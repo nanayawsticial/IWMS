@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
 const { sendMail, weeklyReportHtml, lateAlertHtml } = require('../lib/mailer');
 const { getAttendanceStats } = require('../lib/cron');
-
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 async function notificationsRoutes(fastify) {
   // POST /api/notifications/test-email

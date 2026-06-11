@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
-
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 async function mfaRoutes(fastify) {
   // POST /api/auth/mfa/setup

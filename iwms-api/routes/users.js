@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
-
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 function normalizeEmployeeCode(value) {
   return typeof value === 'string' ? value.trim() : '';

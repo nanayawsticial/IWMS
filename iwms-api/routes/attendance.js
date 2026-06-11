@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
 const { sendMail, overtimeAlertHtml } = require('../lib/mailer');
 const { currentTimeHHMM, diffHoursHHMM, isValidDeviceApiKey } = require('../lib/runtime');
-
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 function normalizeOptionalString(value) {
   return typeof value === 'string' ? value.trim() : '';

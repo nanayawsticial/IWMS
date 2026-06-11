@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const net = require('net');
 const crypto = require('crypto');
 const { parseBoolean, diffHoursHHMM, hashDeviceApiKey, isValidDeviceApiKey } = require('../lib/runtime');

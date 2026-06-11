@@ -1,3 +1,5 @@
+// Fix: Supabase direct DB is IPv6-only on this network. Allow Node.js to use AAAA records.
+require('dns').setDefaultResultOrder('verbatim');
 require('dotenv').config();
 
 if (!process.env.JWT_SECRET) {

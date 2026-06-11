@@ -1,3 +1,6 @@
+// Fix: Supabase direct DB is IPv6-only. Node.js defaults to IPv4-first DNS
+// which returns ENOENT when no A record exists. 'verbatim' preserves AAAA records.
+require('dns').setDefaultResultOrder('verbatim');
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');

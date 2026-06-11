@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { parseBoolean } = require('../lib/runtime');
 
 // Haversine formula to compute distance between two GPS points in metres

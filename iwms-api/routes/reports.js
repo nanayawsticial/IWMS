@@ -1,10 +1,8 @@
-const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 const crypto = require('crypto');
-
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 async function reportsRoutes(fastify) {
   // Helper: check if a user is in Management

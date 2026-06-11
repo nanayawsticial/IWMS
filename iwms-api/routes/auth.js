@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const { getSecret } = require('../lib/runtime');
-
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const refreshSecret = () => getSecret('JWT_REFRESH_SECRET', 'refresh-secret');
 
 // Role permission map (mirrors frontend auth-context.tsx)
