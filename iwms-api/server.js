@@ -95,11 +95,21 @@ const PORT = parseInt(process.env.PORT || '3001', 10);
 async function start() {
   await app.ready();
 
-  // ── Socket.io ───────────────────────────────────────────────
-  // Attach Socket.io directly to Fastify's raw http server instance
   const io = new SocketIO(app.server, {
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, callback) => {
+        if (
+          !origin ||
+          origin.startsWith('http://localhost') ||
+          origin.startsWith('http://127.0.0.1') ||
+          origin.startsWith('http://192.168') ||
+          origin.endsWith('.vercel.app')
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },
