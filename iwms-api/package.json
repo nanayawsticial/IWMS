@@ -1,0 +1,37 @@
+{
+  "name": "iwms-api",
+  "version": "1.0.0",
+  "description": "IWMS Backend API — Node.js + Fastify + Prisma + SQLite",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "db:migrate": "npx prisma migrate dev --name init",
+    "db:seed": "node prisma/seed.js",
+    "db:reset": "npx prisma migrate reset --force && node prisma/seed.js",
+    "db:studio": "npx prisma studio",
+    "start": "node server.js"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@fastify/jwt": "^10.1.0",
+    "@fastify/rate-limit": "^11.0.0",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^3.0.3",
+    "docxtemplater": "^3.68.7",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.8.5",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.10",
+    "pizzip": "^3.2.0",
+    "prisma": "^5.22.0",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.3",
+    "speakeasy": "^2.0.0"
+  }
+}

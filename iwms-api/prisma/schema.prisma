@@ -1,0 +1,298 @@
+// This is your Prisma schema file
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id          String @id @default(cuid())
+  name        String @unique
+  color       String @default("#6366f1")
+  headcount   Int    @default(0)
+  managerId   String?
+  managerName String @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  tasks       Task[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("employee")
+  position     String   @default("")
+  phone        String   @default("")
+  avatar       String   @default("")
+  status       String   @default("active")
+  joinDate     String   @default("")
+  employeeCode String   @default("")
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  mfaEnabled   Boolean  @default(false)
+  mfaSecret    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attendance      AttendanceRecord[]
+  assignedTasks   Task[]             @relation("TaskAssignee")
+  createdTasks    Task[]             @relation("TaskCreator")
+  reviewedTasks   Task[]             @relation("TaskReviewer")
+  sessions        Session[]
+  leaves          LeaveRequest[]
+  comments        TaskComment[]
+  timeLogs        TaskTimeLog[]
+  shifts          Shift[]
+  reports         WeeklyReport[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id              String   @id @default(cuid())
+  title           String
+  description     String   @default("")
+  assigneeId      String
+  assignee        User     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creatorId       String?
+  creator         User?    @relation("TaskCreator", fields: [creatorId], references: [id])
+  reviewerId      String?
+  reviewer        User?    @relation("TaskReviewer", fields: [reviewerId], references: [id])
+  priority        String   @default("medium")
+  status          String   @default("todo")
+  dueDate         String
+  tags            String   @default("[]")
+  projectId       String   @default("general")
+  projectName     String   @default("General")
+  estimatedHours  Int      @default(8)
+  loggedHours     Int      @default(0)
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  comments        TaskComment[]
+  timeLogs        TaskTimeLog[]
+}
+
+model AttendanceRecord {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date             String
+  clockIn          String?
+  clockOut         String?
+  status           String   @default("present")
+  method           String   @default("web")
+  latitude         Float?
+  longitude        Float?
+  hoursWorked      Float?
+  notes            String?
+  correctedIn      String?
+  correctedOut     String?
+  correctionReason String?
+  correctedBy      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+model LeaveRequest {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate    String
+  endDate      String
+  type         String   // vacation, sick, personal
+  status       String   @default("pending") // pending, approved, rejected
+  reason       String?
+  managerNotes String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model TaskTimeLog {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hours     Float
+  date      String
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model Shift {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String
+  startTime String?
+  endTime   String?
+  type      String   // day, night, off
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+}
+
+model BiometricDevice {
+  id              String   @id @default(cuid())
+  name            String
+  ipAddress       String
+  port            Int      @default(4370)
+  deviceType      String   @default("zkteco")  // zkteco | hikvision | generic
+  location        String   @default("")
+  serialNumber    String   @default("")
+  firmwareVersion String   @default("")
+  hardwareModel   String   @default("")
+  status          String   @default("unknown") // online | offline | unknown
+  lastSyncAt      DateTime?
+  lastSeenAt      DateTime?
+  apiKeyHash      String?
+  apiKeyLast4     String   @default("")
+  apiKeyCreatedAt DateTime?
+  isActive        Boolean  @default(true)
+  isSimulated     Boolean  @default(true)
+  notes           String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  syncLogs        DeviceSyncLog[]
+}
+
+model DeviceSyncLog {
+  id           String   @id @default(cuid())
+  deviceId     String
+  device       BiometricDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  employeeCode String
+  userId       String?
+  eventType    String   // check_in | check_out
+  eventTime    String
+  terminalEventId String?
+  verificationMode String @default("")
+  rawData      String   @default("{}")
+  processed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@unique([deviceId, terminalEventId])
+}
+
+model GeoFenceZone {
+  id            String   @id @default(cuid())
+  name          String
+  latitude      Float
+  longitude     Float
+  radiusMeters  Int      @default(200)
+  isActive      Boolean  @default(true)
+  notes         String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model WeeklyReport {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate       String   // YYYY-MM-DD
+  endDate         String   // YYYY-MM-DD
+  status          String   @default("draft") // draft | submitted | approved | needs_revision
+  additionalNotes String   @default("")
+  reviewNotes     String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  activities   ReportActivity[]
+  roadblocks   ReportRoadblock[]
+  plans        ReportUpcomingPlan[]
+  supportItems ReportSupportItem[]
+  insights     ReportInsight[]
+
+  @@unique([userId, startDate])
+}
+
+model ReportActivity {
+  id          String      @id @default(cuid())
+  reportId    String
+  report      WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  taskName    String
+  type        String
+  status      String
+  impact      String      @default("")
+  hoursSpent  Float       @default(0)
+  links       String      @default("")
+}
+
+model ReportRoadblock {
+  id               String      @id @default(cuid())
+  reportId         String
+  report           WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  challenge        String
+  impact           String      @default("")
+  mitigation       String      @default("")
+  supportRequired  String      @default("")
+  responsibleParty String      @default("")
+  deadline         String      @default("")
+}
+
+model ReportUpcomingPlan {
+  id              String      @id @default(cuid())
+  reportId        String
+  report          WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  plannedActivity String
+  typeAssigned    String      @default("Assigned") // Assigned | Self-Motivated
+  typeScope       String      @default("Departmental") // Departmental | Cross-Departmental
+  deliverables    String      @default("")
+  targetDate      String      @default("")
+  dependencies    String      @default("")
+}
+
+model ReportSupportItem {
+  id          String      @id @default(cuid())
+  reportId    String
+  report      WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  description String
+  supportType String      @default("")
+  requestedFrom String    @default("")
+  urgency     String      @default("medium") // high | medium | low
+  dueDate     String      @default("")
+}
+
+model ReportInsight {
+  id        String      @id @default(cuid())
+  reportId  String
+  report    WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  insight   String
+  category  String      // Process | Technical | Team | Tooling
+  impact    String      @default("")
+}

@@ -1,0 +1,31 @@
+# Dependencies
+**/node_modules/
+node_modules/
+
+# Local Environment / Secrets
+**/.env
+.env
+**/.env*.local
+
+# SQLite Database Files
+**/*.db
+**/*.db-journal
+
+# Next.js Build Artifacts
+**/build/
+**/dist/
+**/.next/
+.next/
+
+# IDE / System files
+**/.idea/
+**/.vscode/
+**/.DS_Store
+Thumbs.db
+**/*.log
+**/*.docx.tmp
+
+# AI / Assistant config
+.gemini/
+**/brain/
+**/scratch/
