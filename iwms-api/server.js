@@ -20,11 +20,27 @@ const { getSecret }     = require('./lib/runtime');
 
 // ── Fastify app ────────────────────────────────────────────────
 const app = Fastify({ logger: { level: 'warn' } });
-const allowedOrigins = ['http://localhost:3000', 'http://192.168.2.50:3000'];
 const allowedCorsMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 
 app.register(cors, {
-  origin: allowedOrigins,
+  origin: (origin, cb) => {
+    // Allow requests with no origin (like mobile apps, curl, or local scripts)
+    if (!origin) {
+      cb(null, true);
+      return;
+    }
+    // Allow local development addresses and any Vercel deployments
+    if (
+      origin.startsWith('http://localhost') ||
+      origin.startsWith('http://127.0.0.1') ||
+      origin.startsWith('http://192.168') ||
+      origin.endsWith('.vercel.app')
+    ) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Not allowed by CORS'), false);
+  },
   methods: allowedCorsMethods,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key'],
   credentials: true,
