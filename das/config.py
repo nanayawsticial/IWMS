@@ -6,9 +6,17 @@ All other files import from here; you should not need to change them.
 DS1302_CLK = 20    # Change to whichever GPIO pins you used
 DS1302_DAT = 21
 DS1302_RST  = 22
+# --- Dynamic Configuration Loader ---
+import json
+try:
+    with open("local_config.json", "r") as _f:
+        _local = json.load(_f)
+except OSError:
+    _local = {}
+
 # ── WiFi ──────────────────────────────────────────────────────────────────────
-WIFI_SSID     = "StarOfAfrica_2.4GHz"
-WIFI_PASSWORD = "Z8Ie64kcy2qm_TM"
+WIFI_SSID     = _local.get("wifi_ssid", "StarOfAfrica_2.4GHz")
+WIFI_PASSWORD = _local.get("wifi_password", "Z8Ie64kcy2qm_TM")
 WIFI_TIMEOUT  = 15         # seconds to wait for initial connection
 
 # ── IWMS Server ───────────────────────────────────────────────────────────────
@@ -24,7 +32,7 @@ WIFI_TIMEOUT  = 15         # seconds to wait for initial connection
 #      Next.js:  next dev -H 0.0.0.0
 #      Node:     node server.js --host 0.0.0.0
 
-SERVER_URL     = "http://192.168.2.50:3001"
+SERVER_URL     = _local.get("server_url", "http://192.168.2.50:3001")
 PUNCH_ENDPOINT = "/api/attendance/hardware-punch"
 # The endpoint the Pico POSTs punch events to.
 # Adjust this to match the actual API route in your IWMS codebase.
@@ -41,14 +49,14 @@ PUNCH_ENDPOINT = "/api/attendance/hardware-punch"
 #   }
 
 # Must match the device you register in IWMS Settings → Biometric Hardware
-DEVICE_ID        = "pico-gate-01"
+DEVICE_ID        = _local.get("device_id", "pico-gate-01")
 DEVICE_NAME      = "Main Gate"
 FIRMWARE_VERSION = "pico2w-rfid-0.2.0"
 
 # Hardware API key provisioned from IWMS Settings → Biometric Hardware → Provision.
 # Leave as None if no key has been provisioned yet (local dev / first boot).
 # Once provisioned in the UI, paste the full key here and re-upload config.py to the Pico.
-DEVICE_KEY = "iwms_live_a27ae337be5a631dadcead95c3d5a33e66873807df494923"  # e.g. "iwms_live_abc123..."
+DEVICE_KEY = _local.get("device_key", "iwms_live_a27ae337be5a631dadcead95c3d5a33e66873807df494923")
 
 # ── Attendance Rules ──────────────────────────────────────────────────────────
 LATE_HOUR         = 9     # Clock-ins strictly after 09:00 are flagged LATE

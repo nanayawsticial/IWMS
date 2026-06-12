@@ -690,19 +690,37 @@ def app_about():
     display.erase()
     draw_header()
     display.set_font(tt24)
-    display.set_pos(50, 70)
+    display.set_pos(50, 60)
     display.print("STEMAIDER")
     display.set_font(glcdfont)
-    display.set_pos(35, 110); display.print("Attendance System v3")
-    display.set_pos(35, 130); display.print("Pico 2 W + RFID + WiFi")
+    display.set_pos(35, 95); display.print("Attendance System v3")
+    display.set_pos(35, 115); display.print("Pico 2 W + RFID + WiFi")
     ip = wifi_sync.ip_address()
-    display.set_pos(35, 150)
+    display.set_pos(35, 135)
     display.print("IP: " + (ip if ip else "offline"))
+    
+    # WiFi Setup button
+    display.fill_rectangle(35, 160, 120, 32, DARK_GY)
+    display.set_color(WHITE, DARK_GY)
+    display.set_pos(45, 172)
+    display.print("WIFI SETUP")
+    
+    display.set_color(WHITE, BLACK)
     display.set_pos(35, 220)
     display.print("[ Touch To Exit ]")
+    
     while True:
-        if touch.read():
-            break
+        pos = touch.read()
+        if pos:
+            tx, ty = pos
+            if 35 <= tx <= 155 and 160 <= ty <= 192:
+                # Trigger AP Setup Mode
+                beep(1)
+                from ap_setup import start_ap_setup
+                start_ap_setup(display, touch, tt24, glcdfont)
+                break
+            else:
+                break
         time.sleep_ms(50)
 
 # ── Startup ───────────────────────────────────────────────────────────────────
@@ -711,9 +729,22 @@ draw_main_desktop()
 print("\n====================================")
 print("  STEMAIDER ATTENDANCE SYSTEM v3")
 print("  Raspberry Pi Pico 2 W")
-print("  Connecting to WiFi…")
 print("====================================")
-wifi_sync.connect()   # Non-blocking if it fails; retried in main loop
+
+# Check if local config exists. If not, auto-enter setup AP mode.
+try:
+    os.stat("local_config.json")
+    has_config = True
+except OSError:
+    has_config = False
+
+if not has_config:
+    print("First boot detected (no local config). Entering Setup AP Mode...")
+    from ap_setup import start_ap_setup
+    start_ap_setup(display, touch, tt24, glcdfont)
+else:
+    print("Connecting to WiFi…")
+    wifi_sync.connect()   # Non-blocking if it fails; retried in main loop
 print("Registered users:", list(user_db.keys()))
 print()
 
