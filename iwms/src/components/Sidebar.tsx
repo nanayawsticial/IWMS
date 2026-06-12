@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { href: '/tasks', label: 'Tasks', icon: 'tasks', roles: ['super_admin', 'admin', 'manager', 'team_lead', 'employee'] },
   { href: '/attendance', label: 'Attendance', icon: 'attendance', roles: ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead', 'employee'] },
   { href: '/leave', label: 'Leave', icon: 'leave', roles: ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead', 'employee'] },
-  { href: '/team', label: 'Team', icon: 'team', roles: ['super_admin', 'admin', 'hr_manager', 'manager'] },
+  { href: '/team', label: 'Team', icon: 'team', roles: ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead', 'employee'] },
   { href: '/weekly-reports', label: 'Weekly Reports', icon: 'weeklyReports', roles: ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead', 'employee'] },
   { href: '/reports', label: 'Analytics', icon: 'reports', roles: ['super_admin', 'admin', 'hr_manager', 'manager'] },
   { href: '/settings', label: 'Settings', icon: 'settings', roles: ['super_admin', 'admin'] },
