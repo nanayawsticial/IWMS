@@ -1,8 +1,6 @@
 const cron = require('node-cron');
-const { PrismaClient } = require('@prisma/client');
 const { sendMail, weeklyReportHtml, lateAlertHtml } = require('./mailer');
-
-const prisma = new PrismaClient();
+const prisma = require('./prisma');
 
 /**
  * Start all background cron jobs.
@@ -89,10 +87,25 @@ function startCronJobs(io) {
     } catch (_) {}
   });
 
+  // ── Session Cleanup ───────────────────────────────────────────
+  // Every day at 03:00 AM
+  cron.schedule('0 3 * * *', async () => {
+    console.log('⏰ [CRON] Cleaning up expired sessions...');
+    try {
+      const result = await prisma.session.deleteMany({
+        where: { expiresAt: { lt: new Date() } }
+      });
+      console.log(`✅ [CRON] Cleaned up ${result.count} expired sessions`);
+    } catch (err) {
+      console.error('❌ [CRON] Session cleanup failed:', err.message);
+    }
+  });
+
   console.log('✅ Cron jobs scheduled:');
   console.log('   📊 Weekly report:   Mon 08:00 AM');
   console.log('   ⚠️  Late alert:      Weekdays 10:00 AM');
   console.log('   💓 Stats heartbeat: Every 60s');
+  console.log('   🧹 Session cleanup:  Daily 03:00 AM');
 }
 
 async function getAttendanceStats(date) {

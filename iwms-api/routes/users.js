@@ -128,14 +128,21 @@ async function usersRoutes(fastify) {
     if (dept !== undefined) updateData.departmentId = dept?.id || null;
     if (password) updateData.passwordHash = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.update({
-      where: { id },
-      data: updateData,
-      include: { department: true },
-    });
+    try {
+      const user = await prisma.user.update({
+        where: { id },
+        data: updateData,
+        include: { department: true },
+      });
 
-    const { passwordHash, ...safe } = user;
-    return reply.send({ ...safe, department: user.department?.name || '' });
+      const { passwordHash, ...safe } = user;
+      return reply.send({ ...safe, department: user.department?.name || '' });
+    } catch (err) {
+      if (err.code === 'P2025') {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+      throw err;
+    }
   });
 
   // DELETE /api/users/:id (soft delete)
@@ -145,12 +152,19 @@ async function usersRoutes(fastify) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
-    await prisma.user.update({
-      where: { id: request.params.id },
-      data: { status: 'inactive' },
-    });
+    try {
+      await prisma.user.update({
+        where: { id: request.params.id },
+        data: { status: 'inactive' },
+      });
 
-    return reply.send({ message: 'User deactivated successfully' });
+      return reply.send({ message: 'User deactivated successfully' });
+    } catch (err) {
+      if (err.code === 'P2025') {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+      throw err;
+    }
   });
 }
 

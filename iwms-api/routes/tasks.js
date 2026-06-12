@@ -67,6 +67,11 @@ async function tasksRoutes(fastify) {
     });
     if (!assignee) return reply.code(404).send({ error: 'Assignee user not found' });
 
+    if (reviewerId) {
+      const reviewer = await prisma.user.findUnique({ where: { id: reviewerId } });
+      if (!reviewer) return reply.code(404).send({ error: 'Reviewer user not found' });
+    }
+
     const perm = verifyTaskAssignmentPermission(assigner, assignee);
     if (!perm.allowed) {
       return reply.code(403).send({ error: perm.error });
@@ -177,6 +182,11 @@ async function tasksRoutes(fastify) {
     });
     if (!assignee) return reply.code(404).send({ error: 'Assignee user not found' });
 
+    if (reviewerId) {
+      const reviewer = await prisma.user.findUnique({ where: { id: reviewerId } });
+      if (!reviewer) return reply.code(404).send({ error: 'Reviewer user not found' });
+    }
+
     const perm = verifyTaskAssignmentPermission(assigner, assignee);
     if (!perm.allowed) {
       return reply.code(403).send({ error: perm.error });
@@ -274,8 +284,20 @@ async function tasksRoutes(fastify) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
-    await prisma.task.delete({ where: { id: request.params.id } });
-    return reply.send({ message: 'Task deleted successfully' });
+    const task = await prisma.task.findUnique({ where: { id: request.params.id } });
+    if (!task) return reply.code(404).send({ error: 'Task not found' });
+
+    if (!(await canAccessTask(task, request.user))) {
+      return reply.code(403).send({ error: 'Insufficient permissions to delete this task' });
+    }
+
+    try {
+      await prisma.task.delete({ where: { id: request.params.id } });
+      return reply.send({ message: 'Task deleted successfully' });
+    } catch (err) {
+      if (err.code === 'P2025') return reply.code(404).send({ error: 'Task not found' });
+      throw err;
+    }
   });
 
   // GET /api/tasks/:id
