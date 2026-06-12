@@ -28,6 +28,7 @@ class WiFiSync:
         self.wlan.active(True)
         self._last_retry = 0
         self._last_flush  = 0
+        self._last_heartbeat = 0
         self._queue = self._load_queue()
 
     # ── Connection ────────────────────────────────────────────────────────────
@@ -75,18 +76,68 @@ class WiFiSync:
     def tick(self, now):
         """
         Housekeeping — call once per main loop iteration with time.ticks_ms().
-        Handles reconnection retries and flushing the offline queue.
+        Handles reconnection retries, flushing the offline queue, and heartbeats.
         """
         if not self.is_connected():
             if time.ticks_diff(now, self._last_retry) >= config.WIFI_RETRY_MS:
                 self._last_retry = now
                 self.connect()
-            return  # No point flushing if offline
+            return  # No point flushing or sending heartbeat if offline
+
+        # Send heartbeat every 60 seconds (or immediately on boot)
+        if self._last_heartbeat == 0 or time.ticks_diff(now, self._last_heartbeat) >= 60_000:
+            self._last_heartbeat = now
+            try:
+                self.send_heartbeat()
+            except Exception as e:
+                print("WiFiSync: tick heartbeat failed —", e)
 
         if self._queue:
             if time.ticks_diff(now, self._last_flush) >= config.SYNC_RETRY_MS:
                 self._last_flush = now
                 self.flush_queue()
+
+    def send_heartbeat(self):
+        """Send a lightweight heartbeat to the server to update status and telemetry."""
+        if not self.is_connected():
+            return False
+            
+        import gc
+        device_id = getattr(config, "DEVICE_ID", None)
+        device_key = getattr(config, "DEVICE_KEY", None)
+        if not device_id or not device_key:
+            return False
+            
+        url = config.SERVER_URL.rstrip('/') + "/api/devices/{}/heartbeat".format(device_id)
+        
+        rssi = -50
+        try:
+            rssi = self.wlan.status('rssi')
+        except:
+            pass
+            
+        payload = {
+            "firmwareVersion": getattr(config, "FIRMWARE_VERSION", "pico2w-rfid"),
+            "hardwareModel": "Raspberry Pi Pico 2 W",
+            "batteryLevel": 100,
+            "wifiRssi": rssi,
+            "freeMemory": gc.mem_free(),
+            "uptimeSeconds": time.ticks_ms() // 1000
+        }
+        
+        try:
+            body = json.dumps(payload)
+            headers = {
+                "Content-Type": "application/json",
+                "X-Device-Key": device_key
+            }
+            res = requests.post(url, data=body, headers=headers, timeout=5)
+            ok = res.status_code == 200
+            res.close()
+            return ok
+        except Exception as e:
+            print("Heartbeat: send failed —", e)
+            return False
 
     # ── Event posting ─────────────────────────────────────────────────────────
 
