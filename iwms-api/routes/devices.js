@@ -324,6 +324,15 @@ async function devicesRoutes(fastify) {
       message = isOnline
         ? `[SIMULATED] Device responded in ${latencyMs}ms`
         : '[SIMULATED] No response — device appears offline';
+    } else if (device.deviceType === 'pico2w') {
+      const now = new Date();
+      const lastSeen = device.lastSeenAt ? new Date(device.lastSeenAt) : null;
+      const isRecent = lastSeen && (now - lastSeen < 120 * 1000); // seen within last 2 minutes
+      newStatus = isRecent ? 'online' : 'offline';
+      latencyMs = isRecent ? 12 : null;
+      message = isRecent
+        ? `Pico terminal active/seen recently at ${lastSeen.toLocaleTimeString()}`
+        : 'Pico terminal has not checked in or sent a punch recently';
     } else {
       const res = await pingRealDevice(device.ipAddress, device.port);
       newStatus = res.status;
