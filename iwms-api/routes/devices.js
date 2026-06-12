@@ -248,12 +248,19 @@ async function devicesRoutes(fastify) {
     if (updateData.isActive !== undefined) updateData.isActive = parseBoolean(updateData.isActive);
     if (updateData.isSimulated !== undefined) updateData.isSimulated = parseBoolean(updateData.isSimulated);
 
-    const updated = await prisma.biometricDevice.update({
-      where: { id },
-      data: updateData,
-    });
+    try {
+      const updated = await prisma.biometricDevice.update({
+        where: { id },
+        data: updateData,
+      });
 
-    return reply.send(updated);
+      return reply.send(updated);
+    } catch (err) {
+      if (err.code === 'P2025') {
+        return reply.code(404).send({ error: 'Device not found' });
+      }
+      throw err;
+    }
   });
 
   // ── POST /api/devices/:id/provision-key ───────────────────────
@@ -300,10 +307,17 @@ async function devicesRoutes(fastify) {
 
     const { id } = request.params;
     // Soft delete
-    await prisma.biometricDevice.update({ where: { id }, data: { isActive: false } });
+    try {
+      await prisma.biometricDevice.update({ where: { id }, data: { isActive: false } });
 
-    if (global.io) global.io.emit('device:removed', { id });
-    return reply.send({ success: true });
+      if (global.io) global.io.emit('device:removed', { id });
+      return reply.send({ success: true });
+    } catch (err) {
+      if (err.code === 'P2025') {
+        return reply.code(404).send({ error: 'Device not found' });
+      }
+      throw err;
+    }
   });
 
   // ── POST /api/devices/:id/ping ────────────────────────────────

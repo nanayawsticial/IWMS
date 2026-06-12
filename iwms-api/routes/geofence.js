@@ -63,8 +63,15 @@ async function geofenceRoutes(fastify) {
     if (isActive !== undefined)     updateData.isActive = parseBoolean(isActive);
     if (notes !== undefined)        updateData.notes = notes;
 
-    const updated = await prisma.geoFenceZone.update({ where: { id }, data: updateData });
-    return reply.send(updated);
+    try {
+      const updated = await prisma.geoFenceZone.update({ where: { id }, data: updateData });
+      return reply.send(updated);
+    } catch (err) {
+      if (err.code === 'P2025') {
+        return reply.code(404).send({ error: 'Geo-fence zone not found' });
+      }
+      throw err;
+    }
   });
 
   // ── DELETE /api/geofence/:id ──────────────────────────────────
@@ -73,8 +80,15 @@ async function geofenceRoutes(fastify) {
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
-    await prisma.geoFenceZone.delete({ where: { id: request.params.id } });
-    return reply.send({ success: true });
+    try {
+      await prisma.geoFenceZone.delete({ where: { id: request.params.id } });
+      return reply.send({ success: true });
+    } catch (err) {
+      if (err.code === 'P2025') {
+        return reply.code(404).send({ error: 'Geo-fence zone not found' });
+      }
+      throw err;
+    }
   });
 
   // ── POST /api/geofence/validate ───────────────────────────────
