@@ -3,6 +3,34 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { mfaApi, devicesApi, geofenceApi, usersApi } from '@/lib/api';
+import { useSocketEvent } from '@/hooks/useSocket';
+
+// Telemetry visual helpers
+function getWifiColor(rssi: number | null | undefined): string {
+  if (rssi === null || rssi === undefined) return '#94a3b8'; // slate-400
+  if (rssi >= -55) return '#10b981'; // emerald-500
+  if (rssi >= -70) return '#6366f1'; // indigo-500
+  if (rssi >= -80) return '#f59e0b'; // amber-500
+  return '#ef4444'; // red-500
+}
+
+function getBatteryColor(level: number | null | undefined): string {
+  if (level === null || level === undefined) return '#94a3b8'; // slate-400
+  if (level >= 80) return '#10b981'; // emerald-500
+  if (level >= 25) return '#fbbf24'; // amber-400
+  return '#ef4444'; // red-500
+}
+
+function formatUptime(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined) return 'N/A';
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ${minutes % 60}m`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ${hours % 24}h`;
+}
 
 export default function SettingsPage() {
   const { user, refreshSelf } = useAuth();
@@ -96,6 +124,27 @@ export default function SettingsPage() {
     fetchZones();
     fetchUsers();
   }, []);
+
+  useSocketEvent<any>('device:heartbeat', (data) => {
+    setDevices((prevDevices) =>
+      prevDevices.map((dev) => {
+        if (dev.id === data.id) {
+          return {
+            ...dev,
+            status: data.status,
+            lastSeenAt: data.lastSeenAt,
+            telemetry: {
+              batteryLevel: data.batteryLevel !== undefined ? data.batteryLevel : dev.telemetry?.batteryLevel,
+              wifiRssi: data.wifiRssi !== undefined ? data.wifiRssi : dev.telemetry?.wifiRssi,
+              freeMemory: data.freeMemory !== undefined ? data.freeMemory : dev.telemetry?.freeMemory,
+              uptimeSeconds: data.uptimeSeconds !== undefined ? data.uptimeSeconds : dev.telemetry?.uptimeSeconds,
+            }
+          };
+        }
+        return dev;
+      })
+    );
+  });
 
   const fetchUsers = async () => {
     try {
@@ -582,7 +631,7 @@ export default function SettingsPage() {
                 <p className="text-slate-400 text-sm">No biometric devices registered.</p>
               ) : (
                 devices.map((dev) => (
-                  <div key={dev.id} className="hardware-device-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '220px' }}>
+                  <div key={dev.id} className="hardware-device-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '320px' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div className="device-status-badge">
@@ -636,6 +685,77 @@ export default function SettingsPage() {
                         )}
                         <span>Hardware Key: {dev.apiKeyLast4 ? `•••• ${dev.apiKeyLast4}` : 'Not provisioned'}</span>
                         <span>Total Events: {dev.totalEvents || 0}</span>
+                      </div>
+
+                      {/* Live Telemetry Diagnostics */}
+                      <div className="mt-3 pt-3 border-t border-slate-800">
+                        <span className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold block mb-2">
+                          Live Hardware Telemetry
+                        </span>
+                        {dev.telemetry && (dev.telemetry.wifiRssi !== null || dev.telemetry.batteryLevel !== null || dev.telemetry.freeMemory !== null || dev.telemetry.uptimeSeconds !== null) ? (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                            {/* WiFi Signal RSSI */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.4)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={getWifiColor(dev.telemetry.wifiRssi)} strokeWidth="2.5">
+                                <path d="M12 20h.01M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 14 0M1.5 9.5a15 15 0 0 1 21 0" />
+                              </svg>
+                              <div style={{ minWidth: 0 }}>
+                                <span className="text-slate-500 text-[8px] block leading-none">Signal</span>
+                                <span className="text-white text-[10px] font-medium leading-none truncate block">
+                                  {dev.telemetry.wifiRssi !== null ? `${dev.telemetry.wifiRssi} dBm` : 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Battery Level */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.4)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={getBatteryColor(dev.telemetry.batteryLevel)} strokeWidth="2.5">
+                                <rect x="2" y="7" width="16" height="10" rx="2" ry="2" />
+                                <line x1="22" y1="11" x2="22" y2="13" />
+                              </svg>
+                              <div style={{ minWidth: 0 }}>
+                                <span className="text-slate-500 text-[8px] block leading-none">Battery</span>
+                                <span className="text-white text-[10px] font-medium leading-none truncate block">
+                                  {dev.telemetry.batteryLevel !== null ? `${dev.telemetry.batteryLevel}%` : 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Free RAM */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.4)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
+                              </svg>
+                              <div style={{ minWidth: 0 }}>
+                                <span className="text-slate-500 text-[8px] block leading-none">Free RAM</span>
+                                <span className="text-white text-[10px] font-medium leading-none truncate block">
+                                  {dev.telemetry.freeMemory !== null ? `${dev.telemetry.freeMemory} KB` : 'N/A'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Uptime */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.4)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              <div style={{ minWidth: 0 }}>
+                                <span className="text-slate-500 text-[8px] block leading-none">Uptime</span>
+                                <span className="text-white text-[10px] font-medium leading-none truncate block">
+                                  {formatUptime(dev.telemetry.uptimeSeconds)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-slate-500 italic bg-slate-950/40 p-2 rounded text-center">
+                            {dev.deviceType === 'pico2w' || dev.brand === 'Pico 2 W' 
+                              ? 'Awaiting telemetry transmission...' 
+                              : 'Telemetry not supported on this model'}
+                          </div>
+                        )}
                       </div>
                     </div>
                     

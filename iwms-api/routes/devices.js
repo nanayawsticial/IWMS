@@ -3,6 +3,9 @@ const net = require('net');
 const crypto = require('crypto');
 const { parseBoolean, diffHoursHHMM, hashDeviceApiKey, isValidDeviceApiKey } = require('../lib/runtime');
 
+// Cache to hold last reported device telemetry
+const deviceTelemetryCache = new Map();
+
 // Simulate device type → brand display name
 const DEVICE_BRAND = {
   zkteco: 'ZKTeco',
@@ -169,29 +172,38 @@ async function devicesRoutes(fastify) {
       orderBy: { createdAt: 'asc' },
     });
 
-    return reply.send(devices.map(d => ({
-      id: d.id,
-      name: d.name,
-      ipAddress: d.ipAddress,
-      port: d.port,
-      deviceType: d.deviceType,
-      brand: DEVICE_BRAND[d.deviceType] || d.deviceType,
-      location: d.location,
-      serialNumber: d.serialNumber,
-      firmwareVersion: d.firmwareVersion,
-      hardwareModel: d.hardwareModel,
-      status: d.status,
-      lastSyncAt: d.lastSyncAt,
-      lastSeenAt: d.lastSeenAt,
-      apiKeyLast4: d.apiKeyLast4,
-      apiKeyCreatedAt: d.apiKeyCreatedAt,
-      isActive: d.isActive,
-      isSimulated: d.isSimulated,
-      notes: d.notes,
-      totalEvents: d._count.syncLogs,
-      createdAt: d.createdAt,
-      updatedAt: d.updatedAt,
-    })));
+    return reply.send(devices.map(d => {
+      const cached = deviceTelemetryCache.get(d.id) || {};
+      return {
+        id: d.id,
+        name: d.name,
+        ipAddress: d.ipAddress,
+        port: d.port,
+        deviceType: d.deviceType,
+        brand: DEVICE_BRAND[d.deviceType] || d.deviceType,
+        location: d.location,
+        serialNumber: d.serialNumber,
+        firmwareVersion: d.firmwareVersion,
+        hardwareModel: d.hardwareModel,
+        status: d.status,
+        lastSyncAt: d.lastSyncAt,
+        lastSeenAt: d.lastSeenAt,
+        apiKeyLast4: d.apiKeyLast4,
+        apiKeyCreatedAt: d.apiKeyCreatedAt,
+        isActive: d.isActive,
+        isSimulated: d.isSimulated,
+        notes: d.notes,
+        totalEvents: d._count.syncLogs,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+        telemetry: {
+          batteryLevel: cached.batteryLevel ?? null,
+          wifiRssi: cached.wifiRssi ?? null,
+          freeMemory: cached.freeMemory ?? null,
+          uptimeSeconds: cached.uptimeSeconds ?? null,
+        }
+      };
+    }));
   });
 
   // ── POST /api/devices ─────────────────────────────────────────
@@ -389,6 +401,13 @@ async function devicesRoutes(fastify) {
       data: updateData,
     });
 
+    deviceTelemetryCache.set(id, {
+      batteryLevel: batteryLevel ?? null,
+      wifiRssi: wifiRssi ?? null,
+      freeMemory: freeMemory ?? null,
+      uptimeSeconds: uptimeSeconds ?? null,
+    });
+
     if (global.io) {
       global.io.emit('device:heartbeat', {
         id,
@@ -396,6 +415,8 @@ async function devicesRoutes(fastify) {
         lastSeenAt: device.lastSeenAt,
         batteryLevel,
         wifiRssi,
+        freeMemory,
+        uptimeSeconds,
       });
     }
 

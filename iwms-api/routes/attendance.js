@@ -45,11 +45,40 @@ async function attendanceRoutes(fastify) {
     const { role, sub } = request.user;
     const { date, status, userId } = request.query || {};
 
-    const canViewAll = ['super_admin', 'admin', 'hr_manager', 'manager'].includes(role);
     const whereClause = {};
 
-    if (!canViewAll) whereClause.userId = sub;
-    if (canViewAll && userId) whereClause.userId = userId;
+    if (['super_admin', 'admin', 'hr_manager'].includes(role)) {
+      // Management can view all records, and filter by specific user
+      if (userId) whereClause.userId = userId;
+    } else if (role === 'manager') {
+      // HODs (managers) can view department members' records OR other HODs/Management
+      const currentUser = await prisma.user.findUnique({
+        where: { id: sub },
+        select: { departmentId: true }
+      });
+      const departmentId = currentUser?.departmentId;
+
+      const userConditions = [{ role: { in: ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead'] } }];
+      if (departmentId) {
+        userConditions.push({ departmentId });
+      } else {
+        userConditions.push({ id: sub });
+      }
+
+      if (userId) {
+        // If filtering by a specific user, ensure that user matches HOD's allowed scope
+        whereClause.AND = [
+          { userId },
+          { user: { OR: userConditions } }
+        ];
+      } else {
+        whereClause.user = { OR: userConditions };
+      }
+    } else {
+      // Employees/Team Leads can only view their own attendance records
+      whereClause.userId = sub;
+    }
+
     if (date) whereClause.date = date;
     if (status) whereClause.status = status;
 

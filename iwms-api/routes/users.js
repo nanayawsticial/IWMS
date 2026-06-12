@@ -9,10 +9,48 @@ async function usersRoutes(fastify) {
   // GET /api/users
   fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { role, sub } = request.user;
-    const canViewAll = ['super_admin', 'admin', 'hr_manager', 'manager'].includes(role);
+
+    // 1. Management can see everyone
+    if (['super_admin', 'admin', 'hr_manager'].includes(role)) {
+      const users = await prisma.user.findMany({
+        include: { department: true },
+        orderBy: { name: 'asc' },
+      });
+      return reply.send(users.map(u => {
+        const { passwordHash, ...safe } = u;
+        return { ...safe, department: u.department?.name || '' };
+      }));
+    }
+
+    // Get current user's department
+    const currentUser = await prisma.user.findUnique({
+      where: { id: sub },
+      select: { departmentId: true }
+    });
+    const departmentId = currentUser?.departmentId;
+
+    let whereClause = {};
+
+    if (role === 'manager') {
+      // 2. HODs (managers) can see their department members OR HODs/Management
+      const orConditions = [{ role: { in: ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead'] } }];
+      if (departmentId) {
+        orConditions.push({ departmentId });
+      } else {
+        orConditions.push({ id: sub });
+      }
+      whereClause = { OR: orConditions };
+    } else {
+      // 3. Regular employees and Team Leads can only see their department members
+      if (departmentId) {
+        whereClause = { departmentId };
+      } else {
+        whereClause = { id: sub };
+      }
+    }
 
     const users = await prisma.user.findMany({
-      where: canViewAll ? {} : { id: sub },
+      where: whereClause,
       include: { department: true },
       orderBy: { name: 'asc' },
     });
@@ -27,20 +65,53 @@ async function usersRoutes(fastify) {
   fastify.get('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { role, sub } = request.user;
     const { id } = request.params;
-    const canViewAll = ['super_admin', 'admin', 'hr_manager', 'manager'].includes(role);
 
-    if (!canViewAll && sub !== id) {
-      return reply.code(403).send({ error: 'Access denied' });
-    }
-
-    const user = await prisma.user.findUnique({
+    // Fetch the target user details
+    const targetUser = await prisma.user.findUnique({
       where: { id },
       include: { department: true },
     });
 
-    if (!user) return reply.code(404).send({ error: 'User not found' });
-    const { passwordHash, ...safe } = user;
-    return reply.send({ ...safe, department: user.department?.name || '' });
+    if (!targetUser) return reply.code(404).send({ error: 'User not found' });
+
+    // Allow if requesting user is Management
+    const isManagement = ['super_admin', 'admin', 'hr_manager'].includes(role);
+    if (isManagement) {
+      const { passwordHash, ...safe } = targetUser;
+      return reply.send({ ...safe, department: targetUser.department?.name || '' });
+    }
+
+    // Fetch requesting user's department
+    const currentUser = await prisma.user.findUnique({
+      where: { id: sub },
+      select: { departmentId: true }
+    });
+    const departmentId = currentUser?.departmentId;
+
+    let allowed = false;
+
+    if (sub === id) {
+      allowed = true;
+    } else if (role === 'manager') {
+      // HOD (manager) can see department members or other HODs/Management
+      const isTargetHodOrMgmt = ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead'].includes(targetUser.role);
+      const isSameDepartment = departmentId && targetUser.departmentId === departmentId;
+      if (isTargetHodOrMgmt || isSameDepartment) {
+        allowed = true;
+      }
+    } else {
+      // Employees/Team Leads can see target user only if same department
+      if (departmentId && targetUser.departmentId === departmentId) {
+        allowed = true;
+      }
+    }
+
+    if (!allowed) {
+      return reply.code(403).send({ error: 'Access denied to this user profile' });
+    }
+
+    const { passwordHash, ...safe } = targetUser;
+    return reply.send({ ...safe, department: targetUser.department?.name || '' });
   });
 
   // POST /api/users
