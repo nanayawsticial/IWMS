@@ -59,6 +59,11 @@ async function shiftsRoutes(fastify) {
       return reply.code(400).send({ error: 'userId, date, and type are required' });
     }
 
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return reply.code(404).send({ error: 'User not found' });
+    }
+
     const shift = await prisma.shift.upsert({
       where: { userId_date: { userId, date } },
       update: {

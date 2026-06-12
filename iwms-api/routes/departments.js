@@ -33,11 +33,18 @@ async function departmentsRoutes(fastify) {
     }
 
     const { name, color, managerId, managerName, headcount } = request.body || {};
-    const dept = await prisma.department.update({
-      where: { id: request.params.id },
-      data: { name, color, managerId, managerName, headcount },
-    });
-    return reply.send(dept);
+    try {
+      const dept = await prisma.department.update({
+        where: { id: request.params.id },
+        data: { name, color, managerId, managerName, headcount },
+      });
+      return reply.send(dept);
+    } catch (err) {
+      if (err.code === 'P2025') {
+        return reply.code(404).send({ error: 'Department not found' });
+      }
+      throw err;
+    }
   });
 }
 

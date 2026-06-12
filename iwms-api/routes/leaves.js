@@ -17,6 +17,10 @@ async function leavesRoutes(fastify) {
         select: { departmentId: true }
       });
       
+      if (!managerUser) {
+        return reply.code(404).send({ error: 'Manager user not found' });
+      }
+      
       leaves = await prisma.leaveRequest.findMany({
         where: {
           user: { departmentId: managerUser.departmentId }
@@ -56,6 +60,17 @@ async function leavesRoutes(fastify) {
 
     if (!startDate || !endDate || !type) {
       return reply.code(400).send({ error: 'startDate, endDate, and type are required' });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return reply.code(400).send({ error: 'Invalid startDate or endDate format' });
+    }
+
+    if (start > end) {
+      return reply.code(400).send({ error: 'startDate must be equal to or before endDate' });
     }
 
     const leave = await prisma.leaveRequest.create({
@@ -111,6 +126,9 @@ async function leavesRoutes(fastify) {
         where: { id: sub },
         select: { departmentId: true }
       });
+      if (!managerUser) {
+        return reply.code(404).send({ error: 'Manager user not found' });
+      }
       if (leave.user.departmentId !== managerUser.departmentId) {
         return reply.code(403).send({ error: 'You can only approve leaves for employees in your department' });
       }
