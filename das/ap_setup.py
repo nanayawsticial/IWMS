@@ -108,33 +108,42 @@ def start_ap_setup(display, touch, tt24, glcdfont):
     sta = network.WLAN(network.STA_IF)
     sta.active(False)
 
-    # 2. Generate readable 10-character alphanumeric password (avoiding confusing chars)
-    chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    # 2. Generate random readable SSID and WPA2 password
     random.seed(time.ticks_us())
+    ap_ssid = "IWMS-Setup-" + "".join(random.choice("23456789") for _ in range(3))
+    chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     ap_password = "".join(random.choice(chars) for _ in range(10))
 
-    # 3. Start AP WiFi (WPA2 secure network)
+    # 3. Start AP WiFi
     ap = network.WLAN(network.AP_IF)
-    ap.active(True)
-    
-    # Disable power management for AP connection stability
-    try:
-        ap.config(pm=0xa7a0c0)
-    except:
-        pass
-        
+    ap.active(False)
+    time.sleep_ms(200)
+
     try:
         sec = network.AUTH_WPA2_PSK
     except AttributeError:
         sec = 3
-        
-    ap.config(essid="IWMS-Biometric-Setup", password=ap_password, security=sec)
+
+    print("Configuring AP: SSID='{}', Pass='{}', Security={}".format(ap_ssid, ap_password, sec))
+    ap.config(essid=ap_ssid, password=ap_password, security=sec)
+    
+    # Set static IP subnet for AP mode
+    ap.ifconfig(('192.168.4.1', '255.255.255.0', '192.168.4.1', '192.168.4.1'))
+    
+    ap.active(True)
+    
+    # Disable power management for AP connection stability (0xa11140 = PM_NONE)
+    try:
+        ap.config(pm=0xa11140)
+    except:
+        pass
     
     # 4. Wait for AP to initialize
     while not ap.active():
         time.sleep_ms(100)
 
     ap_ip = ap.ifconfig()[0]
+    print("AP Interface Active. IP Config:", ap.ifconfig())
 
     # 5. Render AP Setup screen on LCD
     display.set_color(WHITE, BLACK)
@@ -152,7 +161,7 @@ def start_ap_setup(display, touch, tt24, glcdfont):
     display.set_color(WHITE, BLACK)
     display.set_pos(15, 55);  display.print("1. Connect to hotspot WiFi:")
     display.set_color(GREEN, BLACK)
-    display.set_pos(25, 75);  display.print("SSID: IWMS-Biometric-Setup")
+    display.set_pos(25, 75);  display.print("SSID: " + ap_ssid)
     display.set_pos(25, 90);  display.print("Pass: " + ap_password)
     
     display.set_color(WHITE, BLACK)
