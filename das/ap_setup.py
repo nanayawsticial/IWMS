@@ -110,7 +110,7 @@ def start_ap_setup(display, touch, tt24, glcdfont):
     # 2. Start AP WiFi
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
-    ap.config(essid="IWMS-Biometric-Setup", password="")
+    ap.config(essid="IWMS-Biometric-Setup", security=0)
     
     # 3. Wait for AP to initialize
     while not ap.active():
