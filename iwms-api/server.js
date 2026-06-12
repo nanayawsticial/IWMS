@@ -20,6 +20,9 @@ const { startCronJobs } = require('./lib/cron');
 const { initMailer }    = require('./lib/mailer');
 const { getSecret }     = require('./lib/runtime');
 
+// Global in-memory map for device pairing codes
+global.pairingCodes = new Map();
+
 // ── Fastify app ────────────────────────────────────────────────
 const app = Fastify({ logger: { level: 'warn' } });
 const allowedCorsMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];

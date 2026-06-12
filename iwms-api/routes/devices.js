@@ -699,6 +699,112 @@ async function devicesRoutes(fastify) {
       userAvatar: l.userId ? userMap[l.userId]?.avatar || '?' : '?',
     })));
   });
+
+  // ── POST /api/devices/pairing-code ─────────────────────────────
+  // Called by Pico to request a new 6-digit pairing code
+  fastify.post('/pairing-code', async (request, reply) => {
+    let code;
+    do {
+      code = Math.floor(100000 + Math.random() * 900000).toString();
+    } while (global.pairingCodes.has(code));
+
+    const deviceIp = request.ip || '127.0.0.1';
+    
+    global.pairingCodes.set(code, {
+      code,
+      deviceIp,
+      paired: false,
+      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      deviceType: 'pico2w',
+    });
+
+    return reply.code(201).send({ code });
+  });
+
+  // ── GET /api/devices/pair/status ──────────────────────────────
+  // Polled by Pico to check if pairing is complete
+  fastify.get('/pair/status', async (request, reply) => {
+    const { code } = request.query || {};
+    if (!code) {
+      return reply.code(400).send({ error: 'Pairing code is required' });
+    }
+
+    const pairing = global.pairingCodes.get(code);
+    if (!pairing) {
+      return reply.code(404).send({ error: 'Pairing code not found or expired' });
+    }
+
+    if (Date.now() > pairing.expiresAt) {
+      global.pairingCodes.delete(code);
+      return reply.code(400).send({ expired: true, error: 'Pairing code expired' });
+    }
+
+    if (pairing.paired) {
+      const response = {
+        paired: true,
+        deviceId: pairing.deviceId,
+        deviceKey: pairing.deviceKey,
+      };
+      global.pairingCodes.delete(code);
+      return reply.send(response);
+    }
+
+    return reply.send({ paired: false });
+  });
+
+  // ── POST /api/devices/pair ─────────────────────────────────────
+  // Called by Web UI to pair a device via its pairing code
+  fastify.post('/pair', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { role } = request.user;
+    if (!['super_admin', 'admin'].includes(role)) {
+      return reply.code(403).send({ error: 'Only Super Admin or Admin can pair devices' });
+    }
+
+    const { code, name, location, notes } = request.body || {};
+    if (!code || !name) {
+      return reply.code(400).send({ error: 'code and name are required' });
+    }
+
+    const pairing = global.pairingCodes.get(code);
+    if (!pairing) {
+      return reply.code(404).send({ error: 'Pairing code not found or expired' });
+    }
+
+    if (Date.now() > pairing.expiresAt) {
+      global.pairingCodes.delete(code);
+      return reply.code(400).send({ error: 'Pairing code has expired' });
+    }
+
+    const apiKey = generateDeviceApiKey();
+    const apiKeyLast4 = apiKey.slice(-4);
+
+    const device = await prisma.biometricDevice.create({
+      data: {
+        name,
+        ipAddress: pairing.deviceIp,
+        port: 4370,
+        deviceType: pairing.deviceType || 'pico2w',
+        location: location || '',
+        notes: notes || '',
+        status: 'online',
+        lastSeenAt: new Date(),
+        apiKeyHash: hashDeviceApiKey(apiKey),
+        apiKeyLast4,
+        apiKeyCreatedAt: new Date(),
+        isSimulated: false,
+        isActive: true,
+      }
+    });
+
+    pairing.paired = true;
+    pairing.deviceId = device.id;
+    pairing.deviceKey = apiKey;
+    global.pairingCodes.set(code, pairing);
+
+    if (global.io) global.io.emit('device:added', { id: device.id, name: device.name });
+
+    return reply.send({ success: true, deviceId: device.id, name: device.name });
+  });
 }
 
 module.exports = devicesRoutes;

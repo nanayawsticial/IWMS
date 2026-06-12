@@ -29,6 +29,7 @@ export default function SettingsPage() {
 
   // Modals / Panels
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
+  const [showPairDeviceModal, setShowPairDeviceModal] = useState(false);
   const [showAddZoneModal, setShowAddZoneModal] = useState(false);
   const [showLogsDrawer, setShowLogsDrawer] = useState(false);
 
@@ -46,6 +47,13 @@ export default function SettingsPage() {
   const [deviceSerial, setDeviceSerial] = useState('');
   const [deviceNotes, setDeviceNotes] = useState('');
   const [deviceIsSimulated, setDeviceIsSimulated] = useState(true);
+
+  // Pair Device Form
+  const [pairCode, setPairCode] = useState('');
+  const [pairName, setPairName] = useState('');
+  const [pairLocation, setPairLocation] = useState('');
+  const [pairNotes, setPairNotes] = useState('');
+  const [pairing, setPairing] = useState(false);
 
   // Puncher Widget Form
   const [punchEmployeeCode, setPunchEmployeeCode] = useState('');
@@ -215,6 +223,34 @@ export default function SettingsPage() {
       fetchDevices();
     } catch (err: any) {
       addToast(err.response?.data?.error || 'Failed to register device', 'error');
+    }
+  };
+
+  const handlePairDevice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pairCode || !pairName) {
+      addToast('Please fill in pairing code and device name', 'error');
+      return;
+    }
+    setPairing(true);
+    try {
+      await devicesApi.pair({
+        code: pairCode,
+        name: pairName,
+        location: pairLocation || undefined,
+        notes: pairNotes || undefined,
+      });
+      addToast('Biometric device paired successfully', 'success');
+      setShowPairDeviceModal(false);
+      setPairCode('');
+      setPairName('');
+      setPairLocation('');
+      setPairNotes('');
+      fetchDevices();
+    } catch (err: any) {
+      addToast(err.response?.data?.error || 'Failed to pair device', 'error');
+    } finally {
+      setPairing(false);
     }
   };
 
@@ -502,9 +538,28 @@ export default function SettingsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 className="settings-sec-title" style={{ margin: 0 }}>Biometric Hardware Integrations</h3>
             {isAdmin && (
-              <button onClick={() => setShowAddDeviceModal(true)} className="btn-primary-sm">
-                Add Biometric Device
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setShowPairDeviceModal(true)}
+                  className="btn-secondary-sm"
+                  style={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontWeight: '500',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)'
+                  }}
+                >
+                  Pair Physical Device (Pico)
+                </button>
+                <button onClick={() => setShowAddDeviceModal(true)} className="btn-primary-sm">
+                  Add Biometric Device
+                </button>
+              </div>
             )}
           </div>
           <div className="settings-card bg-slate-900 border-indigo-500/20" style={{ padding: '24px' }}>
@@ -984,6 +1039,75 @@ export default function SettingsPage() {
                 </button>
                 <button type="submit" className="btn-primary-sm">
                   Register Device
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pair Physical Device Modal */}
+      {showPairDeviceModal && (
+        <div className="modal-overlay" onClick={() => setShowPairDeviceModal(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Pair Physical Device</h3>
+              <button className="modal-close" onClick={() => setShowPairDeviceModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handlePairDevice} className="modal-body">
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label">Pairing Code *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="6-digit code shown on screen"
+                  value={pairCode}
+                  onChange={e => setPairCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  required
+                  style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '8px', fontWeight: 'bold' }}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label">Device Name *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Lobby Entrance"
+                  value={pairName}
+                  onChange={e => setPairName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label">Location</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Ground Floor"
+                  value={pairLocation}
+                  onChange={e => setPairLocation(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label className="form-label">Notes</label>
+                <textarea
+                  className="form-input"
+                  placeholder="Additional setup notes..."
+                  value={pairNotes}
+                  onChange={e => setPairNotes(e.target.value)}
+                  style={{ minHeight: '80px', resize: 'vertical' }}
+                />
+              </div>
+
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px', marginTop: '20px' }}>
+                <button type="button" className="btn-ghost-sm" onClick={() => setShowPairDeviceModal(false)} disabled={pairing}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary-sm" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', border: 'none' }} disabled={pairing || pairCode.length !== 6 || !pairName}>
+                  {pairing ? 'Pairing...' : 'Pair Device'}
                 </button>
               </div>
             </form>

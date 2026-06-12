@@ -172,6 +172,8 @@ export const devicesApi = {
     api.get(`/api/devices/${id}/logs`, { params: limit ? { limit: String(limit) } : {} }).then(r => r.data),
   pushEvent: (id: string, data: Record<string, any>) =>
     api.post(`/api/devices/${id}/events`, data).then(r => r.data),
+  pair: (data: { code: string; name: string; location?: string; notes?: string }) =>
+    api.post('/api/devices/pair', data).then(r => r.data),
 };
 
 export const geofenceApi = {

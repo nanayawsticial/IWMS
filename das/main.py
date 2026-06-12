@@ -699,11 +699,11 @@ def app_about():
     display.set_pos(35, 135)
     display.print("IP: " + (ip if ip else "offline"))
     
-    # WiFi Setup button
+    # Pairing Setup button
     display.fill_rectangle(35, 160, 120, 32, DARK_GY)
     display.set_color(WHITE, DARK_GY)
-    display.set_pos(45, 172)
-    display.print("WIFI SETUP")
+    display.set_pos(50, 172)
+    display.print("PAIR DEVICE")
     
     display.set_color(WHITE, BLACK)
     display.set_pos(35, 220)
@@ -714,10 +714,10 @@ def app_about():
         if pos:
             tx, ty = pos
             if 35 <= tx <= 155 and 160 <= ty <= 192:
-                # Trigger AP Setup Mode
+                # Trigger Pairing Flow
                 beep(1)
-                from ap_setup import start_ap_setup
-                start_ap_setup(display, touch, tt24, glcdfont)
+                from pairing import start_pairing_flow
+                start_pairing_flow(display, touch, tt24, glcdfont)
                 break
             else:
                 break
@@ -731,17 +731,20 @@ print("  STEMAIDER ATTENDANCE SYSTEM v3")
 print("  Raspberry Pi Pico 2 W")
 print("====================================")
 
-# Check if local config exists. If not, auto-enter setup AP mode.
+# Check if device is paired (has local_config.json with device_id and device_key)
+has_pairing = False
 try:
-    os.stat("local_config.json")
-    has_config = True
-except OSError:
-    has_config = False
+    with open("local_config.json", "r") as f:
+        config_data = json.load(f)
+        if config_data.get("device_id") and config_data.get("device_key"):
+            has_pairing = True
+except Exception:
+    pass
 
-if not has_config:
-    print("First boot detected (no local config). Entering Setup AP Mode...")
-    from ap_setup import start_ap_setup
-    start_ap_setup(display, touch, tt24, glcdfont)
+if not has_pairing:
+    print("Device is not paired. Entering Pairing Mode...")
+    from pairing import start_pairing_flow
+    start_pairing_flow(display, touch, tt24, glcdfont)
 else:
     print("Connecting to WiFi…")
     wifi_sync.connect()   # Non-blocking if it fails; retried in main loop
