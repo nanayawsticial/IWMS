@@ -4,6 +4,7 @@ import time
 import machine
 import json
 import os
+import random
 
 HTML_PAGE = """<!DOCTYPE html>
 <html>
@@ -107,18 +108,22 @@ def start_ap_setup(display, touch, tt24, glcdfont):
     sta = network.WLAN(network.STA_IF)
     sta.active(False)
 
-    # 2. Start AP WiFi
+    # 2. Generate random 8-digit WPA2 password
+    random.seed(time.ticks_us())
+    ap_password = "".join(str(random.randint(0, 9)) for _ in range(8))
+
+    # 3. Start AP WiFi (WPA2 secure network)
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
-    ap.config(essid="IWMS-Biometric-Setup", security=0)
+    ap.config(essid="IWMS-Biometric-Setup", password=ap_password, security=3)
     
-    # 3. Wait for AP to initialize
+    # 4. Wait for AP to initialize
     while not ap.active():
         time.sleep_ms(100)
 
     ap_ip = ap.ifconfig()[0]
 
-    # 4. Render AP Setup screen on LCD
+    # 5. Render AP Setup screen on LCD
     display.set_color(WHITE, BLACK)
     display.erase()
     
@@ -132,14 +137,15 @@ def start_ap_setup(display, touch, tt24, glcdfont):
     # Details
     display.set_font(glcdfont)
     display.set_color(WHITE, BLACK)
-    display.set_pos(15, 55);  display.print("Hotspot started successfully.")
-    display.set_pos(15, 75);  display.print("1. Connect your phone/laptop to WiFi:")
+    display.set_pos(15, 55);  display.print("1. Connect to hotspot WiFi:")
     display.set_color(GREEN, BLACK)
-    display.set_pos(25, 95);  display.print("IWMS-Biometric-Setup")
+    display.set_pos(25, 75);  display.print("SSID: IWMS-Biometric-Setup")
+    display.set_pos(25, 90);  display.print("Pass: " + ap_password)
+    
     display.set_color(WHITE, BLACK)
-    display.set_pos(15, 115); display.print("2. Open your browser and go to:")
+    display.set_pos(15, 115); display.print("2. Open browser and navigate to:")
     display.set_color(GREEN, BLACK)
-    display.set_pos(25, 135); display.print("http://" + ap_ip)
+    display.set_pos(25, 130); display.print("http://" + ap_ip)
     
     # Draw Cancel button
     display.fill_rectangle(90, 180, 140, 35, DARK_GY)
