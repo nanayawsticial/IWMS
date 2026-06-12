@@ -163,10 +163,14 @@ async function start() {
 
     // Client can request fresh stats immediately on connect
     socket.on('stats:request', async () => {
-      const { getAttendanceStats } = require('./lib/cron');
-      const today = new Date().toISOString().split('T')[0];
-      const stats = await getAttendanceStats(today);
-      socket.emit('stats:update', { stats, timestamp: new Date().toISOString() });
+      try {
+        const { getAttendanceStats } = require('./lib/cron');
+        const today = new Date().toISOString().split('T')[0];
+        const stats = await getAttendanceStats(today);
+        socket.emit('stats:update', { stats, timestamp: new Date().toISOString() });
+      } catch (err) {
+        console.error('❌ Failed to fetch stats for socket client:', err.message);
+      }
     });
   });
 
