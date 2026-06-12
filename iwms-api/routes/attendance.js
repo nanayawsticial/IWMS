@@ -340,6 +340,7 @@ async function attendanceRoutes(fastify) {
     // 3. Look up employee by employeeCode (= RFID uid)
     const user = await prisma.user.findFirst({
       where: { employeeCode: normalizedUid, status: 'active' },
+      include: { department: true },
     });
 
     if (!user) {
@@ -374,55 +375,56 @@ async function attendanceRoutes(fastify) {
       recordStatus = await getLatenessStatus(user.id, date, timeStr);
     }
 
-    // 6. Upsert the AttendanceRecord
-    let record;
+    // 6. Fetch existing record and check constraints
     const existing = await prisma.attendanceRecord.findUnique({
       where: { userId_date: { userId: user.id, date } },
     });
 
+    let record;
     if (event_type === 'clock_in') {
       if (existing?.clockIn) {
-        // Duplicate scan — return existing record silently
-        record = existing;
-      } else {
-        record = await prisma.attendanceRecord.upsert({
-          where:  { userId_date: { userId: user.id, date } },
-          update: { clockIn: timeStr, status: recordStatus, method: 'hardware' },
-          create: {
-            userId:  user.id,
-            date,
-            clockIn: timeStr,
-            status:  recordStatus,
-            method:  'hardware',
-            notes:   normalizedFlags.length ? normalizedFlags.join(', ') : null,
-          },
+        return reply.code(409).send({
+          error: 'Conflict',
+          message: 'Already clocked in today',
         });
       }
-    } else {
-      // clock_out
-      let hoursWorked = null;
-      const clockInTime = existing?.clockIn ?? null;
-      if (clockInTime) {
-        hoursWorked = diffHoursHHMM(clockInTime, timeStr);
-      }
-
       record = await prisma.attendanceRecord.upsert({
         where:  { userId_date: { userId: user.id, date } },
-        update: {
-          clockOut:    timeStr,
-          hoursWorked: hoursWorked ?? undefined,
-          notes: normalizedFlags.length
-            ? [(existing?.notes ?? ''), normalizedFlags.join(', ')].filter(Boolean).join(' | ')
-            : (existing?.notes ?? undefined),
-        },
+        update: { clockIn: timeStr, status: recordStatus, method: 'hardware' },
         create: {
-          userId:      user.id,
+          userId:  user.id,
           date,
+          clockIn: timeStr,
+          status:  recordStatus,
+          method:  'hardware',
+          notes:   normalizedFlags.length ? normalizedFlags.join(', ') : null,
+        },
+      });
+    } else {
+      // clock_out
+      if (!existing || !existing.clockIn) {
+        return reply.code(404).send({
+          error: 'Not Found',
+          message: 'No clock-in record found for today. Please clock in first.',
+        });
+      }
+      if (existing.clockOut) {
+        return reply.code(409).send({
+          error: 'Conflict',
+          message: 'Already clocked out today',
+        });
+      }
+
+      const hoursWorked = diffHoursHHMM(existing.clockIn, timeStr);
+
+      record = await prisma.attendanceRecord.update({
+        where:  { userId_date: { userId: user.id, date } },
+        data: {
           clockOut:    timeStr,
           hoursWorked,
-          status:      'present',
-          method:      'hardware',
-          notes:       normalizedFlags.length ? normalizedFlags.join(', ') : null,
+          notes: normalizedFlags.length
+            ? [(existing.notes ?? ''), normalizedFlags.join(', ')].filter(Boolean).join(' | ')
+            : (existing.notes ?? undefined),
         },
       });
     }
@@ -454,25 +456,36 @@ async function attendanceRoutes(fastify) {
     // 9. Emit real-time Socket.io events to the dashboard
     const io = global.io;
     if (io) {
-      const eventName = event_type === 'clock_in' ? 'attendance:clockIn' : 'attendance:clockOut';
-      io.emit(eventName, {
-        userId:     user.id,
-        userName:   user.name,
-        date,
-        time:       timeStr,
-        method:     'hardware',
-        deviceName: device.name,
-        flags: normalizedFlags,
-        record,
-        timestamp:  new Date().toISOString(),
-      });
-
-      if (normalizedFlags.includes('LATE') || recordStatus === 'late') {
-        io.emit('attendance:late', {
-          userId:   user.id,
-          userName: user.name,
-          time:     timeStr,
-          date,
+      if (event_type === 'clock_in') {
+        const payload = {
+          userId:         user.id,
+          userName:       user.name,
+          userAvatar:     user.avatar || '??',
+          userDepartment: user.department?.name || '',
+          clockIn:        timeStr,
+          status:         recordStatus,
+          method:         'hardware',
+          deviceName:     device.name,
+          timestamp:      new Date().toISOString(),
+        };
+        io.emit('attendance:clockIn', payload);
+        if (recordStatus === 'late') {
+          io.emit('attendance:late', payload);
+        }
+      } else {
+        // clock_out
+        io.emit('attendance:clockOut', {
+          userId:         user.id,
+          userName:       user.name,
+          userAvatar:     user.avatar || '??',
+          userDepartment: user.department?.name || '',
+          clockIn:        existing?.clockIn || timeStr,
+          clockOut:       timeStr,
+          hoursWorked:    record.hoursWorked,
+          isOvertime:     record.hoursWorked !== null && record.hoursWorked > 9,
+          method:         'hardware',
+          deviceName:     device.name,
+          timestamp:      new Date().toISOString(),
         });
       }
     }
@@ -491,6 +504,8 @@ async function attendanceRoutes(fastify) {
       flags:     normalizedFlags,
       terminal_event_id: terminalEventId || null,
       record_id: record.id,
+      status:    recordStatus,
+      hoursWorked: record.hoursWorked,
     });
   });
 

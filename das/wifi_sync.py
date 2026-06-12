@@ -105,8 +105,8 @@ class WiFiSync:
             flags:      list of flag strings, e.g. ["LATE"]
 
         Returns:
-            True  — event was delivered to the server immediately
-            False — event was queued (offline or server error)
+            (success, status_code, response_data)
+            success is True if successfully processed by server (2xx)
         """
         event_id = self._terminal_event_id(uid, event_type, timestamp)
         payload = {
@@ -120,13 +120,25 @@ class WiFiSync:
             "firmware":          getattr(config, "FIRMWARE_VERSION", "pico2w-rfid"),
         }
 
-        if self.is_connected() and self._try_post(payload):
-            print("Sync ✓ {} {} → {}".format(event_type, name, timestamp))
-            return True
-
-        print("Sync: offline — queuing event for", name)
-        self._enqueue(payload)
-        return False
+        if self.is_connected():
+            ok, status, data = self._try_post(payload)
+            if ok:
+                print("Sync ✓ {} {} → {}".format(event_type, name, timestamp))
+                return True, status, data
+            
+            # If it failed due to a network/server issue (status <= 0 or 5xx), queue it
+            # But if it failed due to client validation error (400, 401, 403, 404, 409), do NOT queue it
+            if status <= 0 or status >= 500:
+                print("Sync: temporary error ({}) — queuing event for {}".format(status, name))
+                self._enqueue(payload)
+                return False, status, data
+            else:
+                print("Sync: validation/auth error ({}) — not queuing event for {}".format(status, name))
+                return False, status, data
+        else:
+            print("Sync: offline — queuing event for", name)
+            self._enqueue(payload)
+            return False, 0, {"error": "Offline", "message": "Device is offline"}
 
     def flush_queue(self):
         """
@@ -138,11 +150,13 @@ class WiFiSync:
 
         sent_indices = []
         for i, payload in enumerate(self._queue):
-            if self._try_post(payload):
+            ok, status, _ = self._try_post(payload)
+            # If successful, or if it's a validation conflict (409/404), count as done/discard
+            if ok or status in (404, 409):
                 sent_indices.append(i)
-                print("Sync: flushed queued event for", payload.get("name", "?"))
+                print("Sync: flushed queued event for {} (status {})".format(payload.get("name", "?"), status))
             else:
-                print("Sync: server still unreachable — will retry later")
+                print("Sync: server still unreachable or other error (status {}) — will retry later".format(status))
                 break
 
         if sent_indices:
@@ -162,7 +176,7 @@ class WiFiSync:
         return "{}-{}-{}-{}".format(config.DEVICE_ID, safe_uid, event_type, safe_time)
 
     def _try_post(self, payload):
-        """Execute one HTTP POST. Returns True on 2xx response."""
+        """Execute one HTTP POST. Returns (ok, status_code, response_data)."""
         url = config.SERVER_URL + config.PUNCH_ENDPOINT
         try:
             body = json.dumps(payload)
@@ -177,18 +191,29 @@ class WiFiSync:
                 headers=headers,
                 timeout=10,
             )
-            ok = 200 <= res.status_code < 300
-            if not ok:
-                print("Sync: server returned", res.status_code)
+            status_code = res.status_code
+            ok = 200 <= status_code < 300
+            
+            resp_data = None
+            try:
+                resp_text = res.text
+                if resp_text:
+                    try:
+                        resp_data = json.loads(resp_text)
+                    except:
+                        resp_data = resp_text
+            except Exception as e:
+                print("Sync: error parsing response body:", e)
+                
             res.close()
-            return ok
+            return ok, status_code, resp_data
         except OSError as e:
             # Common on Pico: EHOSTUNREACH, ETIMEDOUT, etc.
             print("Sync: network error —", e)
-            return False
+            return False, -1, str(e)
         except Exception as e:
             print("Sync: unexpected error —", e)
-            return False
+            return False, -2, str(e)
 
     def _load_queue(self):
         try:

@@ -328,121 +328,228 @@ def process_rfid_scan(uid_str):
         draw_main_desktop()
         return
 
-    # Ensure today's log entry exists
-    if date_str not in attendance:
-        attendance[date_str] = {}
-    if uid_str not in attendance[date_str]:
-        attendance[date_str][uid_str] = {
-            "name":  name,
-            "in":    None,
-            "out":   None,
-            "hours": 0,
-            "flags": [],
-        }
-
-    record = attendance[date_str][uid_str]
-
-    # ── CLOCK IN ──────────────────────────────────────────────
+    # Prepare local flags
+    flags = []
     if current_mode == "IN":
-        if record["out"] is not None:
-            beep(2)
-            display.set_font(tt24)
-            display.set_color(YELLOW, BLACK)
-            display.set_pos(25, 122)
-            display.print("DAY CLOSED")
-            display.set_font(glcdfont)
-            display.set_pos(25, 155)
-            display.print("Already Clocked Out")
+        if hr > config.LATE_HOUR or (hr == config.LATE_HOUR and mn > 0):
+            flags.append("LATE")
+    elif current_mode == "OUT":
+        if hr < config.EARLY_LEAVE_HOUR:
+            flags.append("EARLY LEAVE")
 
-        elif record["in"] is not None:
-            beep(2)
-            display.set_font(tt24)
-            display.set_color(YELLOW, BLACK)
-            display.set_pos(25, 122)
-            display.print("ALREADY IN")
-            display.set_font(glcdfont)
-            display.set_pos(25, 155)
-            display.print("IN: " + record["in"])
+    # Try online validation first if connected
+    online_success = False
+    if wifi_sync.is_connected():
+        print("Device is online. Trying server-side validation…")
+        ok, status_code, resp = wifi_sync.post_event(
+            uid_str, name, "clock_in" if current_mode == "IN" else "clock_out", iso_ts, flags
+        )
+        
+        if ok:
+            # 2xx Success: update local log to match the server state
+            online_success = True
+            if date_str not in attendance:
+                attendance[date_str] = {}
+            if uid_str not in attendance[date_str]:
+                attendance[date_str][uid_str] = {
+                    "name":  name,
+                    "in":    None,
+                    "out":   None,
+                    "hours": 0,
+                    "flags": [],
+                }
+            record = attendance[date_str][uid_str]
 
-        else:
-            # Valid clock-in
-            record["in"] = time_str
-            flags = record["flags"]
-
-            if hr > config.LATE_HOUR or (hr == config.LATE_HOUR and mn > 0):
-                if "LATE" not in flags:
-                    flags.append("LATE")
-                status_text = "LATE"
-                display.set_color(YELLOW, BLACK)
-            else:
+            if current_mode == "IN":
+                record["in"] = time_str
+                record["flags"] = flags
+                
                 status_text = "ON TIME"
                 display.set_color(GREEN, BLACK)
-
-            beep(1)
-            display.set_font(tt24)
-            display.set_pos(25, 122)
-            display.print(status_text)
-            display.set_font(glcdfont)
-            display.set_pos(25, 155)
-            display.print(name)
-
-            save_json(config.LOG_FILE, attendance)
-
-            # ── Sync to IWMS ──────────────────────────────────
-            wifi_sync.post_event(uid_str, name, "clock_in", iso_ts, flags)
-
-    # ── CLOCK OUT ─────────────────────────────────────────────
-    elif current_mode == "OUT":
-        if record["in"] is None:
-            beep(3)
-            display.set_font(tt24)
-            display.set_color(RED, BLACK)
-            display.set_pos(25, 122)
-            display.print("NO CLOCK IN")
-            display.set_font(glcdfont)
-            display.set_pos(25, 155)
-            display.print("Clock IN First")
-
-        elif record["out"] is not None:
-            beep(2)
-            display.set_font(tt24)
-            display.set_color(YELLOW, BLACK)
-            display.set_pos(25, 122)
-            display.print("ALREADY OUT")
-            display.set_font(glcdfont)
-            display.set_pos(25, 155)
-            display.print("OUT: " + record["out"])
-
-        else:
-            # Valid clock-out
-            record["out"] = time_str
-            flags = record["flags"]
-
-            if hr < config.EARLY_LEAVE_HOUR:
-                if "EARLY LEAVE" not in flags:
-                    flags.append("EARLY LEAVE")
-                status_text = "EARLY OUT"
-                display.set_color(YELLOW, BLACK)
+                if isinstance(resp, dict) and resp.get("status") == "late":
+                    status_text = "LATE"
+                    display.set_color(YELLOW, BLACK)
+                
+                beep(1)
+                display.set_font(tt24)
+                display.set_pos(25, 122)
+                display.print(status_text)
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print(name)
             else:
+                # clock_out
+                record["out"] = time_str
+                record["flags"] = flags
+                hours = 0
+                if isinstance(resp, dict):
+                    hours = resp.get("hoursWorked", 0)
+                record["hours"] = hours
+                
                 status_text = "CLOCK OUT"
                 display.set_color(GREEN, BLACK)
-
-            record["hours"] = hours_worked(record["in"], record["out"])
-
-            beep(1)
-            display.set_font(tt24)
-            display.set_pos(25, 122)
-            display.print(status_text)
-            display.set_font(glcdfont)
-            display.set_pos(25, 150)
-            display.print(name)
-            display.set_pos(25, 165)
-            display.print("Hours: " + str(record["hours"]))
+                if "EARLY LEAVE" in flags:
+                    status_text = "EARLY OUT"
+                    display.set_color(YELLOW, BLACK)
+                
+                beep(1)
+                display.set_font(tt24)
+                display.set_pos(25, 122)
+                display.print(status_text)
+                display.set_font(glcdfont)
+                display.set_pos(25, 150)
+                display.print(name)
+                display.set_pos(25, 165)
+                display.print("Hours: " + str(hours))
 
             save_json(config.LOG_FILE, attendance)
 
-            # ── Sync to IWMS ──────────────────────────────────
-            wifi_sync.post_event(uid_str, name, "clock_out", iso_ts, flags)
+        elif status_code in (404, 409):
+            # Server validation error: show the conflict/error exactly and do NOT log locally.
+            online_success = True  # We handled it based on server response
+            
+            if status_code == 409:
+                # Conflict: already in / out
+                beep(2)
+                display.set_font(tt24)
+                display.set_color(YELLOW, BLACK)
+                display.set_pos(25, 122)
+                if current_mode == "IN":
+                    display.print("ALREADY IN")
+                else:
+                    display.print("ALREADY OUT")
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print("Already punched today")
+            else:
+                # 404: Not Found (no clock-in record found for today)
+                beep(3)
+                display.set_font(tt24)
+                display.set_color(RED, BLACK)
+                display.set_pos(25, 122)
+                display.print("NO CLOCK IN")
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print("Clock IN First")
+
+        else:
+            # Temporary network / server 5xx error -> Fall back to local validation
+            print("Server returned temporary error code ({}). Falling back to offline mode…".format(status_code))
+
+    # Offline fallback (if not handled by online validation)
+    if not online_success:
+        # Ensure today's log entry exists
+        if date_str not in attendance:
+            attendance[date_str] = {}
+        if uid_str not in attendance[date_str]:
+            attendance[date_str][uid_str] = {
+                "name":  name,
+                "in":    None,
+                "out":   None,
+                "hours": 0,
+                "flags": [],
+            }
+        record = attendance[date_str][uid_str]
+
+        # ── CLOCK IN ──────────────────────────────────────────────
+        if current_mode == "IN":
+            if record["out"] is not None:
+                beep(2)
+                display.set_font(tt24)
+                display.set_color(YELLOW, BLACK)
+                display.set_pos(25, 122)
+                display.print("DAY CLOSED")
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print("Already Clocked Out")
+
+            elif record["in"] is not None:
+                beep(2)
+                display.set_font(tt24)
+                display.set_color(YELLOW, BLACK)
+                display.set_pos(25, 122)
+                display.print("ALREADY IN")
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print("IN: " + record["in"])
+
+            else:
+                # Valid clock-in
+                record["in"] = time_str
+                record["flags"] = flags
+
+                if "LATE" in flags:
+                    status_text = "LATE"
+                    display.set_color(YELLOW, BLACK)
+                else:
+                    status_text = "ON TIME"
+                    display.set_color(GREEN, BLACK)
+
+                beep(1)
+                display.set_font(tt24)
+                display.set_pos(25, 122)
+                display.print(status_text)
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print(name)
+
+                save_json(config.LOG_FILE, attendance)
+
+                # ── Sync to IWMS ──────────────────────────────────
+                if not wifi_sync.is_connected():
+                    wifi_sync.post_event(uid_str, name, "clock_in", iso_ts, flags)
+
+        # ── CLOCK OUT ─────────────────────────────────────────────
+        elif current_mode == "OUT":
+            if record["in"] is None:
+                beep(3)
+                display.set_font(tt24)
+                display.set_color(RED, BLACK)
+                display.set_pos(25, 122)
+                display.print("NO CLOCK IN")
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print("Clock IN First")
+
+            elif record["out"] is not None:
+                beep(2)
+                display.set_font(tt24)
+                display.set_color(YELLOW, BLACK)
+                display.set_pos(25, 122)
+                display.print("ALREADY OUT")
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print("OUT: " + record["out"])
+
+            else:
+                # Valid clock-out
+                record["out"] = time_str
+                record["flags"] = flags
+
+                if "EARLY LEAVE" in flags:
+                    status_text = "EARLY OUT"
+                    display.set_color(YELLOW, BLACK)
+                else:
+                    status_text = "CLOCK OUT"
+                    display.set_color(GREEN, BLACK)
+
+                record["hours"] = hours_worked(record["in"], record["out"])
+
+                beep(1)
+                display.set_font(tt24)
+                display.set_pos(25, 122)
+                display.print(status_text)
+                display.set_font(glcdfont)
+                display.set_pos(25, 150)
+                display.print(name)
+                display.set_pos(25, 165)
+                display.print("Hours: " + str(record["hours"]))
+
+                save_json(config.LOG_FILE, attendance)
+
+                # ── Sync to IWMS ──────────────────────────────────
+                if not wifi_sync.is_connected():
+                    wifi_sync.post_event(uid_str, name, "clock_out", iso_ts, flags)
 
     time.sleep(3)
     current_mode = "NONE"
