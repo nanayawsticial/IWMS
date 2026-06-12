@@ -796,6 +796,12 @@ async function devicesRoutes(fastify) {
       }
     });
 
+    // Automatically set the serialNumber to the device ID so it matches attendance queries
+    await prisma.biometricDevice.update({
+      where: { id: device.id },
+      data: { serialNumber: device.id }
+    });
+
     pairing.paired = true;
     pairing.deviceId = device.id;
     pairing.deviceKey = apiKey;

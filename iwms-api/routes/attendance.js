@@ -290,9 +290,15 @@ async function attendanceRoutes(fastify) {
       });
     }
 
-    // 2. Verify device is registered and active
+    // 2. Verify device is registered and active (lookup by either database ID or serial number)
     const device = await prisma.biometricDevice.findFirst({
-      where: { serialNumber: normalizedDeviceId, isActive: true },
+      where: {
+        OR: [
+          { id: normalizedDeviceId },
+          { serialNumber: normalizedDeviceId }
+        ],
+        isActive: true
+      },
     });
 
     if (!device) {
