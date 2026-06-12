@@ -108,14 +108,27 @@ def start_ap_setup(display, touch, tt24, glcdfont):
     sta = network.WLAN(network.STA_IF)
     sta.active(False)
 
-    # 2. Generate random 8-digit WPA2 password
+    # 2. Generate readable 10-character alphanumeric password (avoiding confusing chars)
+    chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     random.seed(time.ticks_us())
-    ap_password = "".join(str(random.randint(0, 9)) for _ in range(8))
+    ap_password = "".join(random.choice(chars) for _ in range(10))
 
     # 3. Start AP WiFi (WPA2 secure network)
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
-    ap.config(essid="IWMS-Biometric-Setup", password=ap_password, security=3)
+    
+    # Disable power management for AP connection stability
+    try:
+        ap.config(pm=0xa7a0c0)
+    except:
+        pass
+        
+    try:
+        sec = network.AUTH_WPA2_PSK
+    except AttributeError:
+        sec = 3
+        
+    ap.config(essid="IWMS-Biometric-Setup", password=ap_password, security=sec)
     
     # 4. Wait for AP to initialize
     while not ap.active():
