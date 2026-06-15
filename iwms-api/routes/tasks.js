@@ -3,20 +3,18 @@ const prisma = require('../lib/prisma');
 async function tasksRoutes(fastify) {
   // GET /api/tasks
   fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub } = request.user;
+    const { role, sub, organizationId } = request.user;
     const { status, priority, assigneeId, projectId } = request.query || {};
 
     const canViewAll = ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead'].includes(role);
-    let whereClause = {};
+    let whereClause = { organizationId };
 
     if (!canViewAll) {
       // Regular employees see tasks where they are the assignee OR the reviewer
-      whereClause = {
-        OR: [
-          { assigneeId: sub },
-          { reviewerId: sub },
-        ]
-      };
+      whereClause.OR = [
+        { assigneeId: sub },
+        { reviewerId: sub },
+      ];
     }
     if (status) whereClause.status = status;
     if (priority) whereClause.priority = priority;
@@ -48,27 +46,27 @@ async function tasksRoutes(fastify) {
 
   // POST /api/tasks
   fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { sub } = request.user;
+    const { sub, organizationId } = request.user;
     const { title, description, assigneeId, reviewerId, priority, status, dueDate, tags, projectId, projectName, estimatedHours, departmentId } = request.body || {};
 
     if (!title || !assigneeId) {
       return reply.code(400).send({ error: 'title and assigneeId are required' });
     }
 
-    const assigner = await prisma.user.findUnique({
-      where: { id: sub },
+    const assigner = await prisma.user.findFirst({
+      where: { id: sub, organizationId },
       include: { department: true }
     });
     if (!assigner) return reply.code(401).send({ error: 'Unauthorized' });
 
-    const assignee = await prisma.user.findUnique({
-      where: { id: assigneeId },
+    const assignee = await prisma.user.findFirst({
+      where: { id: assigneeId, organizationId },
       include: { department: true }
     });
     if (!assignee) return reply.code(404).send({ error: 'Assignee user not found' });
 
     if (reviewerId) {
-      const reviewer = await prisma.user.findUnique({ where: { id: reviewerId } });
+      const reviewer = await prisma.user.findFirst({ where: { id: reviewerId, organizationId } });
       if (!reviewer) return reply.code(404).send({ error: 'Reviewer user not found' });
     }
 
@@ -95,6 +93,7 @@ async function tasksRoutes(fastify) {
         estimatedHours: estimatedHours || 8,
         loggedHours: 0,
         departmentId: resolvedDeptId,
+        organizationId,
       },
       include: {
         assignee: { select: { id: true, name: true, avatar: true } },
@@ -134,11 +133,11 @@ async function tasksRoutes(fastify) {
 
   // PATCH /api/tasks/:id
   fastify.patch('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub } = request.user;
+    const { role, sub, organizationId } = request.user;
     const { id } = request.params;
 
-    const existing = await prisma.task.findUnique({ 
-      where: { id },
+    const existing = await prisma.task.findFirst({ 
+      where: { id, organizationId },
       include: {
         assignee: true,
         creator: true,
@@ -170,20 +169,20 @@ async function tasksRoutes(fastify) {
 
     const newAssigneeId = assigneeId !== undefined ? assigneeId : existing.assigneeId;
 
-    const assigner = await prisma.user.findUnique({
-      where: { id: sub },
+    const assigner = await prisma.user.findFirst({
+      where: { id: sub, organizationId },
       include: { department: true }
     });
     if (!assigner) return reply.code(401).send({ error: 'Unauthorized' });
 
-    const assignee = await prisma.user.findUnique({
-      where: { id: newAssigneeId },
+    const assignee = await prisma.user.findFirst({
+      where: { id: newAssigneeId, organizationId },
       include: { department: true }
     });
     if (!assignee) return reply.code(404).send({ error: 'Assignee user not found' });
 
     if (reviewerId) {
-      const reviewer = await prisma.user.findUnique({ where: { id: reviewerId } });
+      const reviewer = await prisma.user.findFirst({ where: { id: reviewerId, organizationId } });
       if (!reviewer) return reply.code(404).send({ error: 'Reviewer user not found' });
     }
 
@@ -279,12 +278,12 @@ async function tasksRoutes(fastify) {
 
   // DELETE /api/tasks/:id
   fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin', 'manager'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
-    const task = await prisma.task.findUnique({ where: { id: request.params.id } });
+    const task = await prisma.task.findFirst({ where: { id: request.params.id, organizationId } });
     if (!task) return reply.code(404).send({ error: 'Task not found' });
 
     if (!(await canAccessTask(task, request.user))) {
@@ -302,10 +301,10 @@ async function tasksRoutes(fastify) {
 
   // GET /api/tasks/:id
   fastify.get('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub } = request.user;
+    const { role, sub, organizationId } = request.user;
     const { id } = request.params;
-    const task = await prisma.task.findUnique({
-      where: { id },
+    const task = await prisma.task.findFirst({
+      where: { id, organizationId },
       include: {
         assignee: { select: { id: true, name: true, avatar: true, email: true } },
         creator:  { select: { id: true, name: true, avatar: true, email: true } },
@@ -328,7 +327,7 @@ async function tasksRoutes(fastify) {
 
     if (!task) return reply.code(404).send({ error: 'Task not found' });
 
-    if (!(await canAccessTask(task, { role, sub }))) {
+    if (!(await canAccessTask(task, { role, sub, organizationId }))) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
@@ -366,13 +365,13 @@ async function tasksRoutes(fastify) {
   fastify.post('/:id/comments', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id } = request.params;
     const { content } = request.body || {};
-    const { sub } = request.user;
+    const { sub, organizationId } = request.user;
 
     if (!content) {
       return reply.code(400).send({ error: 'Comment content is required' });
     }
 
-    const task = await prisma.task.findUnique({ where: { id } });
+    const task = await prisma.task.findFirst({ where: { id, organizationId } });
     if (!task) return reply.code(404).send({ error: 'Task not found' });
     if (!(await canAccessTask(task, request.user))) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
@@ -413,13 +412,13 @@ async function tasksRoutes(fastify) {
   fastify.post('/:id/timelogs', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id } = request.params;
     const { hours, date, note } = request.body || {};
-    const { sub } = request.user;
+    const { sub, organizationId } = request.user;
 
     if (hours === undefined || !date) {
       return reply.code(400).send({ error: 'hours and date are required' });
     }
 
-    const task = await prisma.task.findUnique({ where: { id } });
+    const task = await prisma.task.findFirst({ where: { id, organizationId } });
     if (!task) return reply.code(404).send({ error: 'Task not found' });
     if (!(await canAccessTask(task, request.user))) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
@@ -478,13 +477,13 @@ async function tasksRoutes(fastify) {
 }
 
 async function canAccessTask(task, user) {
-  const { role, sub } = user;
+  const { role, sub, organizationId } = user;
   if (['super_admin', 'admin', 'hr_manager', 'team_lead'].includes(role)) return true;
   if (task.assigneeId === sub) return true;
   if (task.reviewerId === sub) return true; // Reviewer can also access for review actions
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: sub },
+  const dbUser = await prisma.user.findFirst({
+    where: { id: sub, organizationId },
     select: { position: true, departmentId: true }
   });
   if (!dbUser) return false;

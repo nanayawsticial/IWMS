@@ -18,6 +18,194 @@ function hasPermission(role, permission) {
 }
 
 async function authRoutes(fastify) {
+  // POST /api/auth/signup
+  fastify.post('/signup', async (request, reply) => {
+    const { organizationName, userName, email, password } = request.body || {};
+
+    if (!organizationName || !userName || !email || !password) {
+      return reply.code(400).send({ error: 'organizationName, userName, email, and password are required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanOrgName = organizationName.trim();
+
+    // 1. Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: cleanEmail }
+    });
+    if (existingUser) {
+      return reply.code(400).send({ error: 'User with this email already exists' });
+    }
+
+    // 2. Check if organization name is already taken
+    const existingOrg = await prisma.organization.findUnique({
+      where: { name: cleanOrgName }
+    });
+    if (existingOrg) {
+      return reply.code(400).send({ error: 'Organization name is already taken' });
+    }
+
+    try {
+      // 3. Create organization and user inside a transaction
+      const result = await prisma.$transaction(async (tx) => {
+        const crypto = require('crypto');
+        let joinCode;
+        let isUnique = false;
+        while (!isUnique) {
+          joinCode = `ORG-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+          const existing = await tx.organization.findUnique({ where: { joinCode } });
+          if (!existing) isUnique = true;
+        }
+
+        const org = await tx.organization.create({
+          data: { name: cleanOrgName, joinCode }
+        });
+
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        const user = await tx.user.create({
+          data: {
+            name: userName.trim(),
+            email: cleanEmail,
+            passwordHash,
+            role: 'super_admin', // First user of an organization is owner/super_admin
+            position: 'Owner',
+            organizationId: org.id,
+            status: 'active',
+            avatar: userName.trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase() || 'SA',
+            joinDate: new Date().toISOString().split('T')[0]
+          },
+          include: { organization: true }
+        });
+
+        return { org, user };
+      });
+
+      // 4. Generate JWT tokens for the newly signed up user
+      const payload = {
+        sub: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+        organizationId: result.user.organizationId,
+      };
+
+      const accessToken = fastify.jwt.sign(payload, { expiresIn: '15m' });
+      const refreshToken = fastify.jwt.sign(
+        { sub: result.user.id, type: 'refresh' },
+        { expiresIn: '7d', secret: refreshSecret() }
+      );
+
+      // Store refresh token
+      await prisma.session.create({
+        data: {
+          userId: result.user.id,
+          refreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      const { passwordHash, mfaSecret, ...safeUser } = result.user;
+      return reply.code(201).send({
+        accessToken,
+        refreshToken,
+        user: {
+          ...safeUser,
+          department: '',
+          organizationName: result.org.name,
+          permissions: ROLE_PERMISSIONS[result.user.role] || [],
+        }
+      });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.code(500).send({ error: 'Failed to create organization and user account' });
+    }
+  });
+
+  // POST /api/auth/join
+  fastify.post('/join', async (request, reply) => {
+    const { joinCode, userName, email, password } = request.body || {};
+
+    if (!joinCode || !userName || !email || !password) {
+      return reply.code(400).send({ error: 'joinCode, userName, email, and password are required' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanJoinCode = joinCode.trim().toUpperCase();
+
+    // 1. Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: cleanEmail }
+    });
+    if (existingUser) {
+      return reply.code(400).send({ error: 'User with this email already exists' });
+    }
+
+    // 2. Check if organization join code exists
+    const org = await prisma.organization.findUnique({
+      where: { joinCode: cleanJoinCode }
+    });
+    if (!org) {
+      return reply.code(400).send({ error: 'Invalid join code' });
+    }
+
+    try {
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      const user = await prisma.user.create({
+        data: {
+          name: userName.trim(),
+          email: cleanEmail,
+          passwordHash,
+          role: 'employee', // Joining user is a regular employee
+          position: 'Staff',
+          organizationId: org.id,
+          status: 'active',
+          avatar: userName.trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase() || 'E',
+          joinDate: new Date().toISOString().split('T')[0]
+        },
+        include: { organization: true }
+      });
+
+      // Generate JWT tokens
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        organizationId: user.organizationId,
+      };
+
+      const accessToken = fastify.jwt.sign(payload, { expiresIn: '15m' });
+      const refreshToken = fastify.jwt.sign(
+        { sub: user.id, type: 'refresh' },
+        { expiresIn: '7d', secret: refreshSecret() }
+      );
+
+      // Store refresh token
+      await prisma.session.create({
+        data: {
+          userId: user.id,
+          refreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      const { passwordHash: _, mfaSecret, ...safeUser } = user;
+      return reply.code(201).send({
+        accessToken,
+        refreshToken,
+        user: {
+          ...safeUser,
+          department: '',
+          organizationName: org.name,
+          permissions: ROLE_PERMISSIONS[user.role] || [],
+        }
+      });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.code(500).send({ error: 'Failed to join organization' });
+    }
+  });
+
   // POST /api/auth/login
   fastify.post('/login', async (request, reply) => {
     const { email, password } = request.body || {};
@@ -27,7 +215,7 @@ async function authRoutes(fastify) {
 
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
-      include: { department: true },
+      include: { department: true, organization: true },
     });
 
     if (!user) {
@@ -55,6 +243,7 @@ async function authRoutes(fastify) {
       sub: user.id,
       email: user.email,
       role: user.role,
+      organizationId: user.organizationId,
     };
 
     const accessToken = fastify.jwt.sign(payload, { expiresIn: '15m' });
@@ -79,6 +268,7 @@ async function authRoutes(fastify) {
       user: {
         ...safeUser,
         department: user.department?.name || '',
+        organizationName: user.organization?.name || '',
         permissions: ROLE_PERMISSIONS[user.role] || [],
       },
     });
@@ -135,6 +325,7 @@ async function authRoutes(fastify) {
       sub: user.id,
       email: user.email,
       role: user.role,
+      organizationId: user.organizationId,
     };
 
     const accessToken = fastify.jwt.sign(payload, { expiresIn: '15m' });
@@ -188,7 +379,7 @@ async function authRoutes(fastify) {
     if (!user) return reply.code(401).send({ error: 'User not found' });
 
     const accessToken = fastify.jwt.sign(
-      { sub: user.id, email: user.email, role: user.role },
+      { sub: user.id, email: user.email, role: user.role, organizationId: user.organizationId },
       { expiresIn: '15m' }
     );
 
@@ -208,13 +399,14 @@ async function authRoutes(fastify) {
   fastify.get('/me', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const user = await prisma.user.findUnique({
       where: { id: request.user.sub },
-      include: { department: true },
+      include: { department: true, organization: true },
     });
     if (!user) return reply.code(404).send({ error: 'User not found' });
     const { passwordHash, ...safeUser } = user;
     return reply.send({
       ...safeUser,
       department: user.department?.name || '',
+      organizationName: user.organization?.name || '',
       permissions: ROLE_PERMISSIONS[user.role] || [],
     });
   });

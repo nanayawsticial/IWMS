@@ -93,9 +93,19 @@ export const authApi = {
     api.post('/api/auth/login', { email, password }).then(r => r.data),
   loginMfa: (tempToken: string, code: string) =>
     api.post('/api/auth/login/mfa', { tempToken, code }).then(r => r.data),
+  signup: (data: Record<string, unknown>) =>
+    api.post('/api/auth/signup', data).then(r => r.data),
+  join: (data: Record<string, unknown>) =>
+    api.post('/api/auth/join', data).then(r => r.data),
   logout: (refreshToken: string) =>
     api.post('/api/auth/logout', { refreshToken }).then(r => r.data),
   me: () => api.get('/api/auth/me').then(r => r.data),
+};
+
+export const organizationApi = {
+  getDetails: () => api.get('/api/organization').then(r => r.data),
+  regenerateCode: () => api.post('/api/organization/regenerate-code').then(r => r.data),
+  updateDetails: (name: string) => api.patch('/api/organization', { name }).then(r => r.data),
 };
 
 export const usersApi = {
@@ -200,5 +210,11 @@ export const reportsApi = {
     api.post(`/api/reports/${id}/review`, data).then(r => r.data),
   exportDocx: (id: string) =>
     api.get(`/api/reports/${id}/export`, { responseType: 'blob' }).then(r => r.data),
+};
+
+export const notificationsApi = {
+  list: () => api.get('/api/notifications').then(r => r.data),
+  read: (id: string) => api.post(`/api/notifications/${id}/read`).then(r => r.data),
+  readAll: () => api.post('/api/notifications/read-all').then(r => r.data),
 };
 

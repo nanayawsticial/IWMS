@@ -290,3 +290,41 @@ class WiFiSync:
                 json.dump(self._queue, f)
         except Exception as e:
             print("Queue save error:", e)
+
+    def post_unknown_card(self, uid):
+        """
+        POST an unknown card UID to the /api/devices/unknown-card endpoint.
+        Returns (success, status_code)
+        """
+        if not self.is_connected():
+            print("Sync: offline — cannot post unknown card", uid)
+            return False, 0
+
+        url = config.SERVER_URL.rstrip('/') + "/api/devices/unknown-card"
+        payload = {
+            "uid": uid,
+            "deviceSerial": config.DEVICE_ID
+        }
+        try:
+            body = json.dumps(payload)
+            headers = {"Content-Type": "application/json"}
+            device_key = getattr(config, "DEVICE_KEY", None)
+            if device_key:
+                headers["X-Device-Key"] = device_key
+            res = requests.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=10,
+            )
+            status_code = res.status_code
+            ok = 200 <= status_code < 300
+            res.close()
+            return ok, status_code
+        except OSError as e:
+            print("Sync: unknown-card network error —", e)
+            return False, -1
+        except Exception as e:
+            print("Sync: unknown-card unexpected error —", e)
+            return False, -2
+

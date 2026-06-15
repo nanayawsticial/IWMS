@@ -1,0 +1,2 @@
+# Exclude local provisioning configuration (contains network credentials)
+config.json

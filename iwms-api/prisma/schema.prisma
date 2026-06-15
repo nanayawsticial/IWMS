@@ -11,38 +11,64 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Department {
-  id          String @id @default(cuid())
-  name        String @unique
-  color       String @default("#6366f1")
-  headcount   Int    @default(0)
-  managerId   String?
-  managerName String @default("")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Organization {
+  id               String            @id @default(cuid())
+  name             String            @unique
+  joinCode         String            @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
-  users       User[]
-  tasks       Task[]
+  users            User[]
+  departments      Department[]
+  tasks            Task[]
+  attendance       AttendanceRecord[]
+  leaves           LeaveRequest[]
+  shifts           Shift[]
+  biometricDevices BiometricDevice[]
+  geofenceZones    GeoFenceZone[]
+  weeklyReports    WeeklyReport[]
+  notifications    Notification[]
+}
+
+model Department {
+  id             String       @id @default(cuid())
+  name           String
+  color          String       @default("#6366f1")
+  headcount      Int          @default(0)
+  managerId      String?
+  managerName    String       @default("")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  users          User[]
+  tasks          Task[]
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         String   @default("employee")
-  position     String   @default("")
-  phone        String   @default("")
-  avatar       String   @default("")
-  status       String   @default("active")
-  joinDate     String   @default("")
-  employeeCode String   @default("")
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-  mfaEnabled   Boolean  @default(false)
-  mfaSecret    String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String       @id @default(cuid())
+  name           String
+  email          String       @unique
+  passwordHash   String
+  role           String       @default("employee")
+  position       String       @default("")
+  phone          String       @default("")
+  avatar         String       @default("")
+  status         String       @default("active")
+  joinDate       String       @default("")
+  employeeCode   String       @default("")
+  departmentId   String?
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  mfaEnabled     Boolean      @default(false)
+  mfaSecret      String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   attendance      AttendanceRecord[]
   assignedTasks   Task[]             @relation("TaskAssignee")
@@ -54,6 +80,9 @@ model User {
   timeLogs        TaskTimeLog[]
   shifts          Shift[]
   reports         WeeklyReport[]
+
+  @@index([departmentId])
+  @@index([organizationId])
 }
 
 model Session {
@@ -64,6 +93,8 @@ model Session {
   createdAt    DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Task {
@@ -88,9 +119,17 @@ model Task {
   department      Department? @relation(fields: [departmentId], references: [id])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   comments        TaskComment[]
   timeLogs        TaskTimeLog[]
+
+  @@index([assigneeId])
+  @@index([creatorId])
+  @@index([reviewerId])
+  @@index([departmentId])
+  @@index([organizationId])
 }
 
 model AttendanceRecord {
@@ -112,8 +151,12 @@ model AttendanceRecord {
   correctedBy      String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+  @@index([userId])
+  @@index([organizationId])
 }
 
 model LeaveRequest {
@@ -128,6 +171,11 @@ model LeaveRequest {
   managerNotes String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([organizationId])
 }
 
 model TaskComment {
@@ -138,6 +186,9 @@ model TaskComment {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   content   String
   createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([userId])
 }
 
 model TaskTimeLog {
@@ -150,6 +201,9 @@ model TaskTimeLog {
   date      String
   note      String?
   createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([userId])
 }
 
 model Shift {
@@ -163,8 +217,12 @@ model Shift {
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+  @@index([userId])
+  @@index([organizationId])
 }
 
 model BiometricDevice {
@@ -188,8 +246,12 @@ model BiometricDevice {
   notes           String   @default("")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   syncLogs        DeviceSyncLog[]
+
+  @@index([organizationId])
 }
 
 model DeviceSyncLog {
@@ -207,6 +269,8 @@ model DeviceSyncLog {
   createdAt    DateTime @default(now())
 
   @@unique([deviceId, terminalEventId])
+  @@index([deviceId])
+  @@index([userId])
 }
 
 model GeoFenceZone {
@@ -219,6 +283,10 @@ model GeoFenceZone {
   notes         String   @default("")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
 
 model WeeklyReport {
@@ -232,6 +300,8 @@ model WeeklyReport {
   reviewNotes     String   @default("")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   activities   ReportActivity[]
   roadblocks   ReportRoadblock[]
@@ -240,6 +310,8 @@ model WeeklyReport {
   insights     ReportInsight[]
 
   @@unique([userId, startDate])
+  @@index([userId])
+  @@index([organizationId])
 }
 
 model ReportActivity {
@@ -252,6 +324,8 @@ model ReportActivity {
   impact      String      @default("")
   hoursSpent  Float       @default(0)
   links       String      @default("")
+
+  @@index([reportId])
 }
 
 model ReportRoadblock {
@@ -264,6 +338,8 @@ model ReportRoadblock {
   supportRequired  String      @default("")
   responsibleParty String      @default("")
   deadline         String      @default("")
+
+  @@index([reportId])
 }
 
 model ReportUpcomingPlan {
@@ -276,6 +352,8 @@ model ReportUpcomingPlan {
   deliverables    String      @default("")
   targetDate      String      @default("")
   dependencies    String      @default("")
+
+  @@index([reportId])
 }
 
 model ReportSupportItem {
@@ -287,6 +365,8 @@ model ReportSupportItem {
   requestedFrom String    @default("")
   urgency     String      @default("medium") // high | medium | low
   dueDate     String      @default("")
+
+  @@index([reportId])
 }
 
 model ReportInsight {
@@ -296,4 +376,20 @@ model ReportInsight {
   insight   String
   category  String      // Process | Technical | Team | Tooling
   impact    String      @default("")
+
+  @@index([reportId])
+}
+
+model Notification {
+  id             String        @id @default(cuid())
+  message        String
+  type           String
+  metadata       Json
+  isRead         Boolean       @default(false)
+  targetRole     String
+  createdAt      DateTime      @default(now())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }

@@ -23,28 +23,33 @@ const { getSecret }     = require('./lib/runtime');
 // Global in-memory map for device pairing codes
 global.pairingCodes = new Map();
 
+// Helper to validate allowed CORS origins strictly.
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (
+    origin.startsWith('http://localhost') ||
+    origin.startsWith('http://127.0.0.1') ||
+    origin.startsWith('http://192.168')
+  ) {
+    return true;
+  }
+  if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+    return true;
+  }
+  return false;
+};
+
 // ── Fastify app ────────────────────────────────────────────────
 const app = Fastify({ logger: { level: 'warn' } });
 const allowedCorsMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
 
 app.register(cors, {
   origin: (origin, cb) => {
-    // Allow requests with no origin (like mobile apps, curl, or local scripts)
-    if (!origin) {
+    if (isAllowedOrigin(origin)) {
       cb(null, true);
-      return;
+    } else {
+      cb(new Error('Not allowed by CORS'), false);
     }
-    // Allow local development addresses and any Vercel deployments
-    if (
-      origin.startsWith('http://localhost') ||
-      origin.startsWith('http://127.0.0.1') ||
-      origin.startsWith('http://192.168') ||
-      origin.endsWith('.vercel.app')
-    ) {
-      cb(null, true);
-      return;
-    }
-    cb(new Error('Not allowed by CORS'), false);
   },
   methods: allowedCorsMethods,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key'],
@@ -89,6 +94,7 @@ app.register(require('./routes/notifications'),{ prefix: '/api/notifications' })
 app.register(require('./routes/devices'),     { prefix: '/api/devices' });
 app.register(require('./routes/geofence'),    { prefix: '/api/geofence' });
 app.register(require('./routes/reports'),     { prefix: '/api/reports' });
+app.register(require('./routes/organization'),{ prefix: '/api/organization' });
 
 app.get('/api/health', async () => ({
   status: 'ok', timestamp: new Date().toISOString(), service: 'IWMS API', version: '2.0.0',
@@ -103,13 +109,7 @@ async function start() {
   const io = new SocketIO(app.server, {
     cors: {
       origin: (origin, callback) => {
-        if (
-          !origin ||
-          origin.startsWith('http://localhost') ||
-          origin.startsWith('http://127.0.0.1') ||
-          origin.startsWith('http://192.168') ||
-          origin.endsWith('.vercel.app')
-        ) {
+        if (isAllowedOrigin(origin)) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));
@@ -141,6 +141,11 @@ async function start() {
     // Join user to their own room for private events
     if (socket.data.user?.sub) {
       socket.join(`user:${socket.data.user.sub}`);
+    }
+
+    // Join user to their organization room for multi-tenant scoped events
+    if (socket.data.user?.organizationId) {
+      socket.join(`org:${socket.data.user.organizationId}`);
     }
 
     socket.on('disconnect', () => {

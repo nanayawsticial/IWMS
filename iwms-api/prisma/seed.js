@@ -249,20 +249,29 @@ function initials(name) {
 async function main() {
   console.log('Starting seed: Seeding departments and employees...');
 
-  // 1. Seed Departments
+  // 1. Seed Organization
+  const org = await prisma.organization.upsert({
+    where: { name: 'Company Inc.' },
+    update: { joinCode: 'COMPANY-123' },
+    create: { name: 'Company Inc.', joinCode: 'COMPANY-123' }
+  });
+  const orgId = org.id;
+  console.log(`Using Organization: ${org.name} (${orgId})`);
+
+  // 2. Seed Departments
   const deptMap = {};
   for (const dept of DEPARTMENTS) {
     const createdDept = await prisma.department.upsert({
-      where: { name: dept.name },
+      where: { name_organizationId: { name: dept.name, organizationId: orgId } },
       update: { color: dept.color },
-      create: { name: dept.name, color: dept.color }
+      create: { name: dept.name, color: dept.color, organizationId: orgId }
     });
     deptMap[dept.name] = createdDept;
   }
   console.log(`Seeded ${Object.keys(deptMap).length} departments.`);
 
-  // 2. Seed Employees
-  const defaultPasswordHash = await bcrypt.hash('ChangeMe123!', 10);
+  // 3. Seed Employees
+  const defaultPasswordHash = await bcrypt.hash('Micah123', 10);
   const userMap = {};
 
   for (const emp of EMPLOYEES) {
@@ -276,7 +285,8 @@ async function main() {
         role: emp.role,
         position: emp.position,
         employeeCode: emp.code,
-        departmentId: deptId
+        departmentId: deptId,
+        organizationId: orgId
       },
       create: {
         name: emp.name,
@@ -286,6 +296,7 @@ async function main() {
         position: emp.position,
         employeeCode: emp.code,
         departmentId: deptId,
+        organizationId: orgId,
         avatar: initials(emp.name),
         status: 'active',
         joinDate: new Date().toISOString().split('T')[0]

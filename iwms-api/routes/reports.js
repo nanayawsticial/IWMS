@@ -6,9 +6,9 @@ const prisma = require('../lib/prisma');
 
 async function reportsRoutes(fastify) {
   // Helper: check if a user is in Management
-  async function isManagement(userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+  async function isManagement(userId, organizationId) {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, organizationId },
       include: { department: true }
     });
     return user && (user.role === 'super_admin' || user.role === 'admin' || (user.department && user.department.name === 'Management'));
@@ -17,7 +17,7 @@ async function reportsRoutes(fastify) {
   // GET /api/reports/auto-populate
   // Queries active tasks and weekly hours logged by the user to prefill activities
   fastify.get('/auto-populate', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { sub } = request.user;
+    const { sub, organizationId } = request.user;
     const { startDate, endDate } = request.query;
 
     if (!startDate || !endDate) {
@@ -29,7 +29,8 @@ async function reportsRoutes(fastify) {
       const timeLogs = await prisma.taskTimeLog.findMany({
         where: {
           userId: sub,
-          date: { gte: startDate, lte: endDate }
+          date: { gte: startDate, lte: endDate },
+          task: { organizationId }
         },
         include: { task: true }
       });
@@ -53,7 +54,8 @@ async function reportsRoutes(fastify) {
       const activeTasks = await prisma.task.findMany({
         where: {
           assigneeId: sub,
-          status: { in: ['todo', 'in_progress', 'review'] }
+          status: { in: ['todo', 'in_progress', 'review'] },
+          organizationId
         }
       });
 
@@ -94,10 +96,10 @@ async function reportsRoutes(fastify) {
 
   // GET /api/reports/my-reports
   fastify.get('/my-reports', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { sub } = request.user;
+    const { sub, organizationId } = request.user;
     try {
       const reports = await prisma.weeklyReport.findMany({
-        where: { userId: sub },
+        where: { userId: sub, organizationId },
         orderBy: { startDate: 'desc' }
       });
       return reply.send(reports);
@@ -109,12 +111,12 @@ async function reportsRoutes(fastify) {
   // GET /api/reports/review-list
   // HODs and Management reviewing reports
   fastify.get('/review-list', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { sub, role } = request.user;
+    const { sub, role, organizationId } = request.user;
     const { departmentId, employeeId, startDate, status } = request.query;
 
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: sub },
+      const user = await prisma.user.findFirst({
+        where: { id: sub, organizationId },
         include: { department: true }
       });
 
@@ -127,7 +129,7 @@ async function reportsRoutes(fastify) {
         return reply.code(403).send({ error: 'Access denied: review dashboard is only for HODs and Management' });
       }
 
-      const whereClause = {};
+      const whereClause = { organizationId };
 
       // Restrict HODs to their own department only
       if (!isManager && isDeptHead) {
@@ -184,11 +186,11 @@ async function reportsRoutes(fastify) {
   // GET /api/reports/:id
   fastify.get('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id } = request.params;
-    const { sub, role } = request.user;
+    const { sub, role, organizationId } = request.user;
 
     try {
-      const report = await prisma.weeklyReport.findUnique({
-        where: { id },
+      const report = await prisma.weeklyReport.findFirst({
+        where: { id, organizationId },
         include: {
           user: {
             select: {
@@ -213,8 +215,8 @@ async function reportsRoutes(fastify) {
 
       // Auth check
       const isOwner = report.userId === sub;
-      const checker = await prisma.user.findUnique({
-        where: { id: sub },
+      const checker = await prisma.user.findFirst({
+        where: { id: sub, organizationId },
         include: { department: true }
       });
 
@@ -236,7 +238,7 @@ async function reportsRoutes(fastify) {
   // POST /api/reports/draft (or /api/reports/submit)
   // Saves report as draft or submits it
   fastify.post('/save', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { sub } = request.user;
+    const { sub, organizationId } = request.user;
     const {
       startDate,
       endDate,
@@ -255,9 +257,11 @@ async function reportsRoutes(fastify) {
 
     try {
       // Find existing report for this user & start date
-      let report = await prisma.weeklyReport.findUnique({
+      let report = await prisma.weeklyReport.findFirst({
         where: {
-          userId_startDate: { userId: sub, startDate }
+          userId: sub,
+          startDate,
+          organizationId
         }
       });
 
@@ -296,7 +300,8 @@ async function reportsRoutes(fastify) {
             endDate,
             status,
             additionalNotes: additionalNotes || '',
-            reviewNotes: ''
+            reviewNotes: '',
+            organizationId
           }
         });
       }
@@ -369,8 +374,8 @@ async function reportsRoutes(fastify) {
       }
 
       // Fetch completed report to return
-      const finalReport = await prisma.weeklyReport.findUnique({
-        where: { id: report.id },
+      const finalReport = await prisma.weeklyReport.findFirst({
+        where: { id: report.id, organizationId },
         include: {
           activities: true,
           roadblocks: true,
@@ -392,23 +397,23 @@ async function reportsRoutes(fastify) {
   fastify.post('/:id/review', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id } = request.params;
     const { status, reviewNotes } = request.body || {};
-    const { sub, role } = request.user;
+    const { sub, role, organizationId } = request.user;
 
     if (!['approved', 'needs_revision'].includes(status)) {
       return reply.code(400).send({ error: 'Invalid status. Must be approved or needs_revision' });
     }
 
     try {
-      const report = await prisma.weeklyReport.findUnique({
-        where: { id },
+      const report = await prisma.weeklyReport.findFirst({
+        where: { id, organizationId },
         include: { user: true }
       });
 
       if (!report) return reply.code(404).send({ error: 'Report not found' });
 
       // Auth check
-      const reviewer = await prisma.user.findUnique({
-        where: { id: sub },
+      const reviewer = await prisma.user.findFirst({
+        where: { id: sub, organizationId },
         include: { department: true }
       });
 
@@ -439,11 +444,11 @@ async function reportsRoutes(fastify) {
   // Generate and download DOCX file
   fastify.get('/:id/export', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id } = request.params;
-    const { sub, role } = request.user;
+    const { sub, role, organizationId } = request.user;
 
     try {
-      const report = await prisma.weeklyReport.findUnique({
-        where: { id },
+      const report = await prisma.weeklyReport.findFirst({
+        where: { id, organizationId },
         include: {
           user: {
             include: { department: true }
@@ -459,8 +464,8 @@ async function reportsRoutes(fastify) {
       if (!report) return reply.code(404).send({ error: 'Report not found' });
 
       // Auth check
-      const checker = await prisma.user.findUnique({
-        where: { id: sub },
+      const checker = await prisma.user.findFirst({
+        where: { id: sub, organizationId },
         include: { department: true }
       });
 

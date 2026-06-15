@@ -303,6 +303,114 @@ def process_rfid_scan(uid_str):
 
     # ── Unknown card ──────────────────────────────────────────
     if uid_str not in user_db:
+        if wifi_sync.is_connected():
+            print("Device is online. Trying server-side validation for unregistered local card...")
+            date_str, time_str = get_display_time()
+            iso_ts = get_iso_timestamp()
+            hr, mn = get_hour_minute()
+
+            if date_str == "1970-01-01":
+                beep(2)
+                current_mode = "NONE"
+                draw_main_desktop()
+                return
+
+            flags = []
+            if current_mode == "IN":
+                if hr > config.LATE_HOUR or (hr == config.LATE_HOUR and mn > 0):
+                    flags.append("LATE")
+            elif current_mode == "OUT":
+                if hr < config.EARLY_LEAVE_HOUR:
+                    flags.append("EARLY LEAVE")
+
+            ok, status_code, resp = wifi_sync.post_event(
+                uid_str, "", "clock_in" if current_mode == "IN" else "clock_out", iso_ts, flags
+            )
+
+            if ok:
+                name = "Unknown"
+                if isinstance(resp, dict) and "user" in resp and "name" in resp["user"]:
+                    name = resp["user"]["name"]
+                user_db[uid_str] = name
+                save_json(config.DB_FILE, user_db)
+
+                if date_str not in attendance:
+                    attendance[date_str] = {}
+                if uid_str not in attendance[date_str]:
+                    attendance[date_str][uid_str] = {
+                        "name":  name,
+                        "in":    None,
+                        "out":   None,
+                        "hours": 0,
+                        "flags": [],
+                    }
+                record = attendance[date_str][uid_str]
+
+                if current_mode == "IN":
+                    record["in"] = time_str
+                    record["flags"] = flags
+                    
+                    status_text = "ON TIME"
+                    display.set_color(GREEN, BLACK)
+                    if isinstance(resp, dict) and resp.get("status") == "late":
+                        status_text = "LATE"
+                        display.set_color(YELLOW, BLACK)
+                    
+                    beep(1)
+                    display.set_font(tt24)
+                    display.set_pos(25, 122)
+                    display.print(status_text)
+                    display.set_font(glcdfont)
+                    display.set_pos(25, 155)
+                    display.print(name)
+                else:
+                    record["out"] = time_str
+                    record["flags"] = flags
+                    hours = 0
+                    if isinstance(resp, dict):
+                        hours = resp.get("hoursWorked", 0)
+                    record["hours"] = hours
+                    
+                    status_text = "CLOCK OUT"
+                    display.set_color(GREEN, BLACK)
+                    if "EARLY LEAVE" in flags:
+                        status_text = "EARLY OUT"
+                        display.set_color(YELLOW, BLACK)
+                    
+                    beep(1)
+                    display.set_font(tt24)
+                    display.set_pos(25, 122)
+                    display.print(status_text)
+                    display.set_font(glcdfont)
+                    display.set_pos(25, 150)
+                    display.print(name)
+                    display.set_pos(25, 165)
+                    display.print("Hours: " + str(hours))
+
+                save_json(config.LOG_FILE, attendance)
+                time.sleep(3)
+                current_mode = "NONE"
+                draw_main_desktop()
+                return
+
+            elif status_code == 404 and isinstance(resp, dict) and resp.get("error") == "Employee Not Found":
+                print("Reporting unregistered card to server...")
+                wifi_sync.post_unknown_card(uid_str)
+                
+                beep(3)
+                display.set_font(tt24)
+                display.set_color(RED, BLACK)
+                display.set_pos(25, 122)
+                display.print("ACCESS DENIED")
+                display.set_font(glcdfont)
+                display.set_pos(25, 155)
+                display.print("Unknown card. Sent to admin.")
+                
+                time.sleep(3)
+                current_mode = "NONE"
+                draw_main_desktop()
+                return
+
         beep(3)
         display.set_font(tt24)
         display.set_color(RED, BLACK)
@@ -315,6 +423,7 @@ def process_rfid_scan(uid_str):
         current_mode = "NONE"
         draw_main_desktop()
         return
+
 
     name = user_db[uid_str]
     date_str, time_str = get_display_time()
@@ -595,23 +704,27 @@ def app_register():
                     display.print("NEW CARD")
                     display.set_font(glcdfont)
                     display.set_pos(20, 150)
-                    display.print("Enter Name in Shell")
-                    print("\n================================")
-                    print("NEW CARD:", uid_str)
-                    print("Enter employee name:")
-                    name = input().strip() or "User_{}".format(len(user_db) + 1)
-                    user_db[uid_str] = name
-                    save_json(config.DB_FILE, user_db)
-                    display.fill_rectangle(15, 100, 290, 90, GREEN)
+                    display.print("Sending to admin...")
+
+                    ok = False
+                    if wifi_sync.is_connected():
+                        ok, _ = wifi_sync.post_unknown_card(uid_str)
+
+                    display.fill_rectangle(15, 100, 290, 90, GREEN if ok else RED)
                     display.set_font(tt24)
-                    display.set_color(WHITE, GREEN)
+                    display.set_color(WHITE, GREEN if ok else RED)
                     display.set_pos(20, 115)
-                    display.print("SAVED")
+                    display.print("SENT" if ok else "SEND FAILED")
                     display.set_font(glcdfont)
                     display.set_pos(20, 150)
-                    display.print(name)
+                    if ok:
+                        display.print("Sent to admin.")
+                    else:
+                        display.print("WiFi offline / error")
                     beep(1)
                     time.sleep(2)
+                    display.fill_rectangle(15, 100, 290, 90, BLACK)
+
 
         if touch.read():
             break
@@ -724,32 +837,120 @@ def app_about():
         time.sleep_ms(50)
 
 # ── Startup ───────────────────────────────────────────────────────────────────
-draw_main_desktop()
-
 print("\n====================================")
 print("  STEMAIDER ATTENDANCE SYSTEM v3")
 print("  Raspberry Pi Pico 2 W")
 print("====================================")
 
-# Check if device is paired (has local_config.json with device_id and device_key)
-has_pairing = False
+# Check factory reset button (GPIO 6)
+btn = Pin(config.RESET_BTN, Pin.IN, Pin.PULL_UP)
+if btn.value() == 0:
+    beep(1, 0.5)
+    display.set_color(WHITE, BLACK)
+    display.erase()
+    display.fill_rectangle(0, 0, 320, 35, RED)
+    display.set_font(tt24)
+    display.set_color(WHITE, RED)
+    display.set_pos(45, 5)
+    display.print("FACTORY RESET")
+    
+    display.set_font(glcdfont)
+    display.set_color(WHITE, BLACK)
+    display.set_pos(15, 60)
+    display.print("Hold reset button for 5 seconds")
+    display.set_pos(15, 80)
+    display.print("to clear all saved settings...")
+    
+    held = True
+    for i in range(50):
+        # Progress bar
+        display.fill_rectangle(15, 120, int(290 * (i + 1) / 50), 10, GREEN)
+        time.sleep(0.1)
+        if btn.value() != 0:
+            held = False
+            break
+            
+    if held:
+        beep(3, 0.1)
+        display.fill_rectangle(15, 150, 290, 45, RED)
+        display.set_color(WHITE, RED)
+        display.set_pos(25, 165)
+        display.print("SETTINGS CLEARED. REBOOTING...")
+        try:
+            os.remove("local_config.json")
+        except:
+            pass
+        time.sleep(2)
+        machine.reset()
+    else:
+        beep(1, 0.1)
+        print("Reset aborted.")
+
+# Check if WiFi credentials exist and are non-empty
+has_wifi = False
 try:
     with open("local_config.json", "r") as f:
         config_data = json.load(f)
-        if config_data.get("device_id") and config_data.get("device_key"):
-            has_pairing = True
+        if config_data.get("wifi_ssid") and config_data.get("wifi_password"):
+            has_wifi = True
 except Exception:
     pass
 
-if not has_pairing:
-    print("Device is not paired. Entering Pairing Mode...")
-    from pairing import start_pairing_flow
-    start_pairing_flow(display, touch, tt24, glcdfont)
+# If no credentials, go straight to provisioning
+if not has_wifi:
+    print("No WiFi credentials found. Entering provisioning mode...")
+    from provisioning import start_provisioning
+    start_provisioning(display, touch, tt24, glcdfont)
 else:
-    print("Connecting to WiFi…")
-    wifi_sync.connect()   # Non-blocking if it fails; retried in main loop
+    # Try connecting to WiFi
+    display.set_color(WHITE, BLACK)
+    display.erase()
+    display.fill_rectangle(0, 0, 320, 35, ACCENT)
+    display.set_font(tt24)
+    display.set_color(WHITE, ACCENT)
+    display.set_pos(45, 5)
+    display.print("CONNECTING WIFI")
+    
+    display.set_font(glcdfont)
+    display.set_color(WHITE, BLACK)
+    display.set_pos(15, 60)
+    display.print("Connecting to WiFi:")
+    display.set_color(GREEN, BLACK)
+    display.set_pos(15, 80)
+    display.print(config.WIFI_SSID)
+    
+    display.set_color(WHITE, BLACK)
+    display.set_pos(15, 110)
+    display.print("Please wait...")
+    
+    if wifi_sync.connect():
+        # WiFi connected successfully. Now check pairing
+        has_pairing = False
+        try:
+            with open("local_config.json", "r") as f:
+                config_data = json.load(f)
+                if config_data.get("device_id") and config_data.get("device_key"):
+                    has_pairing = True
+        except Exception:
+            pass
+
+        if not has_pairing:
+            print("Device is not paired. Entering Pairing Mode...")
+            from pairing import start_pairing_flow
+            start_pairing_flow(display, touch, tt24, glcdfont)
+        else:
+            # Paired and connected! Proceed to desktop
+            print("WiFi connected & paired successfully.")
+            draw_main_desktop()
+    else:
+        # Connection failed or timed out
+        print("WiFi connection failed. Entering provisioning mode...")
+        from provisioning import start_provisioning
+        start_provisioning(display, touch, tt24, glcdfont)
+
 print("Registered users:", list(user_db.keys()))
 print()
+
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 while True:

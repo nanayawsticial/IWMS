@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { usePathname, useRouter } from 'next/navigation';
-import { attendanceApi } from '@/lib/api';
+import { attendanceApi, notificationsApi } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useSocket } from '@/hooks/useSocket';
 
@@ -24,7 +24,7 @@ export default function TopBar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notifications, setNotifications] = useState<
-    { id: string; text: string; time: string; type: 'info' | 'success' | 'warning' | 'error' | 'task' }[]
+    { id: string; text: string; time: string; type: 'info' | 'success' | 'warning' | 'error' | 'task'; metadata?: { uid?: string; deviceSerial?: string } }[]
   >([
     { id: 'static-1', text: 'Weekly report scheduled for Monday 8:00 AM', time: 'System', type: 'info' },
     { id: 'static-2', text: 'Real-time synchronization engine is online.', time: 'System', type: 'success' },
@@ -38,6 +38,35 @@ export default function TopBar() {
     refetchInterval: 60000,
     enabled: !!user,
   });
+
+  const { data: dbNotifications } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => notificationsApi.list(),
+    enabled: !!user && ['super_admin', 'admin', 'hr_manager', 'manager'].includes(user.role),
+    refetchInterval: 15000,
+  });
+
+  // Sync DB notifications into local state
+  useEffect(() => {
+    if (dbNotifications) {
+      setNotifications((prev) => {
+        const merged = [...prev];
+        dbNotifications.forEach((dn: any) => {
+          if (!merged.some((m) => m.id === dn.id)) {
+            const type = dn.type === 'UNREGISTERED_CARD' ? 'warning' : 'info';
+            merged.push({
+              id: dn.id,
+              text: dn.message,
+              time: new Date(dn.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+              type,
+              metadata: dn.metadata ? (typeof dn.metadata === 'string' ? JSON.parse(dn.metadata) : dn.metadata) : undefined,
+            });
+          }
+        });
+        return merged;
+      });
+    }
+  }, [dbNotifications]);
 
   // Load WebSocket event listeners
   const { on } = useSocket();
@@ -134,6 +163,25 @@ export default function TopBar() {
       ]);
     });
 
+    const offNewNotification = on('notification:new', (data: any) => {
+      const isAdmin = ['super_admin', 'admin', 'hr_manager', 'manager'].includes(user.role);
+      if (isAdmin) {
+        setNotifications((prev) => {
+          if (prev.some((n) => n.id === data.id)) return prev;
+          return [
+            {
+              id: data.id,
+              text: data.text,
+              time: new Date(data.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+              type: data.type || 'warning',
+              metadata: data.metadata,
+            },
+            ...prev,
+          ];
+        });
+      }
+    });
+
     return () => {
       offClockIn();
       offClockOut();
@@ -141,6 +189,7 @@ export default function TopBar() {
       offTaskUpdated();
       offReviewRequested();
       offTaskApproved();
+      offNewNotification();
     };
   }, [user, on]);
 
@@ -161,14 +210,29 @@ export default function TopBar() {
     router.push('/login');
   };
 
-  const dismissNotification = (id: string, e: React.MouseEvent) => {
+  const dismissNotification = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (!id.startsWith('static-') && !id.startsWith('clockin-') && !id.startsWith('clockout-') && !id.startsWith('task-') && !id.startsWith('review-') && !id.startsWith('approved-')) {
+      try {
+        await notificationsApi.read(id);
+      } catch (err) {
+        console.error('Failed to mark notification as read:', err);
+      }
+    }
   };
 
-  const clearAllNotifications = () => {
+  const clearAllNotifications = async () => {
     setNotifications([]);
     setNotifOpen(false);
+    const isAdmin = user && ['super_admin', 'admin', 'hr_manager', 'manager'].includes(user.role);
+    if (isAdmin) {
+      try {
+        await notificationsApi.readAll();
+      } catch (err) {
+        console.error('Failed to clear all notifications:', err);
+      }
+    }
   };
 
   const ROLE_COLORS: Record<string, string> = {
@@ -248,6 +312,35 @@ export default function TopBar() {
                         <div className={`notif-dot dot-${n.type}`} style={{ marginTop: '5px' }} />
                         <div className="notif-content" style={{ flex: 1 }}>
                           <p className="notif-text" style={{ fontSize: '13px', margin: 0, color: 'var(--text-primary)', lineHeight: '1.4' }}>{n.text}</p>
+                          {n.metadata?.uid && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                              <code style={{ fontFamily: 'monospace', fontSize: '12px', background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}>
+                                {n.metadata.uid}
+                              </code>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard.writeText(n.metadata?.uid || '');
+                                  
+                                  const target = e.currentTarget;
+                                  const originalText = target.innerText;
+                                  target.innerText = 'Copied!';
+                                  target.style.background = '#10b981';
+                                  setTimeout(() => {
+                                    target.innerText = originalText;
+                                    target.style.background = 'var(--color-indigo)';
+                                  }, 1500);
+                                }}
+                                style={{
+                                  padding: '2px 8px', fontSize: '11px', background: 'var(--color-indigo)',
+                                  color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
+                                  fontWeight: '600', transition: 'background 0.2s'
+                                }}
+                              >
+                                Copy UID
+                              </button>
+                            </div>
+                          )}
                           <p className="notif-time" style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', margin: 0 }}>{n.time}</p>
                         </div>
                         <button

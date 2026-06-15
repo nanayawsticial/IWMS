@@ -8,11 +8,12 @@ function normalizeEmployeeCode(value) {
 async function usersRoutes(fastify) {
   // GET /api/users
   fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub } = request.user;
+    const { role, sub, organizationId } = request.user;
 
     // 1. Management can see everyone
     if (['super_admin', 'admin', 'hr_manager'].includes(role)) {
       const users = await prisma.user.findMany({
+        where: { organizationId },
         include: { department: true },
         orderBy: { name: 'asc' },
       });
@@ -23,13 +24,13 @@ async function usersRoutes(fastify) {
     }
 
     // Get current user's department
-    const currentUser = await prisma.user.findUnique({
-      where: { id: sub },
+    const currentUser = await prisma.user.findFirst({
+      where: { id: sub, organizationId },
       select: { departmentId: true }
     });
     const departmentId = currentUser?.departmentId;
 
-    let whereClause = {};
+    let whereClause = { organizationId };
 
     if (role === 'manager') {
       // 2. HODs (managers) can see their department members OR HODs/Management
@@ -39,13 +40,13 @@ async function usersRoutes(fastify) {
       } else {
         orConditions.push({ id: sub });
       }
-      whereClause = { OR: orConditions };
+      whereClause = { ...whereClause, OR: orConditions };
     } else {
       // 3. Regular employees and Team Leads can only see their department members
       if (departmentId) {
-        whereClause = { departmentId };
+        whereClause = { ...whereClause, departmentId };
       } else {
-        whereClause = { id: sub };
+        whereClause = { ...whereClause, id: sub };
       }
     }
 
@@ -63,12 +64,12 @@ async function usersRoutes(fastify) {
 
   // GET /api/users/:id
   fastify.get('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub } = request.user;
+    const { role, sub, organizationId } = request.user;
     const { id } = request.params;
 
     // Fetch the target user details
-    const targetUser = await prisma.user.findUnique({
-      where: { id },
+    const targetUser = await prisma.user.findFirst({
+      where: { id, organizationId },
       include: { department: true },
     });
 
@@ -82,8 +83,8 @@ async function usersRoutes(fastify) {
     }
 
     // Fetch requesting user's department
-    const currentUser = await prisma.user.findUnique({
-      where: { id: sub },
+    const currentUser = await prisma.user.findFirst({
+      where: { id: sub, organizationId },
       select: { departmentId: true }
     });
     const departmentId = currentUser?.departmentId;
@@ -116,7 +117,7 @@ async function usersRoutes(fastify) {
 
   // POST /api/users
   fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin', 'hr_manager'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
@@ -128,16 +129,16 @@ async function usersRoutes(fastify) {
       return reply.code(400).send({ error: 'name, email and password are required' });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findFirst({ where: { email, organizationId } });
     if (existing) return reply.code(409).send({ error: 'Email already exists' });
 
     if (normalizedEmployeeCode) {
-      const existingCode = await prisma.user.findFirst({ where: { employeeCode: normalizedEmployeeCode } });
+      const existingCode = await prisma.user.findFirst({ where: { employeeCode: normalizedEmployeeCode, organizationId } });
       if (existingCode) return reply.code(409).send({ error: 'Employee Code / RFID UID already exists' });
     }
 
     const dept = departmentName
-      ? await prisma.department.findFirst({ where: { name: departmentName } })
+      ? await prisma.department.findFirst({ where: { name: departmentName, organizationId } })
       : null;
 
     const avatar = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -156,6 +157,7 @@ async function usersRoutes(fastify) {
         joinDate: joinDate || new Date().toISOString().split('T')[0],
         employeeCode: normalizedEmployeeCode,
         departmentId: dept?.id || null,
+        organizationId,
       },
       include: { department: true },
     });
@@ -166,7 +168,7 @@ async function usersRoutes(fastify) {
 
   // PATCH /api/users/:id
   fastify.patch('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub } = request.user;
+    const { role, sub, organizationId } = request.user;
     const { id } = request.params;
     const canEdit = ['super_admin', 'admin', 'hr_manager'].includes(role);
 
@@ -174,11 +176,18 @@ async function usersRoutes(fastify) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
+    const existingUser = await prisma.user.findFirst({
+      where: { id, organizationId }
+    });
+    if (!existingUser) {
+      return reply.code(404).send({ error: 'User not found' });
+    }
+
     const { name, position, phone, status, roleName, departmentName, password, employeeCode } = request.body || {};
     const normalizedEmployeeCode = normalizeEmployeeCode(employeeCode);
 
     const dept = departmentName
-      ? await prisma.department.findFirst({ where: { name: departmentName } })
+      ? await prisma.department.findFirst({ where: { name: departmentName, organizationId } })
       : undefined;
 
     const updateData = {};
@@ -188,7 +197,7 @@ async function usersRoutes(fastify) {
     if (employeeCode !== undefined) {
       if (normalizedEmployeeCode) {
         const existingCode = await prisma.user.findFirst({
-          where: { employeeCode: normalizedEmployeeCode, NOT: { id } },
+          where: { employeeCode: normalizedEmployeeCode, NOT: { id }, organizationId },
         });
         if (existingCode) return reply.code(409).send({ error: 'Employee Code / RFID UID already exists' });
       }
@@ -218,12 +227,19 @@ async function usersRoutes(fastify) {
 
   // DELETE /api/users/:id (soft delete)
   fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
     try {
+      const existingUser = await prisma.user.findFirst({
+        where: { id: request.params.id, organizationId }
+      });
+      if (!existingUser) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+
       await prisma.user.update({
         where: { id: request.params.id },
         data: { status: 'inactive' },

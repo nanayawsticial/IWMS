@@ -3,9 +3,10 @@ const prisma = require('../lib/prisma');
 async function shiftsRoutes(fastify) {
   // GET /api/shifts
   fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
     const { startDate, endDate, departmentId, userId } = request.query || {};
 
-    const where = {};
+    const where = { organizationId };
     if (startDate && endDate) {
       where.date = { gte: startDate, lte: endDate };
     } else if (startDate) {
@@ -48,7 +49,7 @@ async function shiftsRoutes(fastify) {
 
   // POST /api/shifts
   fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin', 'manager', 'hr_manager'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions to assign shifts' });
     }
@@ -59,7 +60,7 @@ async function shiftsRoutes(fastify) {
       return reply.code(400).send({ error: 'userId, date, and type are required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findFirst({ where: { id: userId, organizationId } });
     if (!user) {
       return reply.code(404).send({ error: 'User not found' });
     }
@@ -70,7 +71,8 @@ async function shiftsRoutes(fastify) {
         type,
         startTime: startTime || null,
         endTime: endTime || null,
-        notes: notes || ''
+        notes: notes || '',
+        organizationId
       },
       create: {
         userId,
@@ -78,7 +80,8 @@ async function shiftsRoutes(fastify) {
         type,
         startTime: startTime || null,
         endTime: endTime || null,
-        notes: notes || ''
+        notes: notes || '',
+        organizationId
       },
       include: { user: true }
     });

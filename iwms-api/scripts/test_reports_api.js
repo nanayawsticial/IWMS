@@ -28,7 +28,7 @@ async function runTest() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'owner@company.com',
-        password: 'ChangeMe123!'
+        password: 'Micah123'
       })
     });
     

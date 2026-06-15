@@ -11,19 +11,48 @@ except ImportError:
     time = None
     os = None
 
-WIFI_SSID = "YOUR_WIFI_NAME"
-WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"
+import ubinascii
 
-API_BASE = "http://192.168.2.50:3001"
-DEVICE_SERIAL = "pico-gate-01"
+# Load configurations dynamically from a local file config.json.
+# This prevents credentials from being hardcoded in code.
+def load_config():
+    try:
+        with open("config.json", "r") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+# Simple XOR crypt for basic obfuscation on device flash drive
+def xor_crypt(data, key):
+    data_bytes = data if isinstance(data, (bytes, bytearray)) else data.encode('utf-8')
+    key_bytes = key if isinstance(key, (bytes, bytearray)) else key.encode('utf-8')
+    out = bytearray(len(data_bytes))
+    for i in range(len(data_bytes)):
+        out[i] = data_bytes[i] ^ key_bytes[i % len(key_bytes)]
+    return out
+
+def deobfuscate(cipher_text, key):
+    if not cipher_text:
+        return None
+    try:
+        encrypted = ubinascii.a2b_base64(cipher_text.encode('utf-8'))
+        decrypted = xor_crypt(encrypted, key)
+        return decrypted.decode('utf-8')
+    except Exception:
+        return None
+
+CONFIG = load_config()
+
+WIFI_SSID = CONFIG.get("WIFI_SSID", "YOUR_WIFI_NAME")
+WIFI_PASSWORD = CONFIG.get("WIFI_PASSWORD", "YOUR_WIFI_PASSWORD")
+API_BASE = CONFIG.get("API_BASE", "https://api.company.com")
+DEVICE_SERIAL = CONFIG.get("DEVICE_SERIAL", "pico-gate-01")
 DEFAULT_EVENT_TYPE = "clock_in"
 FIRMWARE_VERSION = "pico2w-rfid-0.2.0"
 QUEUE_FILE = "offline_queue.json"
 
-# Hardware API key provisioned from IWMS Settings → Biometric Hardware → Provision.
-# Leave as None if no key has been provisioned yet.
-# Once provisioned in the UI, paste the full key here and re-upload this file to the Pico.
-DEVICE_KEY = None  # e.g. "iwms_live_abc123..."
+# Obfuscated key stored in config.json is decrypted dynamically at runtime
+DEVICE_KEY = deobfuscate(CONFIG.get("DEVICE_KEY_OBFUSCATED", ""), DEVICE_SERIAL)
 
 
 def connect_wifi(timeout_seconds=20):
@@ -53,11 +82,17 @@ def api_post(path, payload):
     )
     try:
         status_code = getattr(response, "status_code", 200)
-        body = response.json()
+        try:
+            body = response.json()
+        except Exception:
+            body = {}
     finally:
         response.close()
     if not (200 <= status_code < 300):
-        raise RuntimeError("HTTP {}".format(status_code))
+        err = RuntimeError("HTTP {}".format(status_code))
+        err.status_code = status_code
+        err.response_body = body
+        raise err
     return body
 
 
@@ -95,8 +130,23 @@ def send_rfid_punch(uid, event_type=DEFAULT_EVENT_TYPE, flags=None, name=""):
         flush_queue()
         return result
     except Exception as error:
-        enqueue_payload(payload)
-        return {"success": False, "queued": True, "error": str(error)}
+        status_code = getattr(error, "status_code", None)
+        if status_code == 404:
+            print("Unknown card scanned (UID: {}). Reporting to admin...".format(uid))
+            try:
+                unknown_payload = {
+                    "uid": uid,
+                    "deviceSerial": DEVICE_SERIAL
+                }
+                api_post("/api/devices/unknown-card", unknown_payload)
+                print("Unknown card successfully reported.")
+                return {"success": False, "message": "Unknown card. Sent to admin."}
+            except Exception as report_error:
+                print("Failed to report unknown card:", report_error)
+                return {"success": False, "error": "Report failed: {}".format(report_error)}
+        else:
+            enqueue_payload(payload)
+            return {"success": False, "queued": True, "error": str(error)}
 
 
 def load_queue():

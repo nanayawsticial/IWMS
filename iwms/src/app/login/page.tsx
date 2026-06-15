@@ -166,7 +166,13 @@ export default function LoginPage() {
           )}
 
           <div className="demo-section">
-            <p className="demo-label">Use the administrator account created during setup.</p>
+            <p className="demo-label" style={{ marginBottom: '10px' }}>Use the administrator account created during setup.</p>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '12px', paddingTop: '12px' }}>
+              <p className="demo-label" style={{ marginBottom: '8px', fontSize: '0.8rem', opacity: 0.7 }}>Want to use IWMS for your company?</p>
+              <a href="/register" className="demo-btn" style={{ width: '100%', display: 'block', textAlign: 'center', textDecoration: 'none', color: '#fff', fontSize: '0.85rem', padding: '8px', borderRadius: '6px', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', transition: 'all 0.2s' }}>
+                Register a New Organization
+              </a>
+            </div>
           </div>
         </div>
       </div>

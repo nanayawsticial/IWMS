@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { useSocketEvent } from '@/hooks/useSocket';
 
 const STATUS_STYLES: Record<string, { color: string; bg: string; label: string }> = {
   present:  { color: '#10b981', bg: '#10b98120', label: 'Present' },
@@ -135,6 +136,17 @@ export default function AttendancePage() {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Synchronize attendance records and stats in real-time when clock in/out occurs
+  useSocketEvent<any>('attendance:clockIn', () => {
+    queryClient.invalidateQueries({ queryKey: ['attendance'] });
+    queryClient.invalidateQueries({ queryKey: ['attendance-stats'] });
+  });
+
+  useSocketEvent<any>('attendance:clockOut', () => {
+    queryClient.invalidateQueries({ queryKey: ['attendance'] });
+    queryClient.invalidateQueries({ queryKey: ['attendance-stats'] });
+  });
 
   // Correction state
   const [editRecord, setEditRecord] = useState<any>(null);

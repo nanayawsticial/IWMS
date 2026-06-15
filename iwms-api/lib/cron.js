@@ -108,10 +108,16 @@ function startCronJobs(io) {
   console.log('   🧹 Session cleanup:  Daily 03:00 AM');
 }
 
-async function getAttendanceStats(date) {
+async function getAttendanceStats(date, organizationId) {
+  const recordWhere = { date };
+  const userWhere = { status: 'active' };
+  if (organizationId) {
+    recordWhere.organizationId = organizationId;
+    userWhere.organizationId = organizationId;
+  }
   const [records, totalUsers] = await Promise.all([
-    prisma.attendanceRecord.findMany({ where: { date } }),
-    prisma.user.count({ where: { status: 'active' } }),
+    prisma.attendanceRecord.findMany({ where: recordWhere }),
+    prisma.user.count({ where: userWhere }),
   ]);
   const present = records.filter(r => r.status === 'present').length;
   const late    = records.filter(r => r.status === 'late').length;

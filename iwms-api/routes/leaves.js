@@ -3,17 +3,18 @@ const prisma = require('../lib/prisma');
 async function leavesRoutes(fastify) {
   // GET /api/leaves
   fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub } = request.user;
+    const { role, sub, organizationId } = request.user;
     
     let leaves;
     if (['super_admin', 'admin', 'hr_manager'].includes(role)) {
       leaves = await prisma.leaveRequest.findMany({
+        where: { organizationId },
         include: { user: { include: { department: true } } },
         orderBy: { startDate: 'desc' }
       });
     } else if (role === 'manager') {
-      const managerUser = await prisma.user.findUnique({
-        where: { id: sub },
+      const managerUser = await prisma.user.findFirst({
+        where: { id: sub, organizationId },
         select: { departmentId: true }
       });
       
@@ -23,6 +24,7 @@ async function leavesRoutes(fastify) {
       
       leaves = await prisma.leaveRequest.findMany({
         where: {
+          organizationId,
           user: { departmentId: managerUser.departmentId }
         },
         include: { user: { include: { department: true } } },
@@ -30,7 +32,7 @@ async function leavesRoutes(fastify) {
       });
     } else {
       leaves = await prisma.leaveRequest.findMany({
-        where: { userId: sub },
+        where: { userId: sub, organizationId },
         include: { user: { include: { department: true } } },
         orderBy: { startDate: 'desc' }
       });
@@ -55,7 +57,7 @@ async function leavesRoutes(fastify) {
 
   // POST /api/leaves
   fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { sub } = request.user;
+    const { sub, organizationId } = request.user;
     const { startDate, endDate, type, reason } = request.body || {};
 
     if (!startDate || !endDate || !type) {
@@ -80,7 +82,8 @@ async function leavesRoutes(fastify) {
         endDate,
         type,
         reason: reason || '',
-        status: 'pending'
+        status: 'pending',
+        organizationId
       },
       include: { user: true }
     });
@@ -100,7 +103,7 @@ async function leavesRoutes(fastify) {
 
   // PATCH /api/leaves/:id
   fastify.patch('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub } = request.user;
+    const { role, sub, organizationId } = request.user;
     const { id } = request.params;
     const { status, managerNotes } = request.body || {};
 
@@ -112,8 +115,8 @@ async function leavesRoutes(fastify) {
       return reply.code(400).send({ error: 'Valid status is required' });
     }
 
-    const leave = await prisma.leaveRequest.findUnique({
-      where: { id },
+    const leave = await prisma.leaveRequest.findFirst({
+      where: { id, organizationId },
       include: { user: true }
     });
 
@@ -122,8 +125,8 @@ async function leavesRoutes(fastify) {
     }
 
     if (role === 'manager') {
-      const managerUser = await prisma.user.findUnique({
-        where: { id: sub },
+      const managerUser = await prisma.user.findFirst({
+        where: { id: sub, organizationId },
         select: { departmentId: true }
       });
       if (!managerUser) {
@@ -154,12 +157,13 @@ async function leavesRoutes(fastify) {
       for (const dateStr of dates) {
         await prisma.attendanceRecord.upsert({
           where: { userId_date: { userId: leave.userId, date: dateStr } },
-          update: { status: 'on_leave', method: 'system' },
+          update: { status: 'on_leave', method: 'system', organizationId },
           create: {
             userId: leave.userId,
             date: dateStr,
             status: 'on_leave',
-            method: 'system'
+            method: 'system',
+            organizationId
           }
         });
       }

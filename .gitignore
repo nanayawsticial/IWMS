@@ -29,3 +29,8 @@ Thumbs.db
 .gemini/
 **/brain/
 **/scratch/
+
+# Python / MicroPython Caches
+**/__pycache__/
+**/*.pyc
+

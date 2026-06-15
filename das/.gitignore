@@ -1,0 +1,7 @@
+config.json
+local_config.json
+offline_queue.json
+attendance_logs.json
+user_db.json
+__pycache__/
+*.tmp

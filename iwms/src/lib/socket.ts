@@ -61,5 +61,6 @@ export type SocketEvent =
   | 'device:removed'
   | 'device:ping'
   | 'device:synced'
-  | 'device:heartbeat';
+  | 'device:heartbeat'
+  | 'notification:new';
 

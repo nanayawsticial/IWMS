@@ -15,9 +15,12 @@ except OSError:
     _local = {}
 
 # ── WiFi ──────────────────────────────────────────────────────────────────────
-WIFI_SSID     = _local.get("wifi_ssid", "StarOfAfrica_2.4GHz")
-WIFI_PASSWORD = _local.get("wifi_password", "Z8Ie64kcy2qm_TM")
+WIFI_SSID     = _local.get("wifi_ssid", "")
+WIFI_PASSWORD = _local.get("wifi_password", "")
 WIFI_TIMEOUT  = 15         # seconds to wait for initial connection
+PROVISION_SSID = "IWMS-Setup"
+RESET_BTN     = 6          # factory reset button pin (GPIO 6)
+
 
 # ── IWMS Server ───────────────────────────────────────────────────────────────
 # ⚠  Use your computer's LAN IP address, NOT "localhost" or "127.0.0.1".
@@ -56,7 +59,7 @@ FIRMWARE_VERSION = "pico2w-rfid-0.2.0"
 # Hardware API key provisioned from IWMS Settings → Biometric Hardware → Provision.
 # Leave as None if no key has been provisioned yet (local dev / first boot).
 # Once provisioned in the UI, paste the full key here and re-upload config.py to the Pico.
-DEVICE_KEY = _local.get("device_key", "iwms_live_a27ae337be5a631dadcead95c3d5a33e66873807df494923")
+DEVICE_KEY = _local.get("device_key", "")
 
 # ── Attendance Rules ──────────────────────────────────────────────────────────
 LATE_HOUR         = 9     # Clock-ins strictly after 09:00 are flagged LATE

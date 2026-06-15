@@ -562,7 +562,7 @@ export default function EmployeeProfilePage() {
               </div>
 
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label className="form-label">Employee Code / RFID UID</label>
+                <label className="form-label">RFID Card UID</label>
                 <input
                   type="text"
                   className="form-input"

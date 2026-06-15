@@ -1,5 +1,5 @@
 # Login
-$loginBody = @{ email = "owner@company.com"; password = "ChangeMe123!" } | ConvertTo-Json
+$loginBody = @{ email = "owner@company.com"; password = "Micah123" } | ConvertTo-Json
 $loginRes = Invoke-RestMethod -Uri "http://localhost:3001/api/auth/login" -Method POST -ContentType "application/json" -Body $loginBody
 $token = $loginRes.accessToken
 Write-Host "Token: $($token.Substring(0,30))..."

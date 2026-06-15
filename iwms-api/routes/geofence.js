@@ -16,13 +16,17 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 async function geofenceRoutes(fastify) {
   // ── GET /api/geofence ─────────────────────────────────────────
   fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const zones = await prisma.geoFenceZone.findMany({ orderBy: { createdAt: 'asc' } });
+    const { organizationId } = request.user;
+    const zones = await prisma.geoFenceZone.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: 'asc' }
+    });
     return reply.send(zones);
   });
 
   // ── POST /api/geofence ────────────────────────────────────────
   fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Only Super Admin or Admin can add zones' });
     }
@@ -39,6 +43,7 @@ async function geofenceRoutes(fastify) {
         longitude: parseFloat(longitude),
         radiusMeters: radiusMeters ? parseInt(radiusMeters) : 200,
         notes: notes || '',
+        organizationId
       },
     });
 
@@ -47,13 +52,20 @@ async function geofenceRoutes(fastify) {
 
   // ── PATCH /api/geofence/:id ───────────────────────────────────
   fastify.patch('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
     const { id } = request.params;
     const { name, latitude, longitude, radiusMeters, isActive, notes } = request.body || {};
+
+    const existing = await prisma.geoFenceZone.findFirst({
+      where: { id, organizationId }
+    });
+    if (!existing) {
+      return reply.code(404).send({ error: 'Geo-fence zone not found' });
+    }
 
     const updateData = {};
     if (name !== undefined)         updateData.name = name;
@@ -76,11 +88,18 @@ async function geofenceRoutes(fastify) {
 
   // ── DELETE /api/geofence/:id ──────────────────────────────────
   fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
     try {
+      const existing = await prisma.geoFenceZone.findFirst({
+        where: { id: request.params.id, organizationId }
+      });
+      if (!existing) {
+        return reply.code(404).send({ error: 'Geo-fence zone not found' });
+      }
+
       await prisma.geoFenceZone.delete({ where: { id: request.params.id } });
       return reply.send({ success: true });
     } catch (err) {
@@ -94,12 +113,13 @@ async function geofenceRoutes(fastify) {
   // ── POST /api/geofence/validate ───────────────────────────────
   // Called by web clock-in to validate employee GPS location against active zones
   fastify.post('/validate', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
     const { latitude, longitude } = request.body || {};
     if (latitude === undefined || longitude === undefined) {
       return reply.code(400).send({ error: 'latitude and longitude are required' });
     }
 
-    const zones = await prisma.geoFenceZone.findMany({ where: { isActive: true } });
+    const zones = await prisma.geoFenceZone.findMany({ where: { isActive: true, organizationId } });
 
     if (zones.length === 0) {
       // No zones configured — allow all

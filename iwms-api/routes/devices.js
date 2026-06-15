@@ -54,78 +54,147 @@ function pingRealDevice(ip, port, timeout = 2500) {
   });
 }
 
-async function processDeviceLogs(logsToProcess) {
-  let processedCount = 0;
+async function processDeviceLogs(logsToProcess, organizationId) {
+  if (!logsToProcess || logsToProcess.length === 0) {
+    return 0;
+  }
 
+  // 1. Resolve employeeCode -> userId for logs where userId is missing
+  const missingCodeLogs = logsToProcess.filter(l => !l.userId && l.employeeCode);
+  const employeeCodes = [...new Set(missingCodeLogs.map(l => l.employeeCode))];
+  
+  const resolvedUsers = employeeCodes.length > 0
+    ? await prisma.user.findMany({ where: { employeeCode: { in: employeeCodes }, organizationId } })
+    : [];
+  
+  const userMapByCode = new Map(resolvedUsers.map(u => [u.employeeCode, u]));
+  const resolvedUserIdsMap = new Map(); // log.id -> resolved userId
+
+  const logUserPairs = []; // Array of { log, userId, eventDate }
   for (const log of logsToProcess) {
     let uId = log.userId;
-
     if (!uId && log.employeeCode) {
-      const u = await prisma.user.findFirst({ where: { employeeCode: log.employeeCode } });
+      const u = userMapByCode.get(log.employeeCode);
       if (u) {
         uId = u.id;
-        await prisma.deviceSyncLog.update({ where: { id: log.id }, data: { userId: u.id } });
+        resolvedUserIdsMap.set(log.id, u.id);
       }
     }
-
     if (uId) {
       const eventDate = log.eventTime.split('T')[0];
-      const dateObj = new Date(log.eventTime);
+      logUserPairs.push({ log, userId: uId, eventDate });
+    }
+  }
+
+  const finalRecordsToApply = new Map(); // key: 'userId_date', value: final state data
+
+  if (logUserPairs.length > 0) {
+    // Fetch existing attendance records for the matched user-dates in a single query
+    const userDateFilters = logUserPairs.map(p => ({ userId: p.userId, date: p.eventDate }));
+    
+    const existingRecords = await prisma.attendanceRecord.findMany({
+      where: {
+        OR: userDateFilters,
+        organizationId
+      }
+    });
+
+    const existingRecordsMap = new Map(existingRecords.map(r => [`${r.userId}_${r.date}`, r]));
+
+    // Sort logUserPairs chronologically so check-ins and check-outs are applied in order
+    logUserPairs.sort((a, b) => new Date(a.log.eventTime) - new Date(b.log.eventTime));
+
+    for (const pair of logUserPairs) {
+      const key = `${pair.userId}_${pair.eventDate}`;
+      const dateObj = new Date(pair.log.eventTime);
       const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-      const existingRecord = await prisma.attendanceRecord.findUnique({
-        where: { userId_date: { userId: uId, date: eventDate } }
-      });
+      let recordState = finalRecordsToApply.get(key);
+      if (!recordState) {
+        const dbRecord = existingRecordsMap.get(key);
+        recordState = dbRecord ? { ...dbRecord } : {
+          userId: pair.userId,
+          date: pair.eventDate,
+          clockIn: null,
+          clockOut: null,
+          status: null,
+          hoursWorked: null,
+          method: 'biometric',
+          organizationId
+        };
+        finalRecordsToApply.set(key, recordState);
+      }
 
-      if (log.eventType === 'check_in') {
+      if (pair.log.eventType === 'check_in') {
         const [h, m] = timeStr.split(':').map(Number);
         const minutesSinceMidnight = h * 60 + m;
         const lateThreshold = 9 * 60 + 15;
         const status = minutesSinceMidnight > lateThreshold ? 'late' : 'present';
 
-        if (!existingRecord || !existingRecord.clockIn) {
-          await prisma.attendanceRecord.upsert({
-            where: { userId_date: { userId: uId, date: eventDate } },
-            update: { clockIn: timeStr, status, method: 'biometric' },
-            create: {
-              userId: uId,
-              date: eventDate,
-              clockIn: timeStr,
-              status,
-              method: 'biometric'
-            }
-          });
+        if (!recordState.clockIn) {
+          recordState.clockIn = timeStr;
+          recordState.status = status;
+          recordState.method = 'biometric';
         }
-      } else if (log.eventType === 'check_out') {
-        let clockInTime = existingRecord?.clockIn;
-        let hoursWorked = null;
-        if (clockInTime) {
-          hoursWorked = diffHoursHHMM(clockInTime, timeStr);
+      } else if (pair.log.eventType === 'check_out') {
+        recordState.clockOut = timeStr;
+        recordState.method = 'biometric';
+        if (recordState.clockIn) {
+          recordState.hoursWorked = diffHoursHHMM(recordState.clockIn, timeStr);
         }
-
-        await prisma.attendanceRecord.upsert({
-          where: { userId_date: { userId: uId, date: eventDate } },
-          update: { clockOut: timeStr, hoursWorked, method: 'biometric' },
-          create: {
-            userId: uId,
-            date: eventDate,
-            clockOut: timeStr,
-            method: 'biometric',
-            hoursWorked
-          }
-        });
       }
-
-      processedCount++;
     }
-
-    await prisma.deviceSyncLog.update({
-      where: { id: log.id },
-      data: { processed: true }
-    });
   }
 
-  return processedCount;
+  // 3. Build Prisma transactions
+  const prismaOps = [];
+
+  // 3a. Update DeviceSyncLogs to set processed = true and userId if resolved
+  for (const log of logsToProcess) {
+    const resolvedUserId = resolvedUserIdsMap.get(log.id);
+    prismaOps.push(
+      prisma.deviceSyncLog.update({
+        where: { id: log.id },
+        data: {
+          processed: true,
+          userId: resolvedUserId || log.userId
+        }
+      })
+    );
+  }
+
+  // 3b. Upsert AttendanceRecords
+  for (const [key, state] of finalRecordsToApply.entries()) {
+    prismaOps.push(
+      prisma.attendanceRecord.upsert({
+        where: { userId_date: { userId: state.userId, date: state.date } },
+        update: {
+          clockIn: state.clockIn,
+          clockOut: state.clockOut,
+          status: state.status,
+          hoursWorked: state.hoursWorked,
+          method: state.method,
+        },
+        create: {
+          userId: state.userId,
+          date: state.date,
+          clockIn: state.clockIn,
+          clockOut: state.clockOut,
+          status: state.status,
+          hoursWorked: state.hoursWorked,
+          method: state.method,
+          organizationId: state.organizationId
+        }
+      })
+    );
+  }
+
+  // Execute transaction in a single database round-trip
+  if (prismaOps.length > 0) {
+    await prisma.$transaction(prismaOps);
+  }
+
+  return logUserPairs.length;
 }
 
 async function devicesRoutes(fastify) {
@@ -164,8 +233,9 @@ async function devicesRoutes(fastify) {
 
   // ── GET /api/devices ──────────────────────────────────────────
   fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
     const devices = await prisma.biometricDevice.findMany({
-      where: { isActive: true },
+      where: { isActive: true, organizationId },
       include: {
         _count: { select: { syncLogs: true } },
       },
@@ -208,7 +278,7 @@ async function devicesRoutes(fastify) {
 
   // ── POST /api/devices ─────────────────────────────────────────
   fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Only Super Admin or Admin can register devices' });
     }
@@ -231,6 +301,7 @@ async function devicesRoutes(fastify) {
         notes: notes || '',
         status: 'unknown',
         isSimulated: isSimulated !== undefined ? parseBoolean(isSimulated) : true,
+        organizationId,
       },
     });
 
@@ -242,13 +313,20 @@ async function devicesRoutes(fastify) {
 
   // ── PATCH /api/devices/:id ────────────────────────────────────
   fastify.patch('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
     const { id } = request.params;
     const data = request.body || {};
+
+    const existing = await prisma.biometricDevice.findFirst({
+      where: { id, organizationId }
+    });
+    if (!existing) {
+      return reply.code(404).send({ error: 'Device not found' });
+    }
 
     // Sanitize allowed fields
     const allowed = ['name', 'ipAddress', 'port', 'deviceType', 'location', 'serialNumber', 'firmwareVersion', 'hardwareModel', 'notes', 'isActive', 'isSimulated'];
@@ -278,13 +356,13 @@ async function devicesRoutes(fastify) {
   // ── POST /api/devices/:id/provision-key ───────────────────────
   // Generates a one-time key for a physical terminal such as Pico 2 W.
   fastify.post('/:id/provision-key', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
     const { id } = request.params;
-    const device = await prisma.biometricDevice.findUnique({ where: { id } });
+    const device = await prisma.biometricDevice.findFirst({ where: { id, organizationId } });
     if (!device || !device.isActive) {
       return reply.code(404).send({ error: 'Device not found' });
     }
@@ -312,7 +390,7 @@ async function devicesRoutes(fastify) {
 
   // ── DELETE /api/devices/:id ───────────────────────────────────
   fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
@@ -320,6 +398,13 @@ async function devicesRoutes(fastify) {
     const { id } = request.params;
     // Soft delete
     try {
+      const existing = await prisma.biometricDevice.findFirst({
+        where: { id, organizationId }
+      });
+      if (!existing) {
+        return reply.code(404).send({ error: 'Device not found' });
+      }
+
       await prisma.biometricDevice.update({ where: { id }, data: { isActive: false } });
 
       if (global.io) global.io.emit('device:removed', { id });
@@ -335,8 +420,9 @@ async function devicesRoutes(fastify) {
   // ── POST /api/devices/:id/ping ────────────────────────────────
   // Connectivity test (simulated or active TCP)
   fastify.post('/:id/ping', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
     const { id } = request.params;
-    const device = await prisma.biometricDevice.findUnique({ where: { id } });
+    const device = await prisma.biometricDevice.findFirst({ where: { id, organizationId } });
     if (!device) return reply.code(404).send({ error: 'Device not found' });
 
     let newStatus = 'offline';
@@ -438,7 +524,11 @@ async function devicesRoutes(fastify) {
   // Log a raw swipe transaction (Simulator Puncher or physical terminal)
   fastify.post('/:id/events', { onRequest: [authenticateDeviceOrUser] }, async (request, reply) => {
     const { id } = request.params;
-    const device = request.hardwareDevice || await prisma.biometricDevice.findUnique({ where: { id } });
+    const organizationId = request.deviceAuthSource === 'device'
+      ? request.hardwareDevice.organizationId
+      : request.user.organizationId;
+
+    const device = request.hardwareDevice || await prisma.biometricDevice.findFirst({ where: { id, organizationId } });
     if (!device) return reply.code(404).send({ error: 'Device not found' });
 
     const {
@@ -478,7 +568,7 @@ async function devicesRoutes(fastify) {
 
     // Lookup user by employeeCode
     const user = await prisma.user.findFirst({
-      where: { employeeCode, status: 'active' }
+      where: { employeeCode, status: 'active', organizationId }
     });
 
     const eventTimeStr = eventTime || new Date().toISOString();
@@ -515,7 +605,7 @@ async function devicesRoutes(fastify) {
       : parseBoolean(processNow);
 
     if (shouldProcessNow) {
-      processedCount = await processDeviceLogs([log]);
+      processedCount = await processDeviceLogs([log], organizationId);
     }
 
     const deviceUpdate = {
@@ -549,8 +639,9 @@ async function devicesRoutes(fastify) {
   // ── POST /api/devices/:id/sync ────────────────────────────────
   // Pulls events (either simulated or fetches unprocessed logs) and processes them into AttendanceRecords
   fastify.post('/:id/sync', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
     const { id } = request.params;
-    const device = await prisma.biometricDevice.findUnique({ where: { id } });
+    const device = await prisma.biometricDevice.findFirst({ where: { id, organizationId } });
     if (!device) return reply.code(404).send({ error: 'Device not found' });
 
     if (device.isSimulated) {
@@ -568,7 +659,7 @@ async function devicesRoutes(fastify) {
 
     if (device.isSimulated) {
       // Generate mock events for active seeded users
-      const users = await prisma.user.findMany({ where: { status: 'active' }, take: 6 });
+      const users = await prisma.user.findMany({ where: { status: 'active', organizationId }, take: 6 });
       const eventTypes = ['check_in', 'check_out'];
       const count = Math.floor(Math.random() * 3) + 2; // 2–4 new events
 
@@ -600,76 +691,8 @@ async function devicesRoutes(fastify) {
     }
 
     let processedCount = 0;
-
-    // Process logs into AttendanceRecord model
-    for (const log of logsToProcess) {
-      let uId = log.userId;
-      
-      // If userId is missing, try to resolve it from the employeeCode
-      if (!uId && log.employeeCode) {
-        const u = await prisma.user.findFirst({ where: { employeeCode: log.employeeCode } });
-        if (u) {
-          uId = u.id;
-          await prisma.deviceSyncLog.update({ where: { id: log.id }, data: { userId: u.id } });
-        }
-      }
-
-      if (uId) {
-        const eventDate = log.eventTime.split('T')[0];
-        const dateObj = new Date(log.eventTime);
-        const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-        const existingRecord = await prisma.attendanceRecord.findUnique({
-          where: { userId_date: { userId: uId, date: eventDate } }
-        });
-
-        if (log.eventType === 'check_in') {
-          const [h, m] = timeStr.split(':').map(Number);
-          const minutesSinceMidnight = h * 60 + m;
-          const lateThreshold = 9 * 60 + 15; // 09:15
-          const status = minutesSinceMidnight > lateThreshold ? 'late' : 'present';
-
-          if (!existingRecord || !existingRecord.clockIn) {
-            await prisma.attendanceRecord.upsert({
-              where: { userId_date: { userId: uId, date: eventDate } },
-              update: { clockIn: timeStr, status, method: 'biometric' },
-              create: {
-                userId: uId,
-                date: eventDate,
-                clockIn: timeStr,
-                status,
-                method: 'biometric'
-              }
-            });
-          }
-        } else if (log.eventType === 'check_out') {
-          let clockInTime = existingRecord?.clockIn;
-          let hoursWorked = null;
-          if (clockInTime) {
-            hoursWorked = diffHoursHHMM(clockInTime, timeStr);
-          }
-
-          await prisma.attendanceRecord.upsert({
-            where: { userId_date: { userId: uId, date: eventDate } },
-            update: { clockOut: timeStr, hoursWorked, method: 'biometric' },
-            create: {
-              userId: uId,
-              date: eventDate,
-              clockOut: timeStr,
-              method: 'biometric',
-              hoursWorked
-            }
-          });
-        }
-
-        processedCount++;
-      }
-
-      // Mark the sync log as processed
-      await prisma.deviceSyncLog.update({
-        where: { id: log.id },
-        data: { processed: true }
-      });
+    if (logsToProcess.length > 0) {
+      processedCount = await processDeviceLogs(logsToProcess, organizationId);
     }
 
     // Update lastSyncAt for the device
@@ -698,8 +721,12 @@ async function devicesRoutes(fastify) {
 
   // ── GET /api/devices/:id/logs ─────────────────────────────────
   fastify.get('/:id/logs', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
     const { id } = request.params;
     const { limit = '50' } = request.query || {};
+
+    const device = await prisma.biometricDevice.findFirst({ where: { id, organizationId } });
+    if (!device) return reply.code(404).send({ error: 'Device not found' });
 
     const logs = await prisma.deviceSyncLog.findMany({
       where: { deviceId: id },
@@ -710,7 +737,7 @@ async function devicesRoutes(fastify) {
     // Enrich with user name if userId is set
     const userIds = [...new Set(logs.filter(l => l.userId).map(l => l.userId))];
     const users = userIds.length > 0
-      ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, avatar: true } })
+      ? await prisma.user.findMany({ where: { id: { in: userIds }, organizationId }, select: { id: true, name: true, avatar: true } })
       : [];
     const userMap = Object.fromEntries(users.map(u => [u.id, u]));
 
@@ -776,7 +803,7 @@ async function devicesRoutes(fastify) {
   // ── POST /api/devices/pair ─────────────────────────────────────
   // Called by Web UI to pair a device via its pairing code
   fastify.post('/pair', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Only Super Admin or Admin can pair devices' });
     }
@@ -814,6 +841,7 @@ async function devicesRoutes(fastify) {
         apiKeyCreatedAt: new Date(),
         isSimulated: false,
         isActive: true,
+        organizationId,
       }
     });
 
@@ -831,6 +859,101 @@ async function devicesRoutes(fastify) {
     if (global.io) global.io.emit('device:added', { id: device.id, name: device.name });
 
     return reply.send({ success: true, deviceId: device.id, name: device.name });
+  });
+
+  // POST /api/devices/unknown-card
+  fastify.post('/unknown-card', async (request, reply) => {
+    const { uid, deviceSerial } = request.body || {};
+
+    if (!uid || !deviceSerial) {
+      return reply.code(400).send({
+        error: 'Bad Request',
+        message: 'uid and deviceSerial are required',
+      });
+    }
+
+    // 1. Validate the request using the existing DEVICE_KEY authentication mechanism
+    const apiKey = getDeviceKey(request);
+    if (!apiKey) {
+      return reply.code(401).send({ error: 'Missing X-Device-Key header' });
+    }
+
+    // Lookup device by id or serialNumber
+    const device = await prisma.biometricDevice.findFirst({
+      where: {
+        OR: [
+          { id: deviceSerial },
+          { serialNumber: deviceSerial }
+        ],
+        isActive: true
+      }
+    });
+
+    if (!device) {
+      return reply.code(404).send({ error: 'Device not found' });
+    }
+
+    if (!device.apiKeyHash || !isValidDeviceApiKey(apiKey, device.apiKeyHash)) {
+      return reply.code(401).send({ error: 'Invalid device key' });
+    }
+
+    // 2. Check if the UID has already been reported in the database for this organization
+    const recentNotifs = await prisma.notification.findMany({
+      where: {
+        type: 'UNREGISTERED_CARD',
+        organizationId: device.organizationId
+      },
+      take: 50,
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const isDuplicate = recentNotifs.some(n => {
+      try {
+        const meta = typeof n.metadata === 'string' ? JSON.parse(n.metadata) : n.metadata;
+        return meta && meta.uid === uid;
+      } catch (e) {
+        return false;
+      }
+    });
+
+    if (isDuplicate) {
+      return reply.send({ success: true, message: 'Card already reported' });
+    }
+
+    // 3. If not a duplicate, create a new notification record in the database
+    // targeting all users with role: SUPER_ADMIN or MANAGEMENT
+    const message = `Unregistered card scanned: UID [${uid}] at Terminal [${device.name || deviceSerial}]. Go to an employee's Edit Profile to assign this card.`;
+
+    const targetRoles = ['SUPER_ADMIN', 'MANAGEMENT'];
+    const createdNotifications = await Promise.all(
+      targetRoles.map(role =>
+        prisma.notification.create({
+          data: {
+            message,
+            type: 'UNREGISTERED_CARD',
+            metadata: { uid, deviceSerial },
+            targetRole: role,
+            organizationId: device.organizationId
+          }
+        })
+      )
+    );
+
+    // 4. Emit the real-time update to the organization room
+    const io = global.io;
+    if (io) {
+      // Find the created notification for MANAGEMENT to broadcast to the UI
+      const broadcastNotif = createdNotifications.find(n => n.targetRole === 'MANAGEMENT') || createdNotifications[0];
+      io.to(`org:${device.organizationId}`).emit('notification:new', {
+        id: broadcastNotif.id,
+        text: broadcastNotif.message,
+        type: 'warning',
+        metadata: { uid, deviceSerial },
+        createdAt: broadcastNotif.createdAt.toISOString()
+      });
+    }
+
+    return reply.send({ success: true });
   });
 }
 

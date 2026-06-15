@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { mfaApi, devicesApi, geofenceApi, usersApi } from '@/lib/api';
+import { mfaApi, devicesApi, geofenceApi, usersApi, organizationApi } from '@/lib/api';
 import { useSocketEvent } from '@/hooks/useSocket';
 
 // Telemetry visual helpers
@@ -118,12 +118,64 @@ export default function SettingsPage() {
 
   const isAdmin = ['super_admin', 'admin'].includes(user?.role || '');
 
+  // --- Organization Settings State ---
+  const [orgDetails, setOrgDetails] = useState<{ name: string; joinCode: string } | null>(null);
+  const [orgNameInput, setOrgNameInput] = useState('');
+  const [loadingOrg, setLoadingOrg] = useState(false);
+  const [savingOrg, setSavingOrg] = useState(false);
+
+  const fetchOrgDetails = async () => {
+    if (!['super_admin', 'admin'].includes(user?.role || '')) return;
+    setLoadingOrg(true);
+    try {
+      const data = await organizationApi.getDetails();
+      setOrgDetails(data);
+      setOrgNameInput(data.name);
+    } catch (err: any) {
+      console.warn('Failed to load organization details:', err);
+    } finally {
+      setLoadingOrg(false);
+    }
+  };
+
+  const handleUpdateOrgName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orgNameInput.trim()) return;
+    setSavingOrg(true);
+    try {
+      const data = await organizationApi.updateDetails(orgNameInput);
+      setOrgDetails(data);
+      addToast('Organization name updated successfully', 'success');
+      refreshSelf();
+    } catch (err: any) {
+      addToast(err.response?.data?.error || 'Failed to update organization name', 'error');
+    } finally {
+      setSavingOrg(false);
+    }
+  };
+
+  const handleRegenerateJoinCode = async () => {
+    if (!confirm('Are you sure you want to deactivate the current join code and generate a new one? Employees will no longer be able to sign up using the old code.')) {
+      return;
+    }
+    try {
+      const data = await organizationApi.regenerateCode();
+      if (orgDetails) {
+        setOrgDetails({ ...orgDetails, joinCode: data.joinCode });
+      }
+      addToast('Organization join code regenerated successfully', 'success');
+    } catch (err: any) {
+      addToast(err.response?.data?.error || 'Failed to regenerate join code', 'error');
+    }
+  };
+
   // Fetch devices & zones on mount
   useEffect(() => {
     fetchDevices();
     fetchZones();
     fetchUsers();
-  }, []);
+    fetchOrgDetails();
+  }, [user?.role]);
 
   useSocketEvent<any>('device:heartbeat', (data) => {
     setDevices((prevDevices) =>
@@ -469,6 +521,84 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Company Settings (Admin Only) */}
+        {isAdmin && (
+          <div className="settings-section">
+            <h3 className="settings-sec-title">Company Settings</h3>
+            <div className="settings-card">
+              <form onSubmit={handleUpdateOrgName} className="settings-row" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label className="form-label" style={{ margin: 0 }}>Company / Organization Name</label>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <input
+                      type="text"
+                      value={orgNameInput}
+                      onChange={e => setOrgNameInput(e.target.value)}
+                      className="form-input"
+                      placeholder="Organization Name"
+                      style={{ flex: 1, margin: 0 }}
+                      required
+                    />
+                    <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px', margin: 0 }} disabled={savingOrg || loadingOrg}>
+                      {savingOrg ? 'Saving...' : 'Save Name'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              <div className="settings-row" style={{ paddingTop: '10px' }}>
+                <div className="settings-info">
+                  <h4>Employee Invite Code</h4>
+                  <p>Share this code with employees so they can register and automatically join your organization.</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '10px 16px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)', fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '1px', color: '#8b5cf6', fontWeight: 'bold' }}>
+                      {loadingOrg ? 'Loading...' : (orgDetails?.joinCode || '—')}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (orgDetails?.joinCode) {
+                          navigator.clipboard.writeText(orgDetails.joinCode);
+                          addToast('Invite code copied to clipboard!', 'success');
+                        }
+                      }}
+                      className="demo-btn"
+                      style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      disabled={loadingOrg || !orgDetails?.joinCode}
+                    >
+                      Copy Code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (orgDetails?.joinCode) {
+                          const inviteLink = `${window.location.origin}/register?code=${orgDetails.joinCode}`;
+                          navigator.clipboard.writeText(inviteLink);
+                          addToast('Invite link copied to clipboard!', 'success');
+                        }
+                      }}
+                      className="demo-btn"
+                      style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      disabled={loadingOrg || !orgDetails?.joinCode}
+                    >
+                      Copy Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRegenerateJoinCode}
+                      className="demo-btn"
+                      style={{ margin: 0, padding: '10px 16px', height: '100%', color: '#f43f5e', borderColor: 'rgba(244, 63, 94, 0.2)', background: 'rgba(244, 63, 94, 0.05)' }}
+                      disabled={loadingOrg}
+                    >
+                      Regenerate
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Security Settings */}
         <div className="settings-section">
