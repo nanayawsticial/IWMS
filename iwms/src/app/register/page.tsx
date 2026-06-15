@@ -7,6 +7,7 @@ import { authApi, setTokens, clearTokens } from '@/lib/api';
 function RegisterPageContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
+  const tab = searchParams.get('tab');
 
   const [mode, setMode] = useState<'signup' | 'join'>('signup');
   const [organizationName, setOrganizationName] = useState('');
@@ -22,8 +23,10 @@ function RegisterPageContent() {
     if (code) {
       setMode('join');
       setJoinCode(code.trim().toUpperCase());
+    } else if (tab === 'join') {
+      setMode('join');
     }
-  }, [code]);
+  }, [code, tab]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

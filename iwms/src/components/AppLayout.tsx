@@ -14,7 +14,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isLoginPage = pathname === '/login';
+  const publicPaths = ['/login', '/register', '/get-started', '/'];
+  const isPublicPage = publicPaths.includes(pathname);
 
   // Lifecycle socket connection is initiated in hooks, let's handle cleanup on logout
   useEffect(() => {
@@ -98,10 +99,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, on, addToast]);
 
   useEffect(() => {
-    if (!isLoading && !user && !isLoginPage) {
-      router.replace('/login');
+    if (!isLoading) {
+      if (!user && !isPublicPage) {
+        router.replace('/login');
+      } else if (user && (pathname === '/' || pathname === '/get-started' || pathname === '/login' || pathname === '/register')) {
+        router.replace('/dashboard');
+      }
     }
-  }, [user, isLoading, isLoginPage, router]);
+  }, [user, isLoading, isPublicPage, pathname, router]);
 
   if (isLoading) {
     return (
@@ -114,7 +119,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isLoginPage) {
+  if (isPublicPage) {
+    if (user) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-[#090d16]">
+          <span className="spinner" />
+        </div>
+      );
+    }
     return <>{children}</>;
   }
 
