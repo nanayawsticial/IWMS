@@ -33,6 +33,13 @@ const isAllowedOrigin = (origin) => {
   ) {
     return true;
   }
+  // Allow user's specific Vercel project deployments securely
+  if (
+    origin.endsWith('.vercel.app') &&
+    origin.includes('nana-yaw-s-projects1')
+  ) {
+    return true;
+  }
   if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
     return true;
   }
