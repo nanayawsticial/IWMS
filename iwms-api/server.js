@@ -96,9 +96,27 @@ app.register(require('./routes/geofence'),    { prefix: '/api/geofence' });
 app.register(require('./routes/reports'),     { prefix: '/api/reports' });
 app.register(require('./routes/organization'),{ prefix: '/api/organization' });
 
-app.get('/api/health', async () => ({
-  status: 'ok', timestamp: new Date().toISOString(), service: 'IWMS API', version: '2.0.0',
-}));
+app.get('/api/health', async (request, reply) => {
+  const prisma = require('./lib/prisma');
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return {
+      status: 'ok',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      service: 'IWMS API',
+      version: '2.0.0'
+    };
+  } catch (err) {
+    reply.code(500);
+    return {
+      status: 'error',
+      database: 'disconnected',
+      error: err.message,
+      stack: err.stack
+    };
+  }
+});
 
 // ── Boot ───────────────────────────────────────────────────────
 const PORT = parseInt(process.env.PORT || '3001', 10);
