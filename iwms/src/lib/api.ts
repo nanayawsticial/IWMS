@@ -137,14 +137,31 @@ export const tasksApi = {
 export const attendanceApi = {
   list: (params?: Record<string, string>) =>
     api.get('/api/attendance', { params }).then(r => r.data),
-  stats: (date?: string) =>
-    api.get('/api/attendance/stats', { params: date ? { date } : {} }).then(r => r.data),
+  stats: (paramsOrDate?: string | Record<string, string>) => {
+    let params: Record<string, string> = {};
+    if (typeof paramsOrDate === 'string') {
+      params = { date: paramsOrDate };
+    } else if (paramsOrDate) {
+      params = paramsOrDate;
+    }
+    return api.get('/api/attendance/stats', { params }).then(r => r.data);
+  },
+  liveFeed: () =>
+    api.get('/api/attendance/live-feed').then(r => r.data),
+  summary: () =>
+    api.get('/api/attendance/summary').then(r => r.data),
+  timesheets: (params: Record<string, string>) =>
+    api.get('/api/attendance/timesheets', { params }).then(r => r.data),
+  exportTimesheets: (params: Record<string, string>) =>
+    api.get('/api/attendance/timesheets/export', { params, responseType: 'blob' }).then(r => r.data),
   clockIn: (data?: { latitude?: number; longitude?: number; method?: string }) =>
     api.post('/api/attendance/clock-in', data || {}).then(r => r.data),
   clockOut: () =>
     api.post('/api/attendance/clock-out', {}).then(r => r.data),
   correct: (id: string, data: Record<string, unknown>) =>
     api.patch(`/api/attendance/${id}`, data).then(r => r.data),
+  presence: () =>
+    api.get('/api/attendance/presence').then(r => r.data),
 };
 
 export const leavesApi = {
@@ -217,4 +234,26 @@ export const notificationsApi = {
   read: (id: string) => api.post(`/api/notifications/${id}/read`).then(r => r.data),
   readAll: () => api.post('/api/notifications/read-all').then(r => r.data),
 };
+
+export const overtimeApi = {
+  list: () => api.get('/api/overtime').then(r => r.data),
+  create: (data: { userId: string; date: string; regularHours: number; overtimeHours: number; reason?: string }) =>
+    api.post('/api/overtime', data).then(r => r.data),
+  review: (id: string, data: { status: 'approved' | 'rejected'; reviewNotes?: string }) =>
+    api.patch(`/api/overtime/${id}`, data).then(r => r.data),
+};
+
+export const holidaysApi = {
+  list: (params?: { year?: string }) =>
+    api.get('/api/holidays', { params }).then(r => r.data),
+  create: (data: { name: string; date: string; type?: string }) =>
+    api.post('/api/holidays', data).then(r => r.data),
+  remove: (id: string) =>
+    api.delete(`/api/holidays/${id}`).then(r => r.data),
+};
+
+export const managementApi = {
+  getDashboard: () => api.get('/api/management/dashboard').then(r => r.data),
+};
+
 

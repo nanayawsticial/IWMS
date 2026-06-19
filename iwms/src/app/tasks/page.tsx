@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { tasksApi, usersApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSocket, useSocketEvent } from '@/hooks/useSocket';
@@ -155,19 +156,19 @@ function TaskCardContent({ task, currentUserId }: { task: any; currentUserId?: s
               {dueLabel}
             </span>
           </span>
-          {/* Comment count placeholder */}
+          {/* Comment count */}
           <span className="kanban-counter-pair" title="Comments">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
             {task.commentCount ?? 0}
           </span>
-          {/* Attachment count placeholder */}
-          <span className="kanban-counter-pair" title="Attachments">
+          {/* Time logs count */}
+          <span className="kanban-counter-pair" title="Time Logs">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            {task.attachmentCount ?? 0}
+            {task.timeLogCount ?? 0}
           </span>
         </div>
       </div>
@@ -207,8 +208,26 @@ function TaskCard({
 }
 
 export default function TasksPage() {
+  return (
+    <Suspense fallback={
+      <div className="page-content" style={{ textAlign: 'center', padding: '60px 0', color: '#475569' }}>
+        <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />
+        Loading...
+      </div>
+    }>
+      <TasksPageContent />
+    </Suspense>
+  );
+}
+
+function TasksPageContent() {
   const { user, hasPermission } = useAuth();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const assigneeId = searchParams.get('assignee') || undefined;
+
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const dragSessionRef = useRef<{
     task: any;
@@ -246,15 +265,40 @@ export default function TasksPage() {
   });
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => tasksApi.list(),
+    queryKey: ['tasks', assigneeId],
+    queryFn: () => tasksApi.list(assigneeId ? { assigneeId } : undefined),
   });
+
+  const isManagement = user && ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead'].includes(user.role);
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => usersApi.list(),
-    enabled: hasPermission('assign_tasks'),
+    enabled: !!isManagement,
   });
+
+  const dropdownUsers = React.useMemo(() => {
+    if (!user) return [];
+    const isManager = ['manager', 'team_lead'].includes(user.role);
+    const isAdmin = ['super_admin', 'admin', 'hr_manager'].includes(user.role);
+    if (isAdmin) return users;
+    if (isManager) {
+      return users.filter((u: any) => u.departmentId === user.departmentId);
+    }
+    return [];
+  }, [users, user]);
+
+  const selectedAssigneeUser = users.find((u: any) => u.id === assigneeId);
+
+  const handleAssigneeChange = (id: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) {
+      params.set('assignee', id);
+    } else {
+      params.delete('assignee');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   const updateTask = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
@@ -438,6 +482,21 @@ export default function TasksPage() {
           <p className="page-subtitle">Manage tasks via board or visual timeline</p>
         </div>
         <div className="page-actions">
+          {isManagement && dropdownUsers.length > 0 && (
+            <select
+              value={assigneeId || ''}
+              onChange={e => handleAssigneeChange(e.target.value)}
+              className="form-input form-select"
+              style={{ width: '180px', padding: '6px 12px', fontSize: '13px' }}
+            >
+              <option value="">All Assignees</option>
+              {dropdownUsers.map((u: any) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.position})
+                </option>
+              ))}
+            </select>
+          )}
           <div className="search-box">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -482,6 +541,47 @@ export default function TasksPage() {
         }}>
           <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%', display: 'inline-block' }} />
           <span>{otherDragging.userName} is moving task &quot;{otherDragging.taskTitle}&quot;...</span>
+        </div>
+      )}
+
+      {selectedAssigneeUser && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'rgba(99, 102, 241, 0.12)',
+          border: '1px solid rgba(99, 102, 241, 0.2)',
+          borderRadius: '10px',
+          padding: '10px 16px',
+          marginBottom: '20px',
+          fontSize: '13px',
+          color: '#fff',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '16px' }}>👤</span>
+            <span>
+              Viewing tasks for <strong>{selectedAssigneeUser.name}</strong> ({selectedAssigneeUser.position})
+            </span>
+          </div>
+          <button
+            onClick={() => handleAssigneeChange('')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#818cf8',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="Clear assignee filter"
+          >
+            ✕
+          </button>
         </div>
       )}
 

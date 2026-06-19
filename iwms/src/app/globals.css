@@ -1,18 +1,23 @@
 @import "tailwindcss";
 
 :root {
+  /* ── Background Layers ─────────────────────────────────────────────────── */
   --bg-primary: #090d16;
   --bg-secondary: #0f1524;
   --bg-tertiary: #161f33;
   --bg-accent: #1e2b47;
-  
+
+  /* ── Borders ────────────────────────────────────────────────────────────── */
   --border-color: rgba(255, 255, 255, 0.08);
   --border-glow: rgba(99, 102, 241, 0.15);
-  
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* ── Text ───────────────────────────────────────────────────────────────── */
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  
+
+  /* ── Brand Accent Colors ────────────────────────────────────────────────── */
   --color-indigo: #6366f1;
   --color-purple: #8b5cf6;
   --color-pink: #ec4899;
@@ -20,11 +25,36 @@
   --color-green: #10b981;
   --color-red: #ef4444;
   --color-cyan: #06b6d4;
-  
+
+  /* ── Semantic Color Aliases (design token layer) ────────────────────────── */
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #06b6d4;
+
+  /* ── Typography Scale ───────────────────────────────────────────────────── */
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.875rem;   /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.25rem;    /* 20px */
+  --text-2xl:  1.5rem;     /* 24px */
+  --text-3xl:  1.875rem;   /* 30px */
+
+  /* ── Border Radii ───────────────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* ── Layout Dimensions ──────────────────────────────────────────────────── */
   --sidebar-width: 260px;
-  --sidebar-collapsed-width: 80px;
+  --sidebar-collapsed-width: 64px;
   --topbar-height: 70px;
-  
+
+  /* ── Glass Effect ───────────────────────────────────────────────────────── */
   --glass-bg: rgba(15, 21, 36, 0.6);
   --glass-border: rgba(255, 255, 255, 0.05);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -40,9 +70,14 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  font-family: var(--font-inter), Inter, system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code, kbd, pre, samp {
+  font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', monospace;
 }
 
 /* Scrollbar styles */
@@ -389,9 +424,10 @@ body {
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .sidebar-collapsed {
@@ -403,8 +439,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 16px 0 18px;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .sidebar-logo {
@@ -427,71 +464,115 @@ body {
 
 .collapse-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 6px;
+  padding: 5px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
 }
 
 .collapse-btn:hover {
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 24px 16px;
+  padding: 16px 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 10px 12px;
   color: var(--text-secondary);
   text-decoration: none;
   border-radius: 10px;
   font-weight: 500;
-  font-size: 14px;
-  transition: all 0.2s;
+  font-size: 13.5px;
+  transition: background 0.15s, color 0.15s;
   position: relative;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.02);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
 }
 
 .nav-item-active {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(99, 102, 241, 0.1);
   color: var(--color-indigo);
+}
+
+.nav-item-active:hover {
+  background: rgba(99, 102, 241, 0.14);
+}
+
+.nav-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.nav-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.15s, width 0.15s;
+}
+
+.sidebar-collapsed .nav-label {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
 }
 
 .nav-active-indicator {
   position: absolute;
   right: 0;
-  top: 15%;
-  height: 70%;
+  top: 18%;
+  height: 64%;
   width: 3px;
   background-color: var(--color-indigo);
   border-radius: 3px 0 0 3px;
-  box-shadow: -2px 0 10px var(--color-indigo);
+  box-shadow: -2px 0 8px rgba(99, 102, 241, 0.5);
 }
 
 .sidebar-footer {
-  padding: 20px 16px;
+  padding: 16px 10px;
   border-top: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-collapsed .sidebar-footer {
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sidebar-collapsed .logout-btn {
+  margin-top: 0;
 }
 
 .user-card {
@@ -2614,17 +2695,65 @@ body {
     align-items: flex-start;
     gap: 12px;
   }
+
+  /* Settings page mobile improvements */
+  .settings-container {
+    max-width: 100%;
+  }
+
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .settings-row > :last-child {
+    align-self: flex-start;
+  }
+
+  .settings-card {
+    padding: 16px;
+  }
+
+  /* Settings profile card stacks on mobile */
+  .settings-profile-card {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  /* Sidebar: on mobile always show full width (ignore collapse state) */
+  .sidebar.sidebar-collapsed {
+    width: var(--sidebar-width);
+  }
+
+  .sidebar.sidebar-collapsed .nav-label,
+  .sidebar.sidebar-collapsed .logo-text,
+  .sidebar.sidebar-collapsed .user-info {
+    opacity: 1;
+    width: auto;
+    pointer-events: auto;
+  }
+
+  .sidebar.sidebar-collapsed .sidebar-footer {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  /* Hide collapse button on mobile */
+  .collapse-btn {
+    display: none;
+  }
 }
 
 @media (max-width: 639px) {
   /* Topbar cleanup on very small screens */
   .topbar-clock {
-    display: none !important; /* Hide clock to save horizontal space */
+    display: none !important;
   }
 
   .topbar-user-name,
   .topbar-user-dept {
-    display: none !important; /* Hide user text labels */
+    display: none !important;
   }
 
   .topbar-user button {
@@ -2634,6 +2763,31 @@ body {
   /* Header adjustments */
   .page-title {
     font-size: 20px;
+  }
+
+  /* Modal full-screen on very small screens */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Attendance stats collapse */
+  .attendance-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Kanban board hint for horizontal scroll */
+  .kanban-board {
+    padding-bottom: 8px;
   }
 }
 

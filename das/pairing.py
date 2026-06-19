@@ -188,7 +188,7 @@ def start_pairing_flow(display, touch, tt24, glcdfont):
                     break
 
             try:
-                res = requests.get(status_url, timeout=5)
+                res = requests.get(status_url, timeout=2)
                 if res.status_code == 200:
                     data = res.json()
                     if data.get("paired"):

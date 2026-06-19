@@ -6,7 +6,9 @@ async function tasksRoutes(fastify) {
     const { role, sub, organizationId } = request.user;
     const { status, priority, assigneeId, projectId } = request.query || {};
 
-    const canViewAll = ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead'].includes(role);
+    const isAdmin = ['super_admin', 'admin', 'hr_manager'].includes(role);
+    const isManager = ['manager', 'team_lead'].includes(role);
+    const canViewAll = isAdmin || isManager;
     let whereClause = { organizationId };
 
     if (!canViewAll) {
@@ -16,9 +18,34 @@ async function tasksRoutes(fastify) {
         { reviewerId: sub },
       ];
     }
+
+    // Handle assigneeId filter with role-based scoping
+    if (assigneeId) {
+      if (isAdmin) {
+        // Admins can view any user's tasks
+        whereClause.assigneeId = assigneeId;
+      } else if (isManager) {
+        // Managers can only view tasks of their own department members
+        const [currentManager, targetUser] = await Promise.all([
+          prisma.user.findFirst({ where: { id: sub, organizationId }, select: { departmentId: true } }),
+          prisma.user.findFirst({ where: { id: assigneeId, organizationId }, select: { id: true, departmentId: true } }),
+        ]);
+        if (!targetUser) return reply.code(404).send({ error: 'User not found' });
+        if (assigneeId !== sub && currentManager?.departmentId !== targetUser.departmentId) {
+          return reply.code(403).send({ error: 'Managers can only view tasks of employees in their own department' });
+        }
+        whereClause.assigneeId = assigneeId;
+      } else {
+        // Regular employees cannot view others' tasks
+        if (assigneeId !== sub) {
+          return reply.code(403).send({ error: 'Insufficient permissions to view other users\' tasks' });
+        }
+        whereClause.assigneeId = assigneeId;
+      }
+    }
+
     if (status) whereClause.status = status;
     if (priority) whereClause.priority = priority;
-    if (assigneeId && canViewAll) whereClause.assigneeId = assigneeId;
     if (projectId) whereClause.projectId = projectId;
 
     const tasks = await prisma.task.findMany({
@@ -28,6 +55,7 @@ async function tasksRoutes(fastify) {
         creator: { select: { id: true, name: true, avatar: true, email: true } },
         reviewer: { select: { id: true, name: true, avatar: true, email: true } },
         department: { select: { id: true, name: true, color: true } },
+        _count: { select: { comments: true, timeLogs: true } },
       },
       orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
     });
@@ -41,6 +69,8 @@ async function tasksRoutes(fastify) {
       creatorAvatar: t.creator?.avatar || '',
       reviewerName: t.reviewer?.name || t.creator?.name || 'System',
       reviewerAvatar: t.reviewer?.avatar || t.creator?.avatar || '',
+      commentCount: t._count?.comments ?? 0,
+      timeLogCount: t._count?.timeLogs ?? 0,
     })));
   });
 
@@ -106,7 +136,7 @@ async function tasksRoutes(fastify) {
     // Broadcast new task assignment
     const io = global.io;
     if (io) {
-      io.emit('task:updated', {
+      io.to(`org:${organizationId}`).emit('task:updated', {
         id: task.id,
         status: task.status,
         priority: task.priority,
@@ -229,7 +259,7 @@ async function tasksRoutes(fastify) {
     const io = global.io;
     if (io) {
       // Broadcast global task update for UI refresh
-      io.emit('task:updated', {
+      io.to(`org:${organizationId}`).emit('task:updated', {
         id: task.id,
         status: task.status,
         priority: task.priority,
@@ -389,7 +419,7 @@ async function tasksRoutes(fastify) {
     });
 
     if (global.io) {
-      global.io.emit('task:commentAdded', {
+      global.io.to(`org:${organizationId}`).emit('task:commentAdded', {
         taskId: id,
         commentId: comment.id,
         content: comment.content,
@@ -451,7 +481,7 @@ async function tasksRoutes(fastify) {
     });
 
     if (global.io) {
-      global.io.emit('task:updated', {
+      global.io.to(`org:${organizationId}`).emit('task:updated', {
         id: updatedTask.id,
         status: updatedTask.status,
         priority: updatedTask.priority,

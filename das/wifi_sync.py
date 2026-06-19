@@ -29,18 +29,28 @@ class WiFiSync:
         self._last_retry = 0
         self._last_flush  = 0
         self._last_heartbeat = 0
+        self._connecting = False
+        self._connect_deadline = 0
         self._queue = self._load_queue()
 
     # ── Connection ────────────────────────────────────────────────────────────
 
-    def connect(self):
+    def connect(self, blocking=False):
         """
         Attempt to join the configured WiFi network.
-        Blocks for up to WIFI_TIMEOUT seconds.
-        Returns True on success, False on timeout.
+
+        If blocking=True, waits up to WIFI_TIMEOUT seconds (used at boot).
+        If blocking=False (default), kicks off the connection and returns
+        immediately; call poll_connect() on subsequent ticks to check.
+
+        Returns True on immediate success, False otherwise.
         """
         if self.wlan.isconnected():
+            self._connecting = False
             return True
+
+        if self._connecting:
+            return False  # already in progress
 
         print("WiFi: connecting to '{}'…".format(config.WIFI_SSID))
         try:
@@ -49,15 +59,31 @@ class WiFiSync:
             print("WiFi: connect() error —", e)
             return False
 
-        deadline = time.ticks_add(time.ticks_ms(), config.WIFI_TIMEOUT * 1000)
-        while not self.wlan.isconnected():
-            if time.ticks_diff(deadline, time.ticks_ms()) <= 0:
-                print("WiFi: timed out")
-                return False
-            time.sleep_ms(250)
+        if blocking:
+            deadline = time.ticks_add(time.ticks_ms(), config.WIFI_TIMEOUT * 1000)
+            while not self.wlan.isconnected():
+                if time.ticks_diff(deadline, time.ticks_ms()) <= 0:
+                    print("WiFi: timed out")
+                    return False
+                time.sleep_ms(250)
+            print("WiFi: connected —", self.wlan.ifconfig()[0])
+            return True
 
-        print("WiFi: connected —", self.wlan.ifconfig()[0])
-        return True
+        # Non-blocking: mark as connecting and set deadline
+        self._connecting = True
+        self._connect_deadline = time.ticks_add(time.ticks_ms(), config.WIFI_TIMEOUT * 1000)
+        return False
+
+    def poll_connect(self):
+        """Check on a non-blocking connection attempt. Call from tick()."""
+        if not self._connecting:
+            return
+        if self.wlan.isconnected():
+            self._connecting = False
+            print("WiFi: connected —", self.wlan.ifconfig()[0])
+        elif time.ticks_diff(self._connect_deadline, time.ticks_ms()) <= 0:
+            self._connecting = False
+            print("WiFi: timed out")
 
     def disconnect(self):
         self.wlan.disconnect()
@@ -78,10 +104,14 @@ class WiFiSync:
         Housekeeping — call once per main loop iteration with time.ticks_ms().
         Handles reconnection retries, flushing the offline queue, and heartbeats.
         """
+        # Check on any in-progress non-blocking connection
+        if self._connecting:
+            self.poll_connect()
+
         if not self.is_connected():
-            if time.ticks_diff(now, self._last_retry) >= config.WIFI_RETRY_MS:
+            if not self._connecting and time.ticks_diff(now, self._last_retry) >= config.WIFI_RETRY_MS:
                 self._last_retry = now
-                self.connect()
+                self.connect()  # non-blocking by default
             return  # No point flushing or sending heartbeat if offline
 
         # Send heartbeat every 60 seconds (or immediately on boot)

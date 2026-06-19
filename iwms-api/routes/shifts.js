@@ -87,7 +87,7 @@ async function shiftsRoutes(fastify) {
     });
 
     if (global.io) {
-      global.io.emit('shift:updated', {
+      global.io.to(`org:${organizationId}`).emit('shift:updated', {
         userId: shift.userId,
         date: shift.date,
         type: shift.type

@@ -189,39 +189,34 @@ async function reportsRoutes(fastify) {
     const { sub, role, organizationId } = request.user;
 
     try {
-      const report = await prisma.weeklyReport.findFirst({
-        where: { id, organizationId },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              position: true,
-              departmentId: true,
-              department: { select: { name: true } }
-            }
-          },
-          activities: true,
-          roadblocks: true,
-          plans: true,
-          supportItems: true,
-          insights: true
-        }
-      });
+      // ── Parallelise: fetch report + fetch checker user concurrently ────────
+      const [report, checker] = await Promise.all([
+        prisma.weeklyReport.findFirst({
+          where: { id, organizationId },
+          include: {
+            user: {
+              select: {
+                id: true, name: true, email: true, role: true,
+                position: true, departmentId: true,
+                department: { select: { name: true } }
+              }
+            },
+            activities: true, roadblocks: true, plans: true,
+            supportItems: true, insights: true
+          }
+        }),
+        prisma.user.findFirst({
+          where: { id: sub, organizationId },
+          include: { department: true }
+        }),
+      ]);
 
       if (!report) return reply.code(404).send({ error: 'Report not found' });
 
       // Auth check
       const isOwner = report.userId === sub;
-      const checker = await prisma.user.findFirst({
-        where: { id: sub, organizationId },
-        include: { department: true }
-      });
-
-      const isManager = ['super_admin', 'admin'].includes(role) || (checker.department && checker.department.name === 'Management');
-      const isDeptHead = checker.position && 
+      const isManager = ['super_admin', 'admin'].includes(role) || (checker?.department?.name === 'Management');
+      const isDeptHead = checker?.position &&
         (checker.position.toLowerCase().includes('head') || checker.position.toLowerCase().includes('manager')) &&
         checker.departmentId === report.user.departmentId;
 

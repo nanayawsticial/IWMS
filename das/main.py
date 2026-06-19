@@ -159,6 +159,7 @@ current_mode    = "NONE"   # "NONE" | "IN" | "OUT"
 last_touch_ms   = 0
 last_scan_ms    = 0
 last_cleanup_ms = 0
+touch_down      = False    # non-blocking touch state
 
 # ── Time helpers ──────────────────────────────────────────────────────────────
 def _rtc_tuple():
@@ -923,7 +924,7 @@ else:
     display.set_pos(15, 110)
     display.print("Please wait...")
     
-    if wifi_sync.connect():
+    if wifi_sync.connect(blocking=True):
         # WiFi connected successfully. Now check pairing
         has_pairing = False
         try:
@@ -971,7 +972,7 @@ while True:
 
     # ── Touch handler ─────────────────────────────────────────────────────────
     pos = touch.read()
-    if pos and time.ticks_diff(now, last_touch_ms) >= 300:
+    if pos and not touch_down and time.ticks_diff(now, last_touch_ms) >= 300:
         last_touch_ms = now
         x, y = pos
         print("Touch:", x, y)
@@ -997,10 +998,14 @@ while True:
             elif 230 <= x <= 295:
                 app_about();     draw_main_desktop()
 
-        while touch.read():   # wait for finger lift
-            time.sleep_ms(20)
+        # Non-blocking finger-lift tracking
+        touch_down = True
 
-    # ── Hourly log cleanup ────────────────────────────────────────────────────
+    # ── Non-blocking finger-lift check ─────────────────────────────────────
+    if touch_down and not touch.read():
+        touch_down = False
+
+    # ── Hourly log cleanup ────────────────────────────────────────────────
     if time.ticks_diff(now, last_cleanup_ms) >= config.CLEANUP_INTERVAL:
         last_cleanup_ms = now
         cleanup_logs()

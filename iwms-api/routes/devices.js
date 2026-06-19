@@ -306,7 +306,7 @@ async function devicesRoutes(fastify) {
     });
 
     // Broadcast device added
-    if (global.io) global.io.emit('device:added', { id: device.id, name: device.name });
+    if (global.io) global.io.to(`org:${organizationId}`).emit('device:added', { id: device.id, name: device.name });
 
     return reply.code(201).send(device);
   });
@@ -407,7 +407,7 @@ async function devicesRoutes(fastify) {
 
       await prisma.biometricDevice.update({ where: { id }, data: { isActive: false } });
 
-      if (global.io) global.io.emit('device:removed', { id });
+      if (global.io) global.io.to(`org:${organizationId}`).emit('device:removed', { id });
       return reply.send({ success: true });
     } catch (err) {
       if (err.code === 'P2025') {
@@ -459,7 +459,7 @@ async function devicesRoutes(fastify) {
       data: { status: newStatus },
     });
 
-    if (global.io) global.io.emit('device:ping', { id, status: newStatus, latencyMs });
+    if (global.io) global.io.to(`org:${organizationId}`).emit('device:ping', { id, status: newStatus, latencyMs });
 
     return reply.send({
       id,
@@ -495,7 +495,7 @@ async function devicesRoutes(fastify) {
     });
 
     if (global.io) {
-      global.io.emit('device:heartbeat', {
+      global.io.to(`org:${device.organizationId}`).emit('device:heartbeat', {
         id,
         status: device.status,
         lastSeenAt: device.lastSeenAt,
@@ -617,7 +617,7 @@ async function devicesRoutes(fastify) {
     await prisma.biometricDevice.update({ where: { id }, data: deviceUpdate });
 
     if (global.io) {
-      global.io.emit('device:eventAdded', {
+      global.io.to(`org:${organizationId}`).emit('device:eventAdded', {
         deviceId: id,
         logId: log.id,
         employeeCode,
@@ -702,7 +702,7 @@ async function devicesRoutes(fastify) {
     });
 
     if (global.io) {
-      global.io.emit('device:synced', {
+      global.io.to(`org:${organizationId}`).emit('device:synced', {
         id,
         eventCount: logsToProcess.length,
         processedCount
@@ -856,7 +856,7 @@ async function devicesRoutes(fastify) {
     pairing.deviceKey = apiKey;
     global.pairingCodes.set(code, pairing);
 
-    if (global.io) global.io.emit('device:added', { id: device.id, name: device.name });
+    if (global.io) global.io.to(`org:${organizationId}`).emit('device:added', { id: device.id, name: device.name });
 
     return reply.send({ success: true, deviceId: device.id, name: device.name });
   });

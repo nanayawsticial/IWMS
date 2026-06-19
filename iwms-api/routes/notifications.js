@@ -61,7 +61,7 @@ async function notificationsRoutes(fastify) {
     // Also broadcast over WebSocket
     const io = global.io;
     if (io) {
-      io.emit('attendance:lateAlert', {
+      io.to(`org:${organizationId}`).emit('attendance:lateAlert', {
         count: lateEmployees.length,
         employees: lateEmployees,
         timestamp: new Date().toISOString(),
@@ -78,7 +78,7 @@ async function notificationsRoutes(fastify) {
   // POST /api/notifications/broadcast
   // Broadcast a custom event to all connected Socket.io clients
   fastify.post('/broadcast', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role } = request.user;
+    const { role, organizationId } = request.user;
     if (!['super_admin', 'admin'].includes(role)) {
       return reply.code(403).send({ error: 'Admin only' });
     }
@@ -88,8 +88,13 @@ async function notificationsRoutes(fastify) {
 
     const io = global.io;
     if (io) {
-      io.emit(event, { ...data, timestamp: new Date().toISOString(), sentBy: request.user.email });
-      return reply.send({ message: `Event "${event}" broadcast to ${io.engine.clientsCount} clients` });
+      const payload = { ...data, timestamp: new Date().toISOString(), sentBy: request.user.email };
+      if (role === 'super_admin') {
+        io.emit(event, payload);
+      } else {
+        io.to(`org:${organizationId}`).emit(event, payload);
+      }
+      return reply.send({ message: `Event "${event}" broadcast to clients` });
     }
     return reply.code(500).send({ error: 'Socket.io not initialized' });
   });

@@ -40,33 +40,337 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 async function attendanceRoutes(fastify) {
+  // GET /api/attendance/live-feed
+  fastify.get('/live-feed', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
+    const today = new Date().toISOString().split('T')[0];
+
+    const records = await prisma.attendanceRecord.findMany({
+      where: { date: today, organizationId },
+      include: {
+        user: {
+          select: {
+            name: true,
+            avatar: true,
+            role: true,
+            position: true,
+            department: { select: { name: true } }
+          }
+        }
+      },
+      orderBy: [{ clockIn: 'desc' }],
+    });
+
+    return reply.send(records.map(r => ({
+      ...r,
+      userName: r.user.name,
+      userAvatar: r.user.avatar,
+      userRole: r.user.role || '',
+      userPosition: r.user.position || '',
+      userDepartment: r.user.department?.name || '',
+    })));
+  });
+
+  // GET /api/attendance/summary
+  fastify.get('/summary', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    const [users, recordsToday, recordsYesterday] = await Promise.all([
+      prisma.user.findMany({
+        where: { status: 'active', organizationId },
+        include: { department: { select: { name: true } } }
+      }),
+      prisma.attendanceRecord.findMany({ where: { date: today, organizationId } }),
+      prisma.attendanceRecord.findMany({ where: { date: yesterdayStr, organizationId } })
+    ]);
+
+    // Calculate KPIs
+    const presentToday = recordsToday.filter(r => r.status === 'present').length;
+    const lateToday = recordsToday.filter(r => r.status === 'late').length;
+    const absentToday = recordsToday.filter(r => r.status === 'absent').length;
+    const onLeaveToday = recordsToday.filter(r => r.status === 'on_leave').length;
+
+    const presentYesterday = recordsYesterday.filter(r => r.status === 'present').length;
+    const lateYesterday = recordsYesterday.filter(r => r.status === 'late').length;
+    const absentYesterday = recordsYesterday.filter(r => r.status === 'absent').length;
+    const onLeaveYesterday = recordsYesterday.filter(r => r.status === 'on_leave').length;
+
+    const getChangePercent = (todayVal, yesterdayVal) => {
+      if (yesterdayVal === 0) return todayVal > 0 ? 100 : 0;
+      return Math.round(((todayVal - yesterdayVal) / yesterdayVal) * 100);
+    };
+
+    const kpis = {
+      present: { value: presentToday, change: getChangePercent(presentToday, presentYesterday) },
+      late: { value: lateToday, change: getChangePercent(lateToday, lateYesterday) },
+      absent: { value: absentToday, change: getChangePercent(absentToday, absentYesterday) },
+      onLeave: { value: onLeaveToday, change: getChangePercent(onLeaveToday, onLeaveYesterday) }
+    };
+
+    // Calculate byDepartment
+    const deptMap = {};
+    for (const u of users) {
+      const deptName = u.department?.name || 'Unassigned';
+      if (!deptMap[deptName]) {
+        deptMap[deptName] = { name: deptName, present: 0, late: 0, absent: 0 };
+      }
+      const rec = recordsToday.find(r => r.userId === u.id);
+      if (rec) {
+        if (rec.status === 'present') deptMap[deptName].present++;
+        else if (rec.status === 'late') deptMap[deptName].late++;
+        else if (rec.status === 'absent') deptMap[deptName].absent++;
+      } else {
+        deptMap[deptName].absent++;
+      }
+    }
+    const byDepartment = Object.values(deptMap);
+
+    // Calculate byHour
+    const hourCounts = {};
+    for (let h = 7; h <= 18; h++) {
+      const label = `${String(h).padStart(2, '0')}:00`;
+      hourCounts[label] = 0;
+    }
+    for (const r of recordsToday) {
+      if (r.clockIn) {
+        const h = parseInt(r.clockIn.split(':')[0], 10);
+        if (h >= 7 && h <= 18) {
+          const label = `${String(h).padStart(2, '0')}:00`;
+          hourCounts[label]++;
+        }
+      }
+    }
+    const byHour = Object.entries(hourCounts).map(([hour, count]) => ({ hour, count }));
+
+    // Top arrivals
+    const sortedClockIns = recordsToday
+      .filter(r => r.clockIn)
+      .map(r => {
+        const u = users.find(usr => usr.id === r.userId);
+        return {
+          id: r.userId,
+          name: u?.name || 'Unknown',
+          avatar: u?.avatar || '??',
+          clockIn: r.clockIn,
+          status: r.status
+        };
+      });
+
+    const topEarlyArrivals = [...sortedClockIns]
+      .filter(r => r.status === 'present')
+      .sort((a, b) => a.clockIn.localeCompare(b.clockIn))
+      .slice(0, 5);
+
+    const topLateArrivals = [...sortedClockIns]
+      .filter(r => r.status === 'late')
+      .sort((a, b) => a.clockIn.localeCompare(b.clockIn))
+      .slice(0, 5);
+
+    return reply.send({
+      kpis,
+      byDepartment,
+      byHour,
+      topEarlyArrivals,
+      topLateArrivals
+    });
+  });
+
+  // GET /api/attendance/timesheets
+  fastify.get('/timesheets', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
+    const { startDate, endDate, userId, departmentId } = request.query || {};
+
+    if (!startDate || !endDate) {
+      return reply.code(400).send({ error: 'startDate and endDate are required' });
+    }
+
+    // 1. Fetch active users matching filters
+    const userWhere = { organizationId, status: 'active' };
+    if (userId) userWhere.id = userId;
+    if (departmentId) userWhere.departmentId = departmentId;
+
+    const users = await prisma.user.findMany({
+      where: userWhere,
+      include: { department: { select: { name: true } } },
+      orderBy: { name: 'asc' }
+    });
+
+    // 2. Fetch all attendance records in range for these users
+    const records = await prisma.attendanceRecord.findMany({
+      where: {
+        organizationId,
+        date: { gte: startDate, lte: endDate },
+        userId: { in: users.map(u => u.id) }
+      }
+    });
+
+    // 3. Helper to list all dates in YYYY-MM-DD format
+    const getDatesInRange = (startStr, endStr) => {
+      const dates = [];
+      const curr = new Date(startStr);
+      const end = new Date(endStr);
+      while (curr <= end) {
+        dates.push(curr.toISOString().split('T')[0]);
+        curr.setDate(curr.getDate() + 1);
+      }
+      return dates;
+    };
+    const dateRange = getDatesInRange(startDate, endDate);
+
+    // 4. Map records per user
+    const timesheets = users.map(user => {
+      const userRecords = records.filter(r => r.userId === user.id);
+      
+      let totalHours = 0;
+      let overtimeHours = 0;
+
+      const days = dateRange.map(dStr => {
+        const rec = userRecords.find(r => r.date === dStr);
+        if (rec) {
+          const hours = rec.hoursWorked || 0;
+          totalHours += hours;
+          if (hours > 8) {
+            overtimeHours += (hours - 8);
+          }
+          return {
+            date: dStr,
+            clockIn: rec.clockIn || null,
+            clockOut: rec.clockOut || null,
+            hoursWorked: hours,
+            status: rec.status,
+            method: rec.method
+          };
+        } else {
+          return {
+            date: dStr,
+            clockIn: null,
+            clockOut: null,
+            hoursWorked: 0,
+            status: 'absent',
+            method: null
+          };
+        }
+      });
+
+      return {
+        user: {
+          id: user.id,
+          name: user.name,
+          avatar: user.avatar || '??',
+          department: user.department?.name || '',
+          position: user.position || ''
+        },
+        days,
+        totalHours,
+        overtimeHours
+      };
+    });
+
+    return reply.send(timesheets);
+  });
+
+  // GET /api/attendance/timesheets/export
+  fastify.get('/timesheets/export', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { organizationId } = request.user;
+    const { startDate, endDate, userId, departmentId } = request.query || {};
+
+    if (!startDate || !endDate) {
+      return reply.code(400).send({ error: 'startDate and endDate are required' });
+    }
+
+    // 1. Fetch active users matching filters
+    const userWhere = { organizationId, status: 'active' };
+    if (userId) userWhere.id = userId;
+    if (departmentId) userWhere.departmentId = departmentId;
+
+    const users = await prisma.user.findMany({
+      where: userWhere,
+      include: { department: { select: { name: true } } },
+      orderBy: { name: 'asc' }
+    });
+
+    // 2. Fetch all attendance records in range
+    const records = await prisma.attendanceRecord.findMany({
+      where: {
+        organizationId,
+        date: { gte: startDate, lte: endDate },
+        userId: { in: users.map(u => u.id) }
+      }
+    });
+
+    const getDatesInRange = (startStr, endStr) => {
+      const dates = [];
+      const curr = new Date(startStr);
+      const end = new Date(endStr);
+      while (curr <= end) {
+        dates.push(curr.toISOString().split('T')[0]);
+        curr.setDate(curr.getDate() + 1);
+      }
+      return dates;
+    };
+    const dateRange = getDatesInRange(startDate, endDate);
+
+    // 3. Build timesheet rows
+    let csv = 'Employee,Department,Position,';
+    csv += dateRange.join(',') + ',Total Hours,Overtime Hours\n';
+
+    for (const user of users) {
+      const userRecords = records.filter(r => r.userId === user.id);
+      let totalHours = 0;
+      let overtimeHours = 0;
+      let rowStr = `"${user.name}","${user.department?.name || ''}","${user.position || ''}",`;
+
+      for (const dStr of dateRange) {
+        const rec = userRecords.find(r => r.date === dStr);
+        const hours = rec ? (rec.hoursWorked || 0) : 0;
+        totalHours += hours;
+        if (hours > 8) {
+          overtimeHours += (hours - 8);
+        }
+        rowStr += `${hours.toFixed(1)},`;
+      }
+
+      rowStr += `${totalHours.toFixed(1)},${overtimeHours.toFixed(1)}\n`;
+      csv += rowStr;
+    }
+
+    reply.header('Content-Type', 'text/csv');
+    reply.header('Content-Disposition', `attachment; filename=timesheets_${startDate}_to_${endDate}.csv`);
+    return reply.send(csv);
+  });
+
   // GET /api/attendance
-  fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    const { role, sub, organizationId } = request.user;
-    const { date, status, userId } = request.query || {};
+  async function buildAttendanceWhereClause(user, query, isStats = false) {
+    const { role, sub, organizationId } = user;
+    const { userId, departmentId, status, date, period, startDate, endDate } = query || {};
 
     const whereClause = { organizationId };
 
+    // 1. Role-based scoping
     if (['super_admin', 'admin', 'hr_manager'].includes(role)) {
-      // Management can view all records, and filter by specific user
       if (userId) whereClause.userId = userId;
+      if (departmentId && departmentId !== 'all') {
+        whereClause.user = { departmentId };
+      }
     } else if (role === 'manager') {
-      // HODs (managers) can view department members' records OR other HODs/Management
       const currentUser = await prisma.user.findFirst({
         where: { id: sub, organizationId },
         select: { departmentId: true }
       });
-      const departmentId = currentUser?.departmentId;
+      const managerDeptId = currentUser?.departmentId;
 
       const userConditions = [{ role: { in: ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead'] } }];
-      if (departmentId) {
-        userConditions.push({ departmentId });
+      if (managerDeptId) {
+        userConditions.push({ departmentId: managerDeptId });
       } else {
         userConditions.push({ id: sub });
       }
 
       if (userId) {
-        // If filtering by a specific user, ensure that user matches HOD's allowed scope
         whereClause.AND = [
           { userId },
           { user: { OR: userConditions } }
@@ -74,19 +378,79 @@ async function attendanceRoutes(fastify) {
       } else {
         whereClause.user = { OR: userConditions };
       }
+
+      // Restrict department filter to manager's own department
+      if (departmentId && departmentId !== 'all') {
+        if (departmentId === managerDeptId) {
+          whereClause.user = { departmentId };
+        } else {
+          whereClause.user = { departmentId: managerDeptId };
+        }
+      }
     } else {
-      // Employees/Team Leads can only view their own attendance records
       whereClause.userId = sub;
     }
 
-    if (date) whereClause.date = date;
-    if (status) whereClause.status = status;
+    // 2. Status filter
+    if (status && status !== 'all') {
+      whereClause.status = status;
+    }
+
+    // 3. Date range calculations
+    let start = null;
+    let end = null;
+    const today = new Date();
+
+    if (period) {
+      if (period === 'today') {
+        start = today.toISOString().split('T')[0];
+        end = start;
+      } else if (period === 'yesterday') {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        start = yesterday.toISOString().split('T')[0];
+        end = start;
+      } else if (period === 'week') {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 6);
+        start = weekAgo.toISOString().split('T')[0];
+        end = today.toISOString().split('T')[0];
+      } else if (period === 'month') {
+        const monthAgo = new Date();
+        monthAgo.setDate(monthAgo.getDate() - 29);
+        start = monthAgo.toISOString().split('T')[0];
+        end = today.toISOString().split('T')[0];
+      } else if (period === 'custom') {
+        start = startDate;
+        end = endDate;
+      }
+    } else if (date) {
+      start = date;
+      end = date;
+    } else if (isStats) {
+      start = today.toISOString().split('T')[0];
+      end = start;
+    }
+
+    if (start && end) {
+      whereClause.date = {
+        gte: start,
+        lte: end
+      };
+    }
+
+    return { whereClause, start, end };
+  }
+
+  // GET /api/attendance
+  fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { whereClause } = await buildAttendanceWhereClause(request.user, request.query, false);
 
     const records = await prisma.attendanceRecord.findMany({
       where: whereClause,
       include: {
         user: {
-          select: { id: true, name: true, avatar: true, email: true, department: { select: { name: true } } },
+          select: { id: true, name: true, avatar: true, email: true, role: true, position: true, department: { select: { name: true } } },
         },
       },
       orderBy: [{ date: 'desc' }, { clockIn: 'desc' }],
@@ -98,35 +462,59 @@ async function attendanceRoutes(fastify) {
       userAvatar: r.user.avatar,
       userEmail: r.user.email,
       userDepartment: r.user.department?.name || '',
+      userRole: r.user.role || '',
+      userPosition: r.user.position || '',
     })));
   });
 
   // GET /api/attendance/stats — aggregated stats for dashboard
   fastify.get('/stats', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { organizationId } = request.user;
-    const { date } = request.query || {};
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    const { whereClause, start, end } = await buildAttendanceWhereClause(request.user, request.query, true);
 
-    const [records, totalUsers] = await Promise.all([
-      prisma.attendanceRecord.findMany({ where: { date: targetDate, organizationId } }),
-      prisma.user.count({ where: { status: 'active', organizationId } }),
-    ]);
+    // Calculate diffDays safely
+    let diffDays = 1;
+    if (start && end) {
+      const sDate = new Date(start);
+      const eDate = new Date(end);
+      if (!isNaN(sDate.getTime()) && !isNaN(eDate.getTime())) {
+        const diffTime = Math.abs(eDate - sDate);
+        diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      }
+    }
+
+    // Determine totalEmployees in the scoped view
+    let totalEmployees = 0;
+    const isSingleUserFilter = whereClause.userId || (whereClause.AND && whereClause.AND.some(c => c.userId));
+    if (isSingleUserFilter) {
+      totalEmployees = 1;
+    } else {
+      const userCountWhere = { status: 'active', organizationId };
+      if (whereClause.user) {
+        userCountWhere.AND = [whereClause.user];
+      }
+      totalEmployees = await prisma.user.count({ where: userCountWhere });
+    }
+
+    const records = await prisma.attendanceRecord.findMany({ where: whereClause });
 
     const present = records.filter(r => r.status === 'present').length;
     const late    = records.filter(r => r.status === 'late').length;
     const absent  = records.filter(r => r.status === 'absent').length;
     const onLeave = records.filter(r => r.status === 'on_leave').length;
 
+    const denominator = totalEmployees * diffDays;
+
     return reply.send({
-      date: targetDate,
-      totalEmployees: totalUsers,
+      date: start === end ? start : `${start} to ${end}`,
+      totalEmployees,
       present,
       late,
       presentWithLate: present + late,
       absent,
       onLeave,
-      notRecorded: totalUsers - records.length,
-      attendanceRate: totalUsers > 0 ? Math.round(((present + late) / totalUsers) * 100) : 0,
+      notRecorded: Math.max(0, denominator - records.length),
+      attendanceRate: denominator > 0 ? Math.round(((present + late) / denominator) * 100) : 0,
     });
   });
 
@@ -135,41 +523,33 @@ async function attendanceRoutes(fastify) {
     const { sub, organizationId } = request.user;
     const { latitude, longitude, method } = request.body || {};
 
-    // Validate geo-fence if lat/lng are provided
-    if (latitude !== undefined && longitude !== undefined) {
-      const zones = await prisma.geoFenceZone.findMany({ where: { isActive: true, organizationId } });
-      if (zones.length > 0) {
-        let inZone = false;
-        let closestZone = null;
-        let closestDistance = Infinity;
-
-        for (const zone of zones) {
-          const dist = haversineDistance(latitude, longitude, zone.latitude, zone.longitude);
-          if (dist < closestDistance) {
-            closestDistance = dist;
-            closestZone = zone;
-          }
-          if (dist <= zone.radiusMeters) {
-            inZone = true;
-            break;
-          }
-        }
-
-        if (!inZone) {
-          return reply.code(400).send({
-            error: `Out of geo-fence zone. You are ${Math.round(closestDistance)}m away from the nearest allowed zone (${closestZone?.name}).`,
-          });
-        }
-      }
-    }
-
     const today = new Date().toISOString().split('T')[0];
     const now = currentTimeHHMM();
 
-    // Check if already clocked in today
-    const existing = await prisma.attendanceRecord.findFirst({
-      where: { userId: sub, date: today, organizationId },
-    });
+    // ── Parallelise: geo-fence lookup + existing record check ──────────────
+    const [zones, existing] = await Promise.all([
+      (latitude !== undefined && longitude !== undefined)
+        ? prisma.geoFenceZone.findMany({ where: { isActive: true, organizationId } })
+        : Promise.resolve([]),
+      prisma.attendanceRecord.findFirst({ where: { userId: sub, date: today, organizationId } }),
+    ]);
+
+    // Geo-fence validation
+    if (latitude !== undefined && longitude !== undefined && zones.length > 0) {
+      let inZone = false;
+      let closestZone = null;
+      let closestDistance = Infinity;
+      for (const zone of zones) {
+        const dist = haversineDistance(latitude, longitude, zone.latitude, zone.longitude);
+        if (dist < closestDistance) { closestDistance = dist; closestZone = zone; }
+        if (dist <= zone.radiusMeters) { inZone = true; break; }
+      }
+      if (!inZone) {
+        return reply.code(400).send({
+          error: `Out of geo-fence zone. You are ${Math.round(closestDistance)}m away from the nearest allowed zone (${closestZone?.name}).`,
+        });
+      }
+    }
 
     if (existing?.clockIn) {
       return reply.code(409).send({ error: 'Already clocked in today', record: existing });
@@ -178,43 +558,35 @@ async function attendanceRoutes(fastify) {
     // Determine status dynamically based on user shift schedule
     const status = await getLatenessStatus(sub, today, now, organizationId);
 
+    // Upsert attendance record — include user + department in one query (avoids a follow-up lookup)
     const record = await prisma.attendanceRecord.upsert({
       where: { userId_date: { userId: sub, date: today } },
       update: { clockIn: now, status, method: method || 'web', latitude, longitude, organizationId },
       create: {
-        userId: sub,
-        date: today,
-        clockIn: now,
-        status,
-        method: method || 'web',
-        latitude,
-        longitude,
-        organizationId,
+        userId: sub, date: today, clockIn: now, status,
+        method: method || 'web', latitude, longitude, organizationId,
       },
       include: {
-        user: { select: { name: true, avatar: true } },
+        user: { select: { name: true, avatar: true, role: true, position: true, department: { select: { name: true } } } },
       },
-    });
-
-    const user = await prisma.user.findFirst({
-      where: { id: sub, organizationId },
-      include: { department: true },
     });
 
     const io = global.io;
     if (io) {
       const payload = {
         userId: sub,
-        userName: user?.name || 'Unknown',
-        userAvatar: user?.avatar || '??',
-        userDepartment: user?.department?.name || '',
+        userName: record.user?.name || 'Unknown',
+        userAvatar: record.user?.avatar || '??',
+        userDepartment: record.user?.department?.name || '',
+        userRole: record.user?.role || '',
+        userPosition: record.user?.position || '',
         clockIn: now,
         status,
         method: method || 'web',
         timestamp: new Date().toISOString(),
       };
-      io.emit('attendance:clockIn', payload);
-      if (status === 'late') io.emit('attendance:late', payload);
+      io.to(`org:${organizationId}`).emit('attendance:clockIn', payload);
+      if (status === 'late') io.to(`org:${organizationId}`).emit('attendance:late', payload);
     }
 
     return reply.code(201).send({
@@ -249,36 +621,63 @@ async function attendanceRoutes(fastify) {
     const record = await prisma.attendanceRecord.update({
       where: { userId_date: { userId: sub, date: today } },
       data: { clockOut: now, hoursWorked },
+      include: {
+        user: { select: { name: true, avatar: true, role: true, position: true, department: { select: { name: true } } } },
+      },
     });
 
-    // Overtime alert: > 9 hours worked
-    if (hoursWorked !== null && hoursWorked > 9) {
-      const user = await prisma.user.findFirst({
-        where: { id: sub, organizationId },
-        include: { department: true },
+    if (hoursWorked !== null && hoursWorked > 8) {
+      const otHours = hoursWorked - 8;
+      const existingOt = await prisma.overtimeRequest.findFirst({
+        where: { userId: sub, date: today, organizationId }
       });
-      const managers = await prisma.user.findMany({
-        where: { role: { in: ['admin', 'manager'] }, status: 'active', organizationId },
-        select: { email: true },
-      });
-      const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-      const html = overtimeAlertHtml({
-        employee: { name: user?.name, avatar: user?.avatar, department: user?.department?.name, position: user?.position },
-        hoursWorked,
-        date: dateStr,
-      });
-      for (const mgr of managers) {
-        sendMail({ to: mgr.email, subject: `Overtime Alert: ${user?.name} worked ${hoursWorked.toFixed(1)}h`, html }).catch(() => {});
+      if (!existingOt) {
+        await prisma.overtimeRequest.create({
+          data: {
+            userId: sub,
+            date: today,
+            regularHours: 8,
+            overtimeHours: otHours,
+            reason: 'Auto-generated from web clock-out',
+            organizationId
+          }
+        });
       }
+    }
+
+    // Overtime alert: > 9 hours worked — fire-and-forget, do not block the response
+    if (hoursWorked !== null && hoursWorked > 9) {
+      // ── Parallelise: user and manager queries ─────────────────────────────
+      Promise.all([
+        prisma.user.findFirst({ where: { id: sub, organizationId }, include: { department: true } }),
+        prisma.user.findMany({ where: { role: { in: ['admin', 'manager'] }, status: 'active', organizationId }, select: { email: true } }),
+      ]).then(([user, managers]) => {
+        const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        const html = overtimeAlertHtml({
+          employee: { name: user?.name, avatar: user?.avatar, department: user?.department?.name, position: user?.position },
+          hoursWorked,
+          date: dateStr,
+        });
+        for (const mgr of managers) {
+          sendMail({ to: mgr.email, subject: `Overtime Alert: ${user?.name} worked ${hoursWorked.toFixed(1)}h`, html }).catch(() => {});
+        }
+      }).catch(() => {});
     }
 
     const io = global.io;
     if (io) {
-      io.emit('attendance:clockOut', {
+      io.to(`org:${organizationId}`).emit('attendance:clockOut', {
         userId: sub,
+        userName: record.user?.name || 'Unknown',
+        userAvatar: record.user?.avatar || '??',
+        userDepartment: record.user?.department?.name || '',
+        userRole: record.user?.role || '',
+        userPosition: record.user?.position || '',
+        clockIn: existing.clockIn,
         clockOut: now,
         hoursWorked,
         isOvertime: hoursWorked !== null && hoursWorked > 9,
+        method: record.method || 'web',
         timestamp: new Date().toISOString(),
       });
     }
@@ -323,13 +722,10 @@ async function attendanceRoutes(fastify) {
       });
     }
 
-    // 2. Verify device is registered and active (lookup by either database ID or serial number)
+    // 2. Verify device is registered and active
     const device = await prisma.biometricDevice.findFirst({
       where: {
-        OR: [
-          { id: normalizedDeviceId },
-          { serialNumber: normalizedDeviceId }
-        ],
+        serialNumber: normalizedDeviceId,
         isActive: true
       },
     });
@@ -354,36 +750,38 @@ async function attendanceRoutes(fastify) {
       });
     }
 
-    // Mark device as seen
+    // 4. Parse timestamp up-front (needed for dedup check and existing record lookup)
+    const serverDate = new Date().toISOString().split('T')[0];
+    const serverTime = currentTimeHHMM();
+    const [deviceDate, timePart] = timestamp.split('T');
+    let date = deviceDate;
+    let timeStr = timePart ? timePart.substring(0, 5) : '00:00';
+    if (deviceDate !== serverDate) { date = serverDate; timeStr = serverTime; }
+
+    // ── Stage A (parallel): mark device seen + duplicate check + employee lookup ──
     const seenUpdate = { lastSeenAt: new Date(), status: 'online' };
     if (normalizedFirmware) seenUpdate.firmwareVersion = normalizedFirmware;
-    await prisma.biometricDevice.update({
-      where: { id: device.id },
-      data: seenUpdate,
-    });
 
-    if (terminalEventId) {
-      const duplicate = await prisma.deviceSyncLog.findUnique({
-        where: { deviceId_terminalEventId: { deviceId: device.id, terminalEventId } },
+    const [, duplicate, user] = await Promise.all([
+      prisma.biometricDevice.update({ where: { id: device.id }, data: seenUpdate }),
+      terminalEventId
+        ? prisma.deviceSyncLog.findUnique({
+            where: { deviceId_terminalEventId: { deviceId: device.id, terminalEventId } },
+          })
+        : Promise.resolve(null),
+      prisma.user.findFirst({
+        where: { employeeCode: normalizedUid, status: 'active', organizationId },
+        include: { department: true },
+      }),
+    ]);
+
+    if (duplicate) {
+      return reply.code(200).send({
+        success: true, duplicate: true, event_type,
+        log_id: duplicate.id, processed: duplicate.processed,
+        message: 'Event was already received',
       });
-
-      if (duplicate) {
-        return reply.code(200).send({
-          success: true,
-          duplicate: true,
-          event_type,
-          log_id: duplicate.id,
-          processed: duplicate.processed,
-          message: 'Event was already received',
-        });
-      }
     }
-
-    // 3. Look up employee by employeeCode (= RFID uid)
-    const user = await prisma.user.findFirst({
-      where: { employeeCode: normalizedUid, status: 'active', organizationId },
-      include: { department: true },
-    });
 
     if (!user) {
       // Log the unknown scan so admins can investigate
@@ -400,38 +798,36 @@ async function attendanceRoutes(fastify) {
           processed:    false,
         },
       });
-
       return reply.code(404).send({
         error: 'Employee Not Found',
         message: `No active employee with RFID uid "${normalizedUid}". Set their Employee Code in IWMS Users → Edit Profile.`,
       });
     }
 
-    // 4. Parse date ("2026-06-08") and time ("09:15") from ISO timestamp.
-    // If the hardware device's clock is out of sync (e.g. Pico without battery-backed RTC),
-    // we use the server's current date and time to ensure the record is correctly filed for today.
-    const serverDate = new Date().toISOString().split('T')[0];
-    const serverTime = currentTimeHHMM();
+    // ── Stage B (parallel): existing attendance record + shift for lateness ──
+    const [existing, shift] = await Promise.all([
+      prisma.attendanceRecord.findFirst({ where: { userId: user.id, date, organizationId } }),
+      event_type === 'clock_in'
+        ? prisma.shift.findFirst({ where: { userId: user.id, date, organizationId } })
+        : Promise.resolve(null),
+    ]);
 
-    const [deviceDate, timePart] = timestamp.split('T');
-    let date = deviceDate;
-    let timeStr = timePart ? timePart.substring(0, 5) : '00:00';
-
-    if (deviceDate !== serverDate) {
-      date = serverDate;
-      timeStr = serverTime;
-    }
-
-    // 5. Determine late / early-leave status dynamically
+    // 5. Determine late / early-leave status (inline, no extra DB call needed)
     let recordStatus = 'present';
     if (event_type === 'clock_in') {
-      recordStatus = await getLatenessStatus(user.id, date, timeStr, organizationId);
+      if (shift && shift.type === 'off') {
+        recordStatus = 'present';
+      } else {
+        const [h, m] = timeStr.split(':').map(Number);
+        const mins = h * 60 + m;
+        let lateThreshold = 9 * 60 + 15;
+        if (shift && shift.startTime) {
+          const [sh] = shift.startTime.split(':').map(Number);
+          lateThreshold = sh * 60 + 15;
+        }
+        recordStatus = mins > lateThreshold ? 'late' : 'present';
+      }
     }
-
-    // 6. Fetch existing record and check constraints
-    const existing = await prisma.attendanceRecord.findFirst({
-      where: { userId: user.id, date, organizationId },
-    });
 
     let record;
     if (event_type === 'clock_in') {
@@ -481,31 +877,47 @@ async function attendanceRoutes(fastify) {
             : (existing.notes ?? undefined),
         },
       });
+
+      if (hoursWorked !== null && hoursWorked > 8) {
+        const otHours = hoursWorked - 8;
+        const existingOt = await prisma.overtimeRequest.findFirst({
+          where: { userId: user.id, date, organizationId }
+        });
+        if (!existingOt) {
+          await prisma.overtimeRequest.create({
+            data: {
+              userId: user.id,
+              date,
+              regularHours: 8,
+              overtimeHours: otHours,
+              reason: 'Auto-generated from hardware clock-out',
+              organizationId
+            }
+          });
+        }
+      }
     }
 
-    // 7. Write to DeviceSyncLog
-    await prisma.deviceSyncLog.create({
-      data: {
-        deviceId:     device.id,
-        employeeCode: normalizedUid,
-        userId:       user.id,
-        eventType:    event_type === 'clock_in' ? 'check_in' : 'check_out',
-        eventTime:    timestamp,
-        terminalEventId: terminalEventId || null,
-        verificationMode: 'rfid',
-        rawData:      JSON.stringify({ device_id: normalizedDeviceId, uid: normalizedUid, name, flags: normalizedFlags, terminal_event_id: terminalEventId || null, firmware: normalizedFirmware }),
-        processed:    true,
-      },
-    }).catch((error) => {
-      if (error.code !== 'P2002') throw error;
-      // Ignore duplicate terminal_event_id retries from the Pico.
-    });
-
-    // 8. Update device lastSyncAt
-    await prisma.biometricDevice.update({
-      where: { id: device.id },
-      data:  { lastSyncAt: new Date() },
-    });
+    // ── Stage C (parallel): write sync log + update device lastSyncAt ──────
+    await Promise.all([
+      prisma.deviceSyncLog.create({
+        data: {
+          deviceId:     device.id,
+          employeeCode: normalizedUid,
+          userId:       user.id,
+          eventType:    event_type === 'clock_in' ? 'check_in' : 'check_out',
+          eventTime:    timestamp,
+          terminalEventId: terminalEventId || null,
+          verificationMode: 'rfid',
+          rawData:      JSON.stringify({ device_id: normalizedDeviceId, uid: normalizedUid, name, flags: normalizedFlags, terminal_event_id: terminalEventId || null, firmware: normalizedFirmware }),
+          processed:    true,
+        },
+      }).catch((error) => {
+        if (error.code !== 'P2002') return; // Ignore duplicate terminal_event_id retries from the Pico
+        throw error;
+      }),
+      prisma.biometricDevice.update({ where: { id: device.id }, data: { lastSyncAt: new Date() } }),
+    ]);
 
     // 9. Emit real-time Socket.io events to the dashboard
     const io = global.io;
@@ -516,23 +928,27 @@ async function attendanceRoutes(fastify) {
           userName:       user.name,
           userAvatar:     user.avatar || '??',
           userDepartment: user.department?.name || '',
+          userRole:       user.role || '',
+          userPosition:   user.position || '',
           clockIn:        timeStr,
           status:         recordStatus,
           method:         'hardware',
           deviceName:     device.name,
           timestamp:      new Date().toISOString(),
         };
-        io.emit('attendance:clockIn', payload);
+        io.to(`org:${organizationId}`).emit('attendance:clockIn', payload);
         if (recordStatus === 'late') {
-          io.emit('attendance:late', payload);
+          io.to(`org:${organizationId}`).emit('attendance:late', payload);
         }
       } else {
         // clock_out
-        io.emit('attendance:clockOut', {
+        io.to(`org:${organizationId}`).emit('attendance:clockOut', {
           userId:         user.id,
           userName:       user.name,
           userAvatar:     user.avatar || '??',
           userDepartment: user.department?.name || '',
+          userRole:       user.role || '',
+          userPosition:   user.position || '',
           clockIn:        existing?.clockIn || timeStr,
           clockOut:       timeStr,
           hoursWorked:    record.hoursWorked,
@@ -561,6 +977,90 @@ async function attendanceRoutes(fastify) {
       status:    recordStatus,
       hoursWorked: record.hoursWorked,
     });
+  });
+
+  // GET /api/attendance/presence — real-time team presence view
+  fastify.get('/presence', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { role, sub, organizationId } = request.user;
+
+    // Build user query based on role
+    const userWhere = { status: 'active', organizationId };
+
+    if (role === 'manager') {
+      // Managers only see their own department
+      const currentUser = await prisma.user.findFirst({
+        where: { id: sub, organizationId },
+        select: { departmentId: true }
+      });
+      if (currentUser?.departmentId) {
+        userWhere.departmentId = currentUser.departmentId;
+      } else {
+        // Manager with no department — only see themselves
+        userWhere.id = sub;
+      }
+    } else if (!['super_admin', 'admin', 'hr_manager'].includes(role)) {
+      return reply.code(403).send({ error: 'Insufficient permissions' });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const [users, todayRecords] = await Promise.all([
+      prisma.user.findMany({
+        where: userWhere,
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+          position: true,
+          role: true,
+          department: { select: { id: true, name: true } }
+        },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.attendanceRecord.findMany({
+        where: { date: today, organizationId },
+        select: {
+          userId: true,
+          status: true,
+          clockIn: true,
+          clockOut: true,
+          hoursWorked: true,
+          method: true
+        }
+      })
+    ]);
+
+    const recordMap = new Map(todayRecords.map(r => [r.userId, r]));
+
+    const presence = users.map(user => {
+      const rec = recordMap.get(user.id);
+      return {
+        userId: user.id,
+        name: user.name,
+        avatar: user.avatar || '??',
+        position: user.position || '',
+        role: user.role,
+        departmentId: user.department?.id || null,
+        department: user.department?.name || 'Unassigned',
+        status: rec ? rec.status : 'not_clocked_in',
+        clockIn: rec?.clockIn || null,
+        clockOut: rec?.clockOut || null,
+        hoursWorked: rec?.hoursWorked || null,
+        method: rec?.method || null
+      };
+    });
+
+    // Summary counts
+    const summary = {
+      total: presence.length,
+      present: presence.filter(p => p.status === 'present').length,
+      late: presence.filter(p => p.status === 'late').length,
+      absent: presence.filter(p => p.status === 'absent').length,
+      onLeave: presence.filter(p => p.status === 'on_leave').length,
+      notClockedIn: presence.filter(p => p.status === 'not_clocked_in').length
+    };
+
+    return reply.send({ presence, summary, date: today });
   });
 
   // PATCH /api/attendance/:id — manual correction (admin/HR only)
@@ -608,7 +1108,7 @@ async function attendanceRoutes(fastify) {
     });
 
     if (global.io) {
-      global.io.emit('attendance:updated', {
+      global.io.to(`org:${organizationId}`).emit('attendance:updated', {
         id:       record.id,
         userId:   record.userId,
         date:     record.date,

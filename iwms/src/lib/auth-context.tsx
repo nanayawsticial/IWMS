@@ -16,6 +16,7 @@ export interface User {
   email: string;
   role: Role;
   department: string;
+  departmentId?: string;
   position: string;
   avatar: string;
   status: 'active' | 'inactive';

@@ -89,7 +89,7 @@ async function leavesRoutes(fastify) {
     });
 
     if (global.io) {
-      global.io.emit('leave:created', {
+      global.io.to(`org:${organizationId}`).emit('leave:created', {
         id: leave.id,
         userName: leave.user.name,
         type: leave.type,
@@ -170,7 +170,7 @@ async function leavesRoutes(fastify) {
     }
 
     if (global.io) {
-      global.io.emit('leave:updated', {
+      global.io.to(`org:${organizationId}`).emit('leave:updated', {
         id: updatedLeave.id,
         userId: updatedLeave.userId,
         status: updatedLeave.status,

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { attendanceApi } from '@/lib/api';
+import { attendanceApi, departmentsApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSocketEvent } from '@/hooks/useSocket';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 const STATUS_STYLES: Record<string, { color: string; bg: string; label: string }> = {
   present:  { color: '#10b981', bg: '#10b98120', label: 'Present' },
@@ -13,6 +14,7 @@ const STATUS_STYLES: Record<string, { color: string; bg: string; label: string }
   half_day: { color: '#06b6d4', bg: '#06b6d420', label: 'Half Day' },
   on_leave: { color: '#8b5cf6', bg: '#8b5cf620', label: 'On Leave' },
 };
+
 const METHOD_ICONS: Record<string, string> = {
   biometric: '🖐️', web: '🌐', mobile: '📱', qr: '📷',
 };
@@ -47,7 +49,7 @@ function ClockWidget() {
   const clockIn = useMutation({
     mutationFn: () => {
       if (navigator.geolocation) {
-        return new Promise<any>((resolve, reject) => {
+        return new Promise<any>((resolve) => {
           navigator.geolocation.getCurrentPosition(
             pos => attendanceApi.clockIn({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, method: 'web' }).then(resolve),
             () => attendanceApi.clockIn({ method: 'web' }).then(resolve),
@@ -131,11 +133,83 @@ function ClockWidget() {
   );
 }
 
-export default function AttendancePage() {
-  const { hasPermission } = useAuth();
+function AttendancePageContent() {
+  const { user, hasPermission } = useAuth();
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Read initial states from URL query parameters
+  const period = searchParams.get('period') || 'today';
+  const startDate = searchParams.get('startDate') || new Date().toISOString().split('T')[0];
+  const endDate = searchParams.get('endDate') || new Date().toISOString().split('T')[0];
+  const statusFilter = searchParams.get('status') || 'all';
+  const departmentFilter = searchParams.get('departmentId') || 'all';
+
+  // Toggle state for collapsible dates
+  const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
+
+  // Helper to update URL search parameters reactively
+  const updateQueryParams = (updates: Record<string, string | null>) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === 'all' || value === '') {
+        current.delete(key);
+      } else {
+        current.set(key, value);
+      }
+    });
+    const search = current.toString();
+    const query = search ? `?${search}` : '';
+    router.replace(`${pathname}${query}`);
+  };
+
+  const handlePeriodChange = (newPeriod: string) => {
+    updateQueryParams({
+      period: newPeriod,
+      ...(newPeriod === 'custom' ? {
+        startDate: startDate || new Date().toISOString().split('T')[0],
+        endDate: endDate || new Date().toISOString().split('T')[0]
+      } : {
+        startDate: null,
+        endDate: null
+      })
+    });
+  };
+
+  const handleStartDateChange = (val: string) => updateQueryParams({ startDate: val });
+  const handleEndDateChange = (val: string) => updateQueryParams({ endDate: val });
+  const handleStatusChange = (val: string) => updateQueryParams({ status: val });
+  const handleDepartmentChange = (val: string) => updateQueryParams({ departmentId: val });
+
+  // Fetch departments list for management dropdown
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments'],
+    queryFn: () => departmentsApi.list(),
+    enabled: ['super_admin', 'admin', 'hr_manager', 'manager'].includes(user?.role || ''),
+  });
+
+  // Fetch attendance records based on URL-driven states
+  const { data: records = [], isLoading } = useQuery({
+    queryKey: ['attendance', period, startDate, endDate, statusFilter, departmentFilter],
+    queryFn: () => attendanceApi.list({
+      period,
+      ...(period === 'custom' ? { startDate, endDate } : {}),
+      ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+      ...(departmentFilter !== 'all' ? { departmentId: departmentFilter } : {}),
+    }),
+  });
+
+  // Fetch stats based on URL-driven states
+  const { data: stats } = useQuery({
+    queryKey: ['attendance-stats', period, startDate, endDate, departmentFilter],
+    queryFn: () => attendanceApi.stats({
+      period,
+      ...(period === 'custom' ? { startDate, endDate } : {}),
+      ...(departmentFilter !== 'all' ? { departmentId: departmentFilter } : {}),
+    }),
+  });
 
   // Synchronize attendance records and stats in real-time when clock in/out occurs
   useSocketEvent<any>('attendance:clockIn', () => {
@@ -154,19 +228,6 @@ export default function AttendancePage() {
   const [editOut, setEditOut] = useState('');
   const [editStatus, setEditStatus] = useState('');
   const [correctionReason, setCorrectionReason] = useState('');
-
-  const { data: records = [], isLoading } = useQuery({
-    queryKey: ['attendance', selectedDate, statusFilter],
-    queryFn: () => attendanceApi.list({
-      ...(selectedDate !== 'all' ? { date: selectedDate } : {}),
-      ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
-    }),
-  });
-
-  const { data: stats } = useQuery({
-    queryKey: ['attendance-stats', selectedDate],
-    queryFn: () => attendanceApi.stats(selectedDate),
-  });
 
   const correctAttendance = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
@@ -201,6 +262,48 @@ export default function AttendancePage() {
     });
   };
 
+  // Group records by date if spanning multiple days
+  const distinctDates = Array.from(new Set(records.map((r: any) => r.date))).sort((a: any, b: any) => b.localeCompare(a));
+  const isMultiDay = distinctDates.length > 1;
+
+  const groupedRecords = records.reduce((groups: Record<string, any[]>, record: any) => {
+    const d = record.date;
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(record);
+    return groups;
+  }, {});
+
+  const sortedDates = Object.keys(groupedRecords).sort((a, b) => b.localeCompare(a));
+
+  const toggleDateCollapse = (date: string) => {
+    setCollapsedDates(prev => ({ ...prev, [date]: !prev[date] }));
+  };
+
+  // Client-side export helper
+  const handleExportCSV = () => {
+    if (records.length === 0) return;
+    const headers = ['Employee', 'Department', 'Clock In', 'Clock Out', 'Hours Worked', 'Method', 'Status', 'Date'];
+    const rows = records.map((r: any) => [
+      `"${r.userName}"`,
+      `"${r.userDepartment}"`,
+      `"${r.clockIn || ''}"`,
+      `"${r.clockOut || ''}"`,
+      `"${r.hoursWorked != null ? r.hoursWorked.toFixed(1) : ''}"`,
+      `"${r.method}"`,
+      `"${r.status}"`,
+      `"${r.date}"`,
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map((e: any) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `attendance_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="page-content">
       <div className="page-header">
@@ -227,18 +330,78 @@ export default function AttendancePage() {
             ))}
           </div>
 
-          {/* Filters */}
-          <div className="table-toolbar">
-            <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="form-input date-picker" />
+          {/* Filters Toolbar */}
+          <div className="table-toolbar" style={{ gap: '12px', alignItems: 'center' }}>
             <div className="filter-tabs">
+              {[
+                { id: 'today', label: 'Today' },
+                { id: 'yesterday', label: 'Yesterday' },
+                { id: 'week', label: 'Last 7 Days' },
+                { id: 'month', label: 'Last 30 Days' },
+                { id: 'custom', label: 'Custom Range' },
+              ].map(p => (
+                <button
+                  key={p.id}
+                  className={`filter-tab ${period === p.id ? 'filter-tab-active' : ''}`}
+                  onClick={() => handlePeriodChange(p.id)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {period === 'custom' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => handleStartDateChange(e.target.value)}
+                  className="form-input date-picker"
+                  style={{ padding: '4px 8px', fontSize: '13px' }}
+                />
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={e => handleEndDateChange(e.target.value)}
+                  className="form-input date-picker"
+                  style={{ padding: '4px 8px', fontSize: '13px' }}
+                />
+              </div>
+            )}
+
+            {['super_admin', 'admin', 'hr_manager', 'manager'].includes(user?.role || '') && (
+              <select
+                value={departmentFilter}
+                onChange={e => handleDepartmentChange(e.target.value)}
+                className="form-input form-select"
+                style={{ width: '150px', padding: '6px 12px', fontSize: '13px' }}
+              >
+                <option value="all">All Departments</option>
+                {departments
+                  .filter((d: any) => user?.role !== 'manager' || d.id === user.departmentId)
+                  .map((d: any) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+              </select>
+            )}
+
+            <div className="filter-tabs" style={{ marginLeft: 'auto' }}>
               {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
-                <button key={s} className={`filter-tab ${statusFilter === s ? 'filter-tab-active' : ''}`} onClick={() => setStatusFilter(s)}>
+                <button
+                  key={s}
+                  className={`filter-tab ${statusFilter === s ? 'filter-tab-active' : ''}`}
+                  onClick={() => handleStatusChange(s)}
+                >
                   {s === 'all' ? 'All' : STATUS_STYLES[s]?.label || s}
                 </button>
               ))}
             </div>
+
             {hasPermission('export_reports') && (
-              <button className="btn-ghost-sm">
+              <button className="btn-ghost-sm" onClick={handleExportCSV}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Export CSV
               </button>
@@ -261,63 +424,181 @@ export default function AttendancePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((r: any) => (
-                    <tr key={r.id} className="table-row">
-                      <td>
-                        <div className="table-user-cell">
-                          <div className="table-avatar">{r.userAvatar}</div>
-                          <div>
-                            <p className="table-user-name">{r.userName}</p>
-                            <p className="table-user-email">{r.userEmail}</p>
+                  {isMultiDay ? (
+                    sortedDates.map((dateStr) => {
+                      const dateRecords = groupedRecords[dateStr] || [];
+                      const isCollapsed = !!collapsedDates[dateStr];
+                      const dateObj = new Date(dateStr);
+                      const formattedDate = isNaN(dateObj.getTime())
+                        ? dateStr
+                        : dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+                      return (
+                        <React.Fragment key={dateStr}>
+                          <tr
+                            onClick={() => toggleDateCollapse(dateStr)}
+                            className="table-row"
+                            style={{
+                              background: 'rgba(30,41,59,0.5)',
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                              fontWeight: 600,
+                            }}
+                          >
+                            <td colSpan={hasPermission('edit_attendance') ? 8 : 7} style={{ padding: '10px 16px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ transition: 'transform 0.2s', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
+                                  ▼
+                                </span>
+                                <span style={{ color: '#fff' }}>{formattedDate}</span>
+                                <span className="dept-chip" style={{ background: 'var(--color-bg-surface-hover)', color: 'var(--color-text-secondary)' }}>
+                                  {dateRecords.length} {dateRecords.length === 1 ? 'record' : 'records'}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+
+                          {!isCollapsed &&
+                            dateRecords.map((r: any) => (
+                              <tr key={r.id} className="table-row">
+                                <td>
+                                  <div className="table-user-cell">
+                                    <div className="table-avatar">{r.userAvatar}</div>
+                                    <div>
+                                      <p className="table-user-name">{r.userName}</p>
+                                      <p className="table-user-email">{r.userEmail}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td><span className="dept-chip">{r.userDepartment}</span></td>
+                                <td>
+                                  <span className="time-cell">{r.clockIn || '—'}</span>
+                                  {r.correctedBy && (
+                                    <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', textDecoration: 'line-through' }}>
+                                      {r.correctedIn || '—'}
+                                    </span>
+                                  )}
+                                </td>
+                                <td>
+                                  <span className="time-cell">{r.clockOut || '—'}</span>
+                                  {r.correctedBy && (
+                                    <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', textDecoration: 'line-through' }}>
+                                      {r.correctedOut || '—'}
+                                    </span>
+                                  )}
+                                </td>
+                                <td><span className="time-cell">{r.hoursWorked != null ? `${r.hoursWorked.toFixed(1)}h` : '—'}</span></td>
+                                <td><span className="method-cell">{METHOD_ICONS[r.method] || '⚙️'} {r.method}</span></td>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span className="status-pill" style={{ color: STATUS_STYLES[r.status]?.color, background: STATUS_STYLES[r.status]?.bg }}>
+                                      {STATUS_STYLES[r.status]?.label || r.status}
+                                    </span>
+                                    {r.correctedBy && (
+                                      <span
+                                        style={{ cursor: 'help', fontSize: '12px' }}
+                                        title={`Correction by: ${r.correctedBy}\nReason: ${r.correctionReason}`}
+                                      >
+                                        ✏️
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                {hasPermission('edit_attendance') && (
+                                  <td>
+                                    <button className="table-action-btn" onClick={() => handleEditClick(r)}>
+                                      Edit
+                                    </button>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    records.map((r: any) => (
+                      <tr key={r.id} className="table-row">
+                        <td>
+                          <div className="table-user-cell">
+                            <div className="table-avatar">{r.userAvatar}</div>
+                            <div>
+                              <p className="table-user-name">{r.userName}</p>
+                              <p className="table-user-email">{r.userEmail}</p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td><span className="dept-chip">{r.userDepartment}</span></td>
-                      <td>
-                        <span className="time-cell">{r.clockIn || '—'}</span>
-                        {r.correctedBy && (
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', textDecoration: 'line-through' }}>
-                            {r.correctedIn || '—'}
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <span className="time-cell">{r.clockOut || '—'}</span>
-                        {r.correctedBy && (
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', textDecoration: 'line-through' }}>
-                            {r.correctedOut || '—'}
-                          </span>
-                        )}
-                      </td>
-                      <td><span className="time-cell">{r.hoursWorked != null ? `${r.hoursWorked.toFixed(1)}h` : '—'}</span></td>
-                      <td><span className="method-cell">{METHOD_ICONS[r.method]} {r.method}</span></td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className="status-pill" style={{ color: STATUS_STYLES[r.status]?.color, background: STATUS_STYLES[r.status]?.bg }}>
-                            {STATUS_STYLES[r.status]?.label}
-                          </span>
+                        </td>
+                        <td><span className="dept-chip">{r.userDepartment}</span></td>
+                        <td>
+                          <span className="time-cell">{r.clockIn || '—'}</span>
                           {r.correctedBy && (
-                            <span
-                              style={{ cursor: 'help', fontSize: '12px' }}
-                              title={`Correction by: ${r.correctedBy}\nReason: ${r.correctionReason}`}
-                            >
-                              ✏️
+                            <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', textDecoration: 'line-through' }}>
+                              {r.correctedIn || '—'}
                             </span>
                           )}
-                        </div>
-                      </td>
-                      {hasPermission('edit_attendance') && (
-                        <td>
-                          <button className="table-action-btn" onClick={() => handleEditClick(r)}>
-                            Edit
-                          </button>
                         </td>
-                      )}
-                    </tr>
-                  ))}
-                  {records.length === 0 && (
-                    <tr><td colSpan={8} style={{ textAlign: 'center', padding: '32px', color: '#475569' }}>No records found</td></tr>
+                        <td>
+                          <span className="time-cell">{r.clockOut || '—'}</span>
+                          {r.correctedBy && (
+                            <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', textDecoration: 'line-through' }}>
+                              {r.correctedOut || '—'}
+                            </span>
+                          )}
+                        </td>
+                        <td><span className="time-cell">{r.hoursWorked != null ? `${r.hoursWorked.toFixed(1)}h` : '—'}</span></td>
+                        <td><span className="method-cell">{METHOD_ICONS[r.method] || '⚙️'} {r.method}</span></td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className="status-pill" style={{ color: STATUS_STYLES[r.status]?.color, background: STATUS_STYLES[r.status]?.bg }}>
+                              {STATUS_STYLES[r.status]?.label || r.status}
+                            </span>
+                            {r.correctedBy && (
+                              <span
+                                style={{ cursor: 'help', fontSize: '12px' }}
+                                title={`Correction by: ${r.correctedBy}\nReason: ${r.correctionReason}`}
+                              >
+                                ✏️
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        {hasPermission('edit_attendance') && (
+                          <td>
+                            <button className="table-action-btn" onClick={() => handleEditClick(r)}>
+                              Edit
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))
                   )}
+                  {records.length === 0 && (
+                    <tr>
+                      <td colSpan={hasPermission('edit_attendance') ? 8 : 7} style={{ textAlign: 'center', padding: '32px', color: '#475569' }}>
+                        No records found
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Summary Row */}
+                  {isMultiDay && records.length > 0 && (() => {
+                    let totalHoursWorked = 0;
+                    let lateDays = 0;
+                    records.forEach((r: any) => {
+                      if (r.hoursWorked) totalHoursWorked += r.hoursWorked;
+                      if (r.status === 'late') lateDays++;
+                    });
+                    const avgDailyHours = distinctDates.length > 0 ? (totalHoursWorked / distinctDates.length) : 0;
+
+                    return (
+                      <tr className="table-summary-row" style={{ background: 'rgba(99,102,241,0.08)', fontWeight: 'bold' }}>
+                        <td colSpan={2} style={{ color: 'var(--color-text-primary)' }}>Summary ({distinctDates.length} Days)</td>
+                        <td colSpan={2} style={{ color: 'var(--color-warning)' }}>Late Days: {lateDays}</td>
+                        <td style={{ color: 'var(--color-success)' }}>Total: {totalHoursWorked.toFixed(1)}h</td>
+                        <td colSpan={hasPermission('edit_attendance') ? 3 : 2} style={{ color: 'var(--color-info)' }}>Avg/Day: {avgDailyHours.toFixed(1)}h</td>
+                      </tr>
+                    );
+                  })()}
                 </tbody>
               </table>
             )}
@@ -331,7 +612,7 @@ export default function AttendancePage() {
             <ClockWidget />
           </div>
           <div className="chart-card">
-            <div className="chart-header"><h3 className="chart-title">Today Summary</h3></div>
+            <div className="chart-header"><h3 className="chart-title">Period Summary</h3></div>
             <div className="month-stats">
               {[
                 { label: 'Total Employees', value: stats?.totalEmployees ?? 0, color: '#6366f1' },
@@ -402,5 +683,20 @@ export default function AttendancePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AttendancePage() {
+  return (
+    <Suspense fallback={
+      <div className="page-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh', color: '#475569' }}>
+        <div style={{ textAlign: 'center' }}>
+          <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />
+          Loading Attendance Module...
+        </div>
+      </div>
+    }>
+      <AttendancePageContent />
+    </Suspense>
   );
 }

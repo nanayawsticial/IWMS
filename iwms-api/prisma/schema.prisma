@@ -28,6 +28,8 @@ model Organization {
   geofenceZones    GeoFenceZone[]
   weeklyReports    WeeklyReport[]
   notifications    Notification[]
+  overtimeRequests OvertimeRequest[]
+  publicHolidays   PublicHoliday[]
 }
 
 model Department {
@@ -80,6 +82,7 @@ model User {
   timeLogs        TaskTimeLog[]
   shifts          Shift[]
   reports         WeeklyReport[]
+  overtimeRequests OvertimeRequest[]
 
   @@index([departmentId])
   @@index([organizationId])
@@ -391,5 +394,38 @@ model Notification {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
+  @@index([organizationId])
+}
+
+model OvertimeRequest {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           String
+  regularHours   Float
+  overtimeHours  Float
+  reason         String?
+  status         String   @default("pending") // pending | approved | rejected
+  reviewedBy     String?
+  reviewNotes    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model PublicHoliday {
+  id             String   @id @default(cuid())
+  name           String
+  date           String   // YYYY-MM-DD
+  type           String   @default("public") // public | optional
+  createdAt      DateTime @default(now())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([date, organizationId])
   @@index([organizationId])
 }

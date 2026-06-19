@@ -97,11 +97,15 @@ app.register(require('./routes/tasks'),       { prefix: '/api/tasks' });
 app.register(require('./routes/attendance'),  { prefix: '/api/attendance' });
 app.register(require('./routes/leaves'),      { prefix: '/api/leaves' });
 app.register(require('./routes/shifts'),      { prefix: '/api/shifts' });
+app.register(require('./routes/overtime'),    { prefix: '/api/overtime' });
 app.register(require('./routes/notifications'),{ prefix: '/api/notifications' });
 app.register(require('./routes/devices'),     { prefix: '/api/devices' });
 app.register(require('./routes/geofence'),    { prefix: '/api/geofence' });
 app.register(require('./routes/reports'),     { prefix: '/api/reports' });
 app.register(require('./routes/organization'),{ prefix: '/api/organization' });
+app.register(require('./routes/holidays'),    { prefix: '/api/holidays' });
+app.register(require('./routes/management'),  { prefix: '/api/management' });
+
 
 app.get('/api/health', async (request, reply) => {
   const prisma = require('./lib/prisma');
@@ -199,7 +203,7 @@ async function start() {
       try {
         const { getAttendanceStats } = require('./lib/cron');
         const today = new Date().toISOString().split('T')[0];
-        const stats = await getAttendanceStats(today);
+        const stats = await getAttendanceStats(today, socket.data.user?.organizationId);
         socket.emit('stats:update', { stats, timestamp: new Date().toISOString() });
       } catch (err) {
         console.error('❌ Failed to fetch stats for socket client:', err.message);
