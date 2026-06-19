@@ -19,13 +19,32 @@ const COLUMNS: { id: Status; label: string; color: string }[] = [
   { id: 'done',        label: 'Done',        color: '#10b981' },
 ];
 
-const PRIORITY_COLORS: Record<Priority, string> = {
-  critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#64748b',
-};
-const PRIORITY_BG: Record<Priority, string> = {
-  critical: '#ef444420', high: '#f9731620', medium: '#f59e0b20', low: '#64748b20',
+const PRIORITY_CONFIG: Record<Priority, { color: string; bg: string; label: string }> = {
+  critical: { color: '#ef4444', bg: '#ef444415', label: 'Critical' },
+  high:     { color: '#f97316', bg: '#f9731615', label: 'High' },
+  medium:   { color: '#f59e0b', bg: '#f59e0b15', label: 'Medium' },
+  low:      { color: '#10b981', bg: '#10b98115', label: 'Low' },
 };
 
+// ── Avatar stack helper ───────────────────────────────────────────────
+function AvatarStack({ items }: { items: { label: string; color: string; bg: string; title?: string }[] }) {
+  return (
+    <div className="avatar-stack" style={{ paddingRight: 6 }}>
+      {items.map((item, idx) => (
+        <div
+          key={idx}
+          className="avatar-stack-item"
+          style={{ background: item.bg, color: item.color, zIndex: items.length - idx }}
+          title={item.title || item.label}
+        >
+          {item.label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Redesigned Task Card Content ──────────────────────────────────────
 function TaskCardContent({ task, currentUserId }: { task: any; currentUserId?: string }) {
   const daysLeft = Math.ceil((new Date(task.dueDate).getTime() - Date.now()) / 86400000);
   const isOverdue = daysLeft < 0;
@@ -33,6 +52,26 @@ function TaskCardContent({ task, currentUserId }: { task: any; currentUserId?: s
     ? Math.min(100, Math.round((task.loggedHours / task.estimatedHours) * 100))
     : 0;
   const needsMyReview = currentUserId && task.status === 'review' && task.reviewerId === currentUserId && task.assigneeId !== currentUserId;
+  const priority = task.priority as Priority;
+  const pConf = PRIORITY_CONFIG[priority] ?? PRIORITY_CONFIG.medium;
+
+  // Build avatar stack: assignee first, then reviewer if different
+  const avatarItems: { label: string; color: string; bg: string; title?: string }[] = [];
+  if (task.assigneeAvatar) {
+    const initials = typeof task.assigneeAvatar === 'string' && task.assigneeAvatar.length <= 2
+      ? task.assigneeAvatar
+      : (task.assigneeName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || '?');
+    avatarItems.push({ label: initials, color: '#818cf8', bg: 'rgba(99,102,241,0.18)', title: task.assigneeName });
+  }
+  if (task.reviewerName && task.reviewerName !== task.assigneeName) {
+    const rInitials = task.reviewerName.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || '?';
+    avatarItems.push({ label: rInitials, color: '#34d399', bg: 'rgba(16,185,129,0.18)', title: `Reviewer: ${task.reviewerName}` });
+  }
+
+  const dueLabel = isOverdue
+    ? `${Math.abs(daysLeft)}d overdue`
+    : daysLeft === 0 ? 'Due today'
+    : `${daysLeft}d left`;
 
   return (
     <>
@@ -41,47 +80,96 @@ function TaskCardContent({ task, currentUserId }: { task: any; currentUserId?: s
           <span>🔍</span> Needs Your Review
         </div>
       )}
-      <div className="task-card-header">
-        <span className="task-priority-tag" style={{ color: PRIORITY_COLORS[task.priority as Priority], background: PRIORITY_BG[task.priority as Priority] }}>
-          {task.priority}
+
+      {/* Top badge row: project outline badge + priority dot badge */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <span className="kanban-card-project-badge">
+          {task.projectName || 'General'}
         </span>
-        <span className="task-project">{task.projectName}</span>
+        <span
+          className="kanban-card-priority-badge"
+          style={{ color: pConf.color, background: pConf.bg }}
+        >
+          <span className="kanban-priority-dot" />
+          {pConf.label}
+        </span>
       </div>
-      <h4 className="task-card-title">{task.title}</h4>
-      <p className="task-card-desc">{task.description}</p>
-      {/* Assigner & Reviewer context — helps employee know who gave the task */}
-      {task.creatorName && task.creatorName !== task.assigneeName && (
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '6px' }}>
-          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 500 }}>Assigned by:</span>
-          <span style={{ fontSize: '10px', color: '#818cf8', fontWeight: 600 }}>{task.creatorName}</span>
-        </div>
+
+      {/* Task ID + Title */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+        <h4 className="task-card-title">{task.title}</h4>
+      </div>
+
+      {/* Description (optional, limited) */}
+      {task.description && (
+        <p className="task-card-desc" style={{ marginBottom: 0, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {task.description}
+        </p>
       )}
-      {task.reviewerName && task.reviewerName !== task.creatorName && (
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '6px' }}>
-          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 500 }}>Reviewer:</span>
-          <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>{task.reviewerName}</span>
-        </div>
-      )}
+
+      {/* Tags */}
       {task.tags?.length > 0 && (
         <div className="task-tags">
           {task.tags.map((tag: string) => <span key={tag} className="tag-chip">#{tag}</span>)}
         </div>
       )}
-      <div className="task-progress-row">
+
+      {/* Metadata strip: Est. Hours | Progress | Due */}
+      <div className="kanban-card-meta-strip">
+        <div className="kanban-meta-col">
+          <span className="kanban-meta-label">Est. Hrs</span>
+          <span className="kanban-meta-value">{task.estimatedHours || '—'}</span>
+        </div>
+        <div className="kanban-meta-col">
+          <span className="kanban-meta-label">Progress</span>
+          <span className="kanban-meta-value">{task.loggedHours || 0}/{task.estimatedHours || 0}h</span>
+        </div>
+        <div className="kanban-meta-col">
+          <span className="kanban-meta-label">Due</span>
+          <span className="kanban-meta-value" style={{ color: isOverdue ? '#ef4444' : daysLeft <= 2 ? '#f59e0b' : '#fff' }}>
+            {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+          </span>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="task-progress-row" style={{ marginTop: 0 }}>
         <span className="task-progress-label">{progress}%</span>
         <div className="task-progress-bar">
-          <div className="task-progress-fill" style={{ width: `${progress}%` }} />
+          <div
+            className="task-progress-fill"
+            style={{ width: `${progress}%`, background: isOverdue ? '#ef4444' : '#6366f1' }}
+          />
         </div>
-        <span className="task-hours">{task.loggedHours}h / {task.estimatedHours}h</span>
       </div>
-      <div className="task-card-footer">
-        <div className="task-assignee">
-          <div className="assignee-avatar">{task.assigneeAvatar}</div>
-          <span className="assignee-name">{task.assigneeName?.split(' ')[0]}</span>
+
+      {/* Footer row: stacked avatars + counters */}
+      <div className="kanban-card-footer-row">
+        <AvatarStack items={avatarItems} />
+        <div className="kanban-card-counters">
+          <span className={`kanban-counter-pair ${isOverdue ? '' : ''}`} title="Days remaining">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span style={{ color: isOverdue ? '#ef4444' : daysLeft <= 2 ? '#f59e0b' : undefined, fontWeight: isOverdue ? 700 : undefined }}>
+              {dueLabel}
+            </span>
+          </span>
+          {/* Comment count placeholder */}
+          <span className="kanban-counter-pair" title="Comments">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            {task.commentCount ?? 0}
+          </span>
+          {/* Attachment count placeholder */}
+          <span className="kanban-counter-pair" title="Attachments">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+            {task.attachmentCount ?? 0}
+          </span>
         </div>
-        <span className={`task-due ${isOverdue ? 'overdue' : daysLeft <= 2 ? 'urgent' : ''}`}>
-          {isOverdue ? `${Math.abs(daysLeft)}d overdue` : daysLeft === 0 ? 'Due today' : `${daysLeft}d left`}
-        </span>
       </div>
     </>
   );
@@ -139,7 +227,7 @@ export default function TasksPage() {
   const [activeDropStatus, setActiveDropStatus] = useState<Status | null>(null);
   const [dragPreview, setDragPreview] = useState<{ task: any; x: number; y: number; width: number } | null>(null);
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium' as Priority, dueDate: '', tags: '', assigneeId: '', reviewerId: '' });
-  
+
   const [otherDragging, setOtherDragging] = useState<{ userName: string; taskTitle: string } | null>(null);
   const { emit } = useSocket();
 
@@ -208,6 +296,11 @@ export default function TasksPage() {
       t.assigneeName?.toLowerCase().includes(searchQ.toLowerCase());
     return matchesPriority && matchesSearch;
   });
+
+  // Stats for the kanban stats bar
+  const totalCount = filtered.length;
+  const pendingCount = filtered.filter((t: any) => t.status !== 'done').length;
+  const completedCount = filtered.filter((t: any) => t.status === 'done').length;
 
   const getDropStatusFromPoint = (x: number, y: number): Status | null => {
     const element = document.elementFromPoint(x, y);
@@ -388,7 +481,7 @@ export default function TasksPage() {
           fontWeight: 500,
         }}>
           <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%', display: 'inline-block' }} />
-          <span>{otherDragging.userName} is moving task "{otherDragging.taskTitle}"...</span>
+          <span>{otherDragging.userName} is moving task &quot;{otherDragging.taskTitle}&quot;...</span>
         </div>
       )}
 
@@ -400,46 +493,72 @@ export default function TasksPage() {
       ) : viewMode === 'gantt' ? (
         <GanttChart tasks={filtered} onTaskClick={(id) => setActiveTaskId(id)} />
       ) : (
-        <div className="kanban-board">
-          {COLUMNS.map(col => {
-            const colTasks = filtered.filter((t: any) => t.status === col.id);
-            return (
-              <div
-                key={col.id}
-                data-status={col.id}
-                className={`kanban-column ${activeDropStatus === col.id ? 'kanban-column-drop-active' : ''}`}
-              >
-                <div className="kanban-col-header">
-                  <div className="kanban-col-title">
-                    <span className="kanban-col-dot" style={{ background: col.color }} />{col.label}
-                  </div>
-                  <span className="kanban-col-count" style={{ background: `${col.color}20`, color: col.color }}>{colTasks.length}</span>
-                </div>
-                <div className="kanban-cards">
-                  {colTasks.map((task: any) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      isDragging={draggingId === task.id}
-                      onPointerDown={handlePointerDown}
-                      onMouseDown={handleMouseDown}
-                      onClick={(event) => handleTaskClick(event, task.id)}
-                      currentUserId={user?.id}
-                    />
-                  ))}
-                  {colTasks.length === 0 && (
-                    <div className="kanban-empty">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.3">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-                      </svg>
-                      <p>Drop tasks here</p>
+        <>
+          {/* Kanban Stats Bar */}
+          <div className="kanban-stats-bar">
+            <div className="kanban-stat-item">
+              <span className="kanban-stat-label">Total Tasks</span>
+              <span className="kanban-stat-value">{totalCount}</span>
+            </div>
+            <div className="kanban-stat-item">
+              <span className="kanban-stat-label">Pending</span>
+              <span className="kanban-stat-value" style={{ color: '#f59e0b' }}>{pendingCount}</span>
+            </div>
+            <div className="kanban-stat-item">
+              <span className="kanban-stat-label">Completed</span>
+              <span className="kanban-stat-value" style={{ color: '#10b981' }}>{completedCount}</span>
+            </div>
+          </div>
+
+          <div className="kanban-board">
+            {COLUMNS.map(col => {
+              const colTasks = filtered.filter((t: any) => t.status === col.id);
+              return (
+                <div
+                  key={col.id}
+                  data-status={col.id}
+                  className={`kanban-column ${activeDropStatus === col.id ? 'kanban-column-drop-active' : ''}`}
+                >
+                  {/* Redesigned column header: ring indicator + name + count + menu */}
+                  <div className="kanban-col-header">
+                    <div className="kanban-col-title">
+                      <span className="kanban-col-ring" style={{ color: col.color }} />
+                      {col.label}
                     </div>
-                  )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="kanban-col-count" style={{ background: `${col.color}20`, color: col.color }}>
+                        {colTasks.length}
+                      </span>
+                      <button className="kanban-col-menu-btn" title="Column options">⋯</button>
+                    </div>
+                  </div>
+
+                  <div className="kanban-cards">
+                    {colTasks.map((task: any) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        isDragging={draggingId === task.id}
+                        onPointerDown={handlePointerDown}
+                        onMouseDown={handleMouseDown}
+                        onClick={(event) => handleTaskClick(event, task.id)}
+                        currentUserId={user?.id}
+                      />
+                    ))}
+                    {colTasks.length === 0 && (
+                      <div className="kanban-empty">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.3">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                        <p>Drop tasks here</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {dragPreview && (

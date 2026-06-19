@@ -6,6 +6,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import Link from 'next/link';
 import { attendanceApi, tasksApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSocketEvent } from '@/hooks/useSocket';
@@ -44,6 +45,55 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
+// ── Welcome Banner ──────────────────────────────────────────────────
+function WelcomeBanner({
+  user,
+  pendingLeave,
+  tasksDue,
+  onCreateTask,
+}: {
+  user: any;
+  pendingLeave: number;
+  tasksDue: number;
+  onCreateTask?: () => void;
+}) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const initials = user?.name
+    ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : '?';
+
+  return (
+    <div className="welcome-banner">
+      <div className="welcome-banner-left">
+        <div className="welcome-avatar">{initials}</div>
+        <div className="welcome-text">
+          <h2>{greeting}, {user?.name?.split(' ')[0]} 👋</h2>
+          <p>
+            You have{' '}
+            <strong>{pendingLeave}</strong> pending leave request{pendingLeave !== 1 ? 's' : ''} &amp;{' '}
+            <strong>{tasksDue}</strong> task{tasksDue !== 1 ? 's' : ''} in progress today.
+          </p>
+        </div>
+      </div>
+      <div className="welcome-actions">
+        <Link href="/attendance" className="welcome-btn-secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          View Attendance
+        </Link>
+        <button className="welcome-btn-primary" onClick={onCreateTask}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Create Task
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const today = new Date().toISOString().split('T')[0];
@@ -72,7 +122,6 @@ export default function DashboardPage() {
 
   // Socket updates for clock-in (Activity Feed + Stats)
   useSocketEvent<any>('attendance:clockIn', (payload) => {
-    // Highlight this user's item
     setNewArrivals((prev) => ({ ...prev, [payload.userId]: true }));
     setTimeout(() => {
       setNewArrivals((prev) => {
@@ -82,7 +131,6 @@ export default function DashboardPage() {
       });
     }, 3000);
 
-    // Optimistically update recent attendance list
     queryClient.setQueryData<any[]>(['attendance', today], (prev = []) => {
       const exists = prev.some((item) => item.userId === payload.userId);
       if (exists) {
@@ -91,7 +139,6 @@ export default function DashboardPage() {
       return [payload, ...prev];
     });
 
-    // Refresh today's summary stats
     queryClient.invalidateQueries({ queryKey: ['attendance-stats', today] });
   });
 
@@ -113,10 +160,10 @@ export default function DashboardPage() {
     queryClient.invalidateQueries({ queryKey: ['attendance-stats', today] });
   });
 
-
   const doneTasks = tasks.filter((t: any) => t.status === 'done').length;
   const inProgressTasks = tasks.filter((t: any) => t.status === 'in_progress').length;
   const totalTasks = tasks.length;
+  const pendingLeaveCount = (stats?.onLeave ?? 0);
 
   const taskStatusCounts = [
     { name: 'Done',        value: tasks.filter((t: any) => t.status === 'done').length,        color: '#10b981' },
@@ -133,6 +180,7 @@ export default function DashboardPage() {
       total: stats?.totalEmployees ?? '—',
       pct: stats?.attendanceRate ?? 0,
       color: '#10b981', glow: '0 0 20px #10b98140',
+      href: '/attendance', hrefLabel: 'View Attendance',
       icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>,
     },
     {
@@ -141,6 +189,7 @@ export default function DashboardPage() {
       total: totalTasks,
       pct: totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0,
       color: '#6366f1', glow: '0 0 20px #6366f140',
+      href: '/tasks', hrefLabel: 'View Tasks',
       icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>,
     },
     {
@@ -149,6 +198,7 @@ export default function DashboardPage() {
       total: totalTasks,
       pct: totalTasks > 0 ? Math.round((inProgressTasks / totalTasks) * 100) : 0,
       color: '#f59e0b', glow: '0 0 20px #f59e0b40',
+      href: '/tasks', hrefLabel: 'View Board',
       icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
     },
     {
@@ -157,6 +207,7 @@ export default function DashboardPage() {
       total: stats?.totalEmployees ?? '—',
       pct: stats?.totalEmployees ? Math.round(((stats.onLeave + stats.absent) / stats.totalEmployees) * 100) : 0,
       color: '#8b5cf6', glow: '0 0 20px #8b5cf640',
+      href: '/attendance', hrefLabel: 'View Details',
       icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
     },
   ];
@@ -167,15 +218,13 @@ export default function DashboardPage() {
 
   return (
     <div className="page-content">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Good morning, {user?.name.split(' ')[0]} 👋</h1>
-          <p className="page-subtitle">Here&rsquo;s what&rsquo;s happening across your organization today.</p>
-        </div>
-        <div className="page-date">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        </div>
-      </div>
+      {/* Welcome Banner */}
+      <WelcomeBanner
+        user={user}
+        pendingLeave={pendingLeaveCount}
+        tasksDue={inProgressTasks}
+        onCreateTask={() => { window.location.href = '/tasks'; }}
+      />
 
       {/* KPI Cards */}
       <div className="kpi-grid">
@@ -190,6 +239,10 @@ export default function DashboardPage() {
             <div className="kpi-bar">
               <div className="kpi-bar-fill" style={{ width: `${card.pct}%`, background: card.color }} />
             </div>
+            <Link href={card.href} className="kpi-link" style={{ '--kpi-color': card.color } as React.CSSProperties}>
+              {card.hrefLabel}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </Link>
           </div>
         ))}
       </div>
@@ -267,29 +320,45 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Live Activity Feed — from real attendance records */}
+        {/* Enhanced Live Activity Feed — Clock-In/Out style */}
         <div className="chart-card activity-card">
           <div className="chart-header">
-            <h3 className="chart-title">Live Activity Feed</h3>
+            <h3 className="chart-title">Clock-In / Out</h3>
             <span className="live-badge"><span className="live-dot" />LIVE</span>
           </div>
           <div className="activity-list">
-            {recentAttendance.slice(0, 5).map((a: any) => {
-              const color = a.status === 'present' ? '#10b981' : a.status === 'late' ? '#f59e0b' : a.status === 'on_leave' ? '#8b5cf6' : '#ef4444';
-              const action = a.status === 'present' ? 'Clocked in' : a.status === 'late' ? 'Clocked in (Late)' : a.status === 'clock_out' ? 'Clocked out' : a.status === 'on_leave' ? 'On Leave' : 'Absent';
-              const displayAction = a.clockOut && action === 'Clocked in' ? `Clocked out (${a.clockOut})` : action;
-              const displayColor = a.clockOut && action === 'Clocked in' ? '#6366f1' : color;
-              
+            {recentAttendance.slice(0, 6).map((a: any) => {
+              const isClockedOut = !!a.clockOut;
+              const isPresent = a.status === 'present';
+              const isLate = a.status === 'late';
+              const isLeave = a.status === 'on_leave';
+
+              const pillColor = isClockedOut
+                ? { bg: 'rgba(99,102,241,0.12)', text: '#818cf8' }
+                : isPresent
+                ? { bg: 'rgba(16,185,129,0.12)', text: '#10b981' }
+                : isLate
+                ? { bg: 'rgba(245,158,11,0.12)', text: '#f59e0b' }
+                : isLeave
+                ? { bg: 'rgba(139,92,246,0.12)', text: '#8b5cf6' }
+                : { bg: 'rgba(239,68,68,0.12)', text: '#ef4444' };
+
+              const timeDisplay = isClockedOut ? a.clockOut : (a.clockIn || '');
+              const statusLabel = isClockedOut ? 'Clocked out' : isPresent ? 'Clocked in' : isLate ? 'Late' : isLeave ? 'On Leave' : 'Absent';
+
               return (
                 <div key={a.id || a.userId} className={`activity-item ${newArrivals[a.userId] ? 'activity-item-new' : ''}`}>
-                  <div className="activity-avatar" style={{ background: `${displayColor}20`, border: `2px solid ${displayColor}50`, color: displayColor }}>
+                  <div className="activity-avatar" style={{ background: pillColor.bg, border: `2px solid ${pillColor.text}50`, color: pillColor.text }}>
                     {a.userAvatar}
                   </div>
                   <div className="activity-info">
                     <p className="activity-name">{a.userName}</p>
-                    <p className="activity-action" style={{ color: displayColor }}>{displayAction}</p>
+                    {a.userRole && <p className="activity-role">{a.userRole}</p>}
                   </div>
-                  <span className="activity-time">{a.clockIn || 'All day'}</span>
+                  <div className="activity-pill" style={{ background: pillColor.bg, color: pillColor.text }}>
+                    <span className="activity-pill-dot" />
+                    {statusLabel}{timeDisplay ? ` · ${timeDisplay}` : ''}
+                  </div>
                 </div>
               );
             })}
