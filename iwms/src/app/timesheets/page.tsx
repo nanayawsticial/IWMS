@@ -161,16 +161,16 @@ export default function TimesheetsPage() {
             Loading Timesheets...
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
+          <div className="table-scroll">
+            <table style={{ tableLayout: 'auto', minWidth: 900 }} className="data-table">
+              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)' }}>
                 <tr>
-                  <th style={{ minWidth: '220px' }}>Employee</th>
+                  <th style={{ minWidth: 200, textAlign: 'left', padding: '10px 12px' }}>Employee</th>
                   {DAY_NAMES.map(day => (
                     <th key={day} style={{ textAlign: 'center', width: '90px' }}>{day}</th>
                   ))}
                   <th style={{ textAlign: 'center', width: '110px' }}>Total Hrs</th>
-                  <th style={{ textAlign: 'center', width: '100px' }}>OT Hrs</th>
+                  <th style={{ textAlign: 'center', width: '100px', minWidth: 70 }}>OT Hrs</th>
                 </tr>
               </thead>
               <tbody>
@@ -192,49 +192,24 @@ export default function TimesheetsPage() {
                     
                     {row.days.map((day: any, idx: number) => {
                       const hours = day.hoursWorked || 0;
-                      let cellStyle: React.CSSProperties = {
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        padding: '12px 6px',
-                        transition: 'all 0.15s ease',
-                      };
-                      let badgeStyle: React.CSSProperties = {
-                        display: 'inline-block',
-                        padding: '4px 8px',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        minWidth: '50px',
-                      };
-
-                      if (hours >= 8) {
-                        // Full day
-                        badgeStyle.background = 'rgba(16, 185, 129, 0.15)';
-                        badgeStyle.color = '#10b981';
-                      } else if (hours > 0 && hours < 8) {
-                        // Partial day
-                        badgeStyle.background = 'rgba(245, 158, 11, 0.15)';
-                        badgeStyle.color = '#f59e0b';
-                      } else if (day.status === 'absent') {
-                        // Absent
-                        badgeStyle.background = 'rgba(239, 68, 68, 0.15)';
-                        badgeStyle.color = '#ef4444';
-                      } else {
-                        // Off day / other
-                        badgeStyle.background = '#1e293b';
-                        badgeStyle.color = '#64748b';
-                      }
-
+                      const hasHours = hours > 0;
+                      
                       return (
                         <td
                           key={idx}
-                          style={cellStyle}
                           onClick={() => setSelectedCell({ employeeName: row.user.name, day })}
                           className="timesheet-cell-hover"
+                          style={{
+                            background: hasHours ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
+                            color: hasHours ? '#22c55e' : '#ef4444',
+                            textAlign: 'center',
+                            fontSize: 12,
+                            fontWeight: hasHours ? 500 : undefined,
+                            padding: '8px 4px',
+                            cursor: 'pointer',
+                          }}
                         >
-                          <span style={badgeStyle}>
-                            {hours > 0 ? `${hours.toFixed(1)}h` : day.status === 'on_leave' ? 'Leave' : '—'}
-                          </span>
+                          {hasHours ? `${hours.toFixed(1)}h` : day.status === 'on_leave' ? 'Leave' : '—'}
                         </td>
                       );
                     })}

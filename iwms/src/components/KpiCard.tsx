@@ -1,102 +1,95 @@
-import React from 'react';
-import Link from 'next/link';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import React from 'react'
+import { LucideIcon } from 'lucide-react'
 
 interface KpiCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ComponentType<{ size?: number; className?: string }> | React.ReactNode;
-  iconBg?: string; // CSS color value or tailwind class
-  iconColor?: string; // CSS color value or tailwind class
-  trend?: {
-    value: string | number;
-    isPositive: boolean;
-    label?: string;
-  };
-  link?: {
-    href: string;
-    label: string;
-  };
-  className?: string;
+  icon: LucideIcon
+  iconColor: string
+  iconBg: string
+  label: string
+  value: string | number
+  subLabel?: string
+  subValue?: string | number
+  subColor?: string
+  linkLabel?: string
+  onLinkClick?: () => void
 }
 
-export default function KpiCard({
-  title,
-  value,
+export function KpiCard({
   icon: Icon,
-  iconBg = 'var(--accent-soft)',
-  iconColor = 'var(--accent)',
-  trend,
-  link,
-  className = ''
+  iconColor,
+  iconBg,
+  label,
+  value,
+  subLabel,
+  subValue,
+  subColor,
+  linkLabel,
+  onLinkClick,
 }: KpiCardProps) {
-  // Check if iconBg/iconColor should be applied via styles or classes
-  const isStyleBg = iconBg.startsWith('var(') || iconBg.startsWith('#') || iconBg.startsWith('rgba') || iconBg.startsWith('hsla');
-  const isStyleColor = iconColor.startsWith('var(') || iconColor.startsWith('#') || iconColor.startsWith('rgb');
-
-  const renderIcon = () => {
-    if (!Icon) return null;
-    if (React.isValidElement(Icon)) {
-      return Icon;
-    }
-    const Component = Icon as React.ComponentType<{ size?: number; className?: string }>;
-    return <Component size={20} />;
-  };
-
   return (
-    <div className={`card flex flex-col justify-between transition-transform hover:-translate-y-0.5 duration-200 ${className}`}>
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <span className="label block text-[var(--text-3)] text-xs font-medium tracking-wide uppercase">
-            {title}
-          </span>
-          <span className="value block text-2xl font-bold text-[var(--text-1)]">
-            {value}
-          </span>
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        border: '0.5px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '1rem 1.25rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p className="kpi-label">{label}</p>
+          <p className="kpi-value">{value}</p>
+          {subLabel && (
+            <p className="kpi-sub">
+              {subValue !== undefined && (
+                <span style={{ color: subColor || 'var(--text-2)', marginRight: '4px' }}>{subValue}</span>
+              )}
+              {subLabel}
+            </p>
+          )}
         </div>
         <div
-          className={`kpi-icon ${!isStyleBg ? iconBg : ''} ${!isStyleColor ? iconColor : ''}`}
           style={{
-            backgroundColor: isStyleBg ? iconBg : undefined,
-            color: isStyleColor ? iconColor : undefined
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            background: iconBg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            marginLeft: 12,
           }}
         >
-          {renderIcon()}
+          <Icon size={20} color={iconColor} />
         </div>
       </div>
-
-      {(trend || link) && (
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--border)]">
-          {trend ? (
-            <div className="flex items-center gap-1.5">
-              <span
-                className={`badge ${
-                  trend.isPositive ? 'badge-green' : 'badge-red'
-                }`}
-              >
-                {trend.isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                {trend.value}
-              </span>
-              {trend.label && (
-                <span className="text-[var(--text-3)] text-xs font-normal">
-                  {trend.label}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div />
-          )}
-
-          {link && (
-            <Link
-              href={link.href}
-              className="text-xs font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors inline-flex items-center gap-0.5"
-            >
-              {link.label}
-            </Link>
-          )}
-        </div>
+      {linkLabel && (
+        <button
+          onClick={onLinkClick}
+          style={{
+            marginTop: '0.75rem',
+            paddingTop: '0.75rem',
+            borderTop: '0.5px solid var(--border)',
+            background: 'none',
+            border: 'none',
+            color: 'var(--accent)',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            cursor: 'pointer',
+            textAlign: 'left',
+            padding: '0.75rem 0 0 0',
+            width: '100%',
+          }}
+        >
+          {linkLabel} →
+        </button>
       )}
     </div>
-  );
+  )
 }
+
+export default KpiCard;

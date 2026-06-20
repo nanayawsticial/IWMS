@@ -18,6 +18,13 @@ export default function OvertimePage() {
   const [reviewingRequest, setReviewingRequest] = useState<any>(null);
   const [actionType, setActionType] = useState<'approved' | 'rejected' | null>(null);
 
+  // Log Overtime modal states
+  const [showModal, setShowModal] = useState(false);
+  const [logDate, setLogDate] = useState('');
+  const [logRegularHours, setLogRegularHours] = useState(8);
+  const [logOvertimeHours, setLogOvertimeHours] = useState(0);
+  const [logReason, setLogReason] = useState('');
+
   // Queries
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['overtime-requests'],
@@ -36,7 +43,33 @@ export default function OvertimePage() {
     },
   });
 
+  const createOvertime = useMutation({
+    mutationFn: (data: any) => overtimeApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['overtime-requests'] });
+      setShowModal(false);
+      setLogDate('');
+      setLogRegularHours(8);
+      setLogOvertimeHours(0);
+      setLogReason('');
+    },
+  });
+
+  const handleLogSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    createOvertime.mutate({
+      userId: user.id,
+      date: logDate,
+      regularHours: Number(logRegularHours),
+      overtimeHours: Number(logOvertimeHours),
+      reason: logReason,
+    });
+  };
+
   const isManagement = ['super_admin', 'admin', 'hr_manager', 'manager'].includes(user?.role || '');
+
+  const canLogOvertime = !isManagement;
 
   // Calculate statistics
   const currentMonthStr = new Date().toISOString().substring(0, 7); // YYYY-MM
@@ -66,11 +99,16 @@ export default function OvertimePage() {
 
   return (
     <div className="page-content">
-      <div className="page-header">
-        <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <div className="page-header" style={{ marginBottom: 0 }}>
           <h1 className="page-title">Overtime Management</h1>
           <p className="page-subtitle">Track, review, and approve employee overtime requests</p>
         </div>
+        {canLogOvertime && (
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            + Log Overtime
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -81,7 +119,7 @@ export default function OvertimePage() {
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="attendance-stats" style={{ marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+          <div className="kpi-grid-4" style={{ marginBottom: '24px' }}>
             <div className="att-stat-card" style={{ '--stat-color': '#6366f1' } as React.CSSProperties}>
               <span className="att-stat-value" style={{ color: '#6366f1' }}>{totalOtHoursMonth.toFixed(1)}h</span>
               <span className="att-stat-label">OT Hours This Month</span>
@@ -185,8 +223,8 @@ export default function OvertimePage() {
                   ))}
                   {requests.length === 0 && (
                     <tr>
-                      <td colSpan={isManagement ? 7 : 6} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
-                        No overtime requests recorded.
+                      <td colSpan={isManagement ? 7 : 6}>
+                        <div className="empty-state">No overtime requests recorded</div>
                       </td>
                     </tr>
                   )}
@@ -291,6 +329,167 @@ export default function OvertimePage() {
                   }}
                 >
                   {reviewOvertime.isPending ? 'Saving...' : actionType === 'approved' ? 'Approve' : 'Reject'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Log Overtime Modal */}
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            style={{
+              background: '#0f172a',
+              border: '1px solid #334155',
+              borderRadius: '12px',
+              padding: '24px',
+              width: '100%',
+              maxWidth: '420px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', color: '#f8fafc', fontWeight: 600 }}>Log Overtime</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer', padding: '4px' }}
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleLogSubmit}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                <div>
+                  <label htmlFor="logDate" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                    Date *
+                  </label>
+                  <input
+                    id="logDate"
+                    type="date"
+                    required
+                    value={logDate}
+                    onChange={e => setLogDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: '#0f172a',
+                      border: '1px solid #334155',
+                      borderRadius: '6px',
+                      color: '#f8fafc',
+                      padding: '10px',
+                      fontSize: '13px',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label htmlFor="regHours" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                      Regular Hours *
+                    </label>
+                    <input
+                      id="regHours"
+                      type="number"
+                      step="0.5"
+                      required
+                      value={logRegularHours}
+                      onChange={e => setLogRegularHours(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        background: '#0f172a',
+                        border: '1px solid #334155',
+                        borderRadius: '6px',
+                        color: '#f8fafc',
+                        padding: '10px',
+                        fontSize: '13px',
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label htmlFor="otHours" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                      Overtime Hours *
+                    </label>
+                    <input
+                      id="otHours"
+                      type="number"
+                      step="0.5"
+                      required
+                      value={logOvertimeHours}
+                      onChange={e => setLogOvertimeHours(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        background: '#0f172a',
+                        border: '1px solid #334155',
+                        borderRadius: '6px',
+                        color: '#f8fafc',
+                        padding: '10px',
+                        fontSize: '13px',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="logReason" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                    Reason / Description
+                  </label>
+                  <textarea
+                    id="logReason"
+                    value={logReason}
+                    onChange={e => setLogReason(e.target.value)}
+                    placeholder="e.g. Worked extra hours to complete sprint tasks."
+                    style={{
+                      width: '100%',
+                      background: '#0f172a',
+                      border: '1px solid #334155',
+                      borderRadius: '6px',
+                      color: '#f8fafc',
+                      padding: '10px',
+                      fontSize: '13px',
+                      height: '80px',
+                      resize: 'none',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="btn-ghost-sm"
+                  style={{ padding: '8px 16px', background: '#334155', color: '#f8fafc', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createOvertime.isPending}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'var(--accent)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  {createOvertime.isPending ? 'Saving...' : 'Submit'}
                 </button>
               </div>
             </form>

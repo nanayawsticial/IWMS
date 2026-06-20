@@ -19,13 +19,42 @@ const DEPT_COLORS: Record<string, string> = {
   HR: '#f59e0b', Marketing: '#10b981', Finance: '#06b6d4',
 };
 
+function getAvatarColor(name: string): { bg: string; color: string } {
+  const initial = name.trim().toUpperCase()[0] || 'A'
+  const code = initial.charCodeAt(0)
+  const colors = [
+    { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },  // A-D
+    { bg: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },  // E-H
+    { bg: 'rgba(20,184,166,0.15)', color: '#14b8a6' },  // I-L
+    { bg: 'rgba(249,115,22,0.15)', color: '#f97316' },  // M-P
+    { bg: 'rgba(34,197,94,0.15)',  color: '#22c55e' },  // Q-T
+    { bg: 'rgba(236,72,153,0.15)', color: '#ec4899' },  // U-Z
+  ]
+  return colors[Math.floor((code - 65) / 4.33)] || colors[0]
+}
+
 function UserCard({ user }: { user: any }) {
   const deptColor = DEPT_COLORS[user.department] || '#6366f1';
+  const avatarColors = getAvatarColor(user.name);
   return (
-    <div className="user-card-grid">
+    <div
+      className="user-card-grid"
+      style={{
+        cursor: 'pointer',
+        transition: 'border-color 0.15s, transform 0.15s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--accent)'
+        e.currentTarget.style.transform = 'translateY(-2px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border)'
+        e.currentTarget.style.transform = 'translateY(0)'
+      }}
+    >
       <Link href={`/team/${user.id}`} style={{ textDecoration: 'none' }}>
-        <div className="user-card-avatar" style={{ background: `${deptColor}20`, border: `2px solid ${deptColor}40`, margin: '0 auto 12px' }}>
-          <span style={{ color: deptColor, fontSize: '18px', fontWeight: 700 }}>{user.avatar}</span>
+        <div className="user-card-avatar" style={{ background: avatarColors.bg, border: `2px solid ${avatarColors.color}40`, margin: '0 auto 12px' }}>
+          <span style={{ color: avatarColors.color, fontSize: '18px', fontWeight: 700 }}>{user.avatar}</span>
           <span className={`user-status-dot ${user.status === 'active' ? 'status-active' : 'status-inactive'}`} />
         </div>
       </Link>
@@ -51,7 +80,7 @@ export default function TeamPage() {
   const { hasPermission } = useAuth();
   const queryClient = useQueryClient();
   const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [deptFilter, setDeptFilter] = useState('all');
+  const [activeDept, setActiveDept] = useState('all');
   const [searchQ, setSearchQ] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', department: 'Engineering', position: '', role: 'employee', password: 'Welcome123!' });
@@ -76,7 +105,7 @@ export default function TeamPage() {
   });
 
   const filtered = users.filter((u: any) => {
-    const matchDept = deptFilter === 'all' || u.department === deptFilter;
+    const matchDept = activeDept === 'all' || u.departmentId === activeDept || (departments.find((d: any) => d.id === activeDept)?.name === u.department);
     const matchSearch = u.name.toLowerCase().includes(searchQ.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQ.toLowerCase()) ||
       u.position.toLowerCase().includes(searchQ.toLowerCase());
@@ -126,13 +155,22 @@ export default function TeamPage() {
 
       {/* Department filters */}
       <div className="dept-stats-row">
-        {departments.map((d: any) => (
-          <button key={d.id} className={`dept-stat-chip ${deptFilter === d.name ? 'dept-active' : ''}`}
-            style={{ '--dept-color': d.color } as React.CSSProperties}
-            onClick={() => setDeptFilter(deptFilter === d.name ? 'all' : d.name)}>
-            <span className="dept-dot" style={{ background: d.color }} />
-            <span className="dept-chip-name">{d.name}</span>
-            <span className="dept-chip-count">{d.headcount}</span>
+        {departments.map((dept: any) => (
+          <button key={dept.id} className="dept-stat-chip"
+            style={{
+              background: activeDept === dept.id ? 'var(--accent)' : 'var(--bg-elevated)',
+              color: activeDept === dept.id ? 'white' : 'var(--text-2)',
+              border: 'none',
+              padding: '5px 14px',
+              borderRadius: 9999,
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+            onClick={() => setActiveDept(activeDept === dept.id ? 'all' : dept.id)}>
+            <span className="dept-dot" style={{ background: dept.color }} />
+            <span className="dept-chip-name">{dept.name}</span>
+            <span className="dept-chip-count">{dept.headcount}</span>
           </button>
         ))}
       </div>
@@ -150,28 +188,31 @@ export default function TeamPage() {
               <tr><th>Employee</th><th>Position</th><th>Department</th><th>Role</th><th>Joined</th><th>Status</th></tr>
             </thead>
             <tbody>
-              {filtered.map((u: any) => (
-                <tr key={u.id} className="table-row">
-                  <td>
-                    <div className="table-user-cell">
-                      <Link href={`/team/${u.id}`} style={{ textDecoration: 'none' }}>
-                        <div className="table-avatar" style={{ color: DEPT_COLORS[u.department] || '#6366f1' }}>{u.avatar}</div>
-                      </Link>
-                      <div>
+              {filtered.map((u: any) => {
+                const avatarColors = getAvatarColor(u.name);
+                return (
+                  <tr key={u.id} className="table-row">
+                    <td>
+                      <div className="table-user-cell">
                         <Link href={`/team/${u.id}`} style={{ textDecoration: 'none' }}>
-                          <p className="table-user-name" style={{ margin: 0 }}>{u.name}</p>
+                          <div className="table-avatar" style={{ background: avatarColors.bg, color: avatarColors.color }}>{u.avatar}</div>
                         </Link>
-                        <p className="table-user-email">{u.email}</p>
+                        <div>
+                          <Link href={`/team/${u.id}`} style={{ textDecoration: 'none' }}>
+                            <p className="table-user-name" style={{ margin: 0 }}>{u.name}</p>
+                          </Link>
+                          <p className="table-user-email">{u.email}</p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td><span className="table-text">{u.position}</span></td>
-                  <td><span className="dept-badge" style={{ background: `${DEPT_COLORS[u.department]}20`, color: DEPT_COLORS[u.department] }}>{u.department}</span></td>
-                  <td><span className="role-badge" style={{ background: `${ROLE_COLORS[u.role]}20`, color: ROLE_COLORS[u.role] }}>{ROLE_LABELS[u.role]}</span></td>
-                  <td><span className="table-text">{new Date(u.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span></td>
-                  <td><span className={`status-pill ${u.status === 'active' ? 'status-present' : 'status-absent'}`}>{u.status}</span></td>
-                </tr>
-              ))}
+                    </td>
+                    <td><span className="table-text">{u.position}</span></td>
+                    <td><span className="dept-badge" style={{ background: `${DEPT_COLORS[u.department]}20`, color: DEPT_COLORS[u.department] }}>{u.department}</span></td>
+                    <td><span className="role-badge" style={{ background: `${ROLE_COLORS[u.role]}20`, color: ROLE_COLORS[u.role] }}>{ROLE_LABELS[u.role]}</span></td>
+                    <td><span className="table-text">{new Date(u.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span></td>
+                    <td><span className={`status-pill ${u.status === 'active' ? 'status-present' : 'status-absent'}`}>{u.status}</span></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

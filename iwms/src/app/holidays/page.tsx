@@ -130,6 +130,18 @@ export default function HolidaysPage() {
     }
   };
 
+  const handleCellClick = (date: Date) => {
+    if (!isAdmin) return;
+    const formatted = formatDateStr(date);
+    const dayHolidays = getHolidaysForDate(date);
+    if (dayHolidays.length === 0) {
+      setHolidayDate(formatted);
+      setShowAddModal(true);
+    } else {
+      setShowDeleteModal(dayHolidays[0]);
+    }
+  };
+
   const getHolidaysForDate = (date: Date) => {
     const dStr = formatDateStr(date);
     return holidays.filter((h: any) => h.date === dStr);
@@ -186,15 +198,15 @@ export default function HolidaysPage() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
-        <div className="flex items-center gap-4 text-xs text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 height-3 h-3 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600"></div>
-            <span>Public Holiday</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 height-3 h-3 rounded-full bg-slate-800 border border-slate-700"></div>
-            <span>Work Day</span>
-          </div>
+        <div className="flex items-center gap-4">
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, opacity: 0.7 }}>
+            <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'linear-gradient(to right, #7c3aed, #4f46e5)', display: 'inline-block' }} />
+            Public Holiday
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, opacity: 0.7 }}>
+            <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #94a3b8', display: 'inline-block' }} />
+            Work Day
+          </span>
         </div>
       </div>
 
@@ -217,17 +229,19 @@ export default function HolidaysPage() {
             return (
               <div
                 key={index}
-                className={`p-2 flex flex-col justify-between transition-colors min-h-[90px] relative ${
+                style={{
+                  height: 80,
+                  verticalAlign: 'top',
+                  padding: '6px 8px',
+                  border: '0.5px solid var(--border)',
+                  cursor: 'pointer',
+                }}
+                className={`flex flex-col justify-between transition-colors relative ${
                   dayObj.isCurrentMonth ? 'bg-transparent text-slate-100' : 'bg-slate-950/20 text-slate-500'
                 } ${
-                  isAdmin && dayObj.isCurrentMonth ? 'hover:bg-slate-800/30 cursor-pointer' : ''
+                  isAdmin && dayObj.isCurrentMonth ? 'hover:bg-slate-800/30' : ''
                 }`}
-                onClick={() => {
-                  if (isAdmin && dayObj.isCurrentMonth && dayHolidays.length === 0) {
-                    setHolidayDate(formatted);
-                    setShowAddModal(true);
-                  }
-                }}
+                onClick={() => handleCellClick(dayObj.date)}
               >
                 {/* Day Number */}
                 <div className="flex items-center justify-between">
@@ -263,6 +277,9 @@ export default function HolidaysPage() {
           })}
         </div>
       </div>
+      <p style={{ fontSize: '0.75rem', opacity: 0.4, marginTop: 8, textAlign: 'center' }}>
+        Click any date to add a public holiday
+      </p>
 
       {/* Add Holiday Modal */}
       {showAddModal && (

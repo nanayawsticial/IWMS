@@ -178,7 +178,7 @@ export default function PresencePage() {
                 {k.value}
               </span>
               <span className="label text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider mt-1.5">
-                {k.label.split(' ')[0]}
+                {k.label}
               </span>
             </button>
           );
@@ -208,9 +208,18 @@ export default function PresencePage() {
               <button
                 key={dept}
                 onClick={() => setActiveDept(dept)}
-                className={`px-3 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer capitalize whitespace-nowrap ${
-                  activeDept === dept ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
-                }`}
+                className="capitalize whitespace-nowrap"
+                style={{
+                  background: activeDept === dept ? 'var(--accent)' : 'transparent',
+                  color: activeDept === dept ? 'white' : 'var(--text-2)',
+                  border: '0.5px solid',
+                  borderColor: activeDept === dept ? 'var(--accent)' : 'var(--border)',
+                  padding: '5px 14px',
+                  borderRadius: 9999,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
               >
                 {dept === 'all' ? 'All Departments' : dept}
               </button>
@@ -231,7 +240,12 @@ export default function PresencePage() {
 
       {/* Grid Mode */}
       {!isLoading && !isError && viewMode === 'grid' && filtered.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 220px))',
+          gap: '1rem',
+          alignContent: 'start',
+        }}>
           {filtered.map((user: PresenceUser) => {
             const cfg = STATUS_CONFIG[user.status] ?? STATUS_CONFIG.not_clocked_in;
             const hasClocked = user.status === 'present' || user.status === 'late';

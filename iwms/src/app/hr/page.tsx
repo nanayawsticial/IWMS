@@ -242,38 +242,43 @@ export default function HrDashboardPage() {
           ) : (
             <>
               {/* KPIs Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="kpi-grid-4">
                 <KpiCard
-                  title="Total Headcount"
+                  label="Total Headcount"
                   value={dashboard?.totalEmployees ?? 0}
                   icon={Users}
                   iconBg="var(--blue-soft)"
                   iconColor="var(--blue)"
-                  trend={{ value: `+${dashboard?.newHiresThisMonth ?? 0}`, isPositive: true, label: 'new this month' }}
+                  subValue={`+${dashboard?.newHiresThisMonth ?? 0}`}
+                  subLabel="new this month"
                 />
                 <KpiCard
-                  title="On Probation"
+                  label="On Probation"
                   value={dashboard?.onProbation ?? 0}
                   icon={UserCheck}
                   iconBg="var(--yellow-soft)"
                   iconColor="var(--yellow)"
-                  trend={{ value: 'Incomplete', isPositive: false, label: 'onboardings' }}
+                  subValue="Incomplete"
+                  subLabel="onboardings"
                 />
                 <KpiCard
-                  title="On Leave Today"
+                  label="On Leave Today"
                   value={dashboard?.onLeaveToday ?? 0}
                   icon={CalendarIcon}
                   iconBg="var(--purple-soft)"
                   iconColor="var(--purple)"
-                  trend={{ value: `${dashboard?.openLeaveRequestsCount ?? 0} pending`, isPositive: true, label: 'requests' }}
+                  subValue={`${dashboard?.openLeaveRequestsCount ?? 0} pending`}
+                  subLabel="requests"
                 />
                 <KpiCard
-                  title="Probation Endings"
+                  label="Probation Endings"
                   value={dashboard?.upcomingContractEndings ?? 0}
                   icon={AlertCircle}
                   iconBg="var(--red-soft)"
                   iconColor="var(--red)"
-                  trend={{ value: 'Next 30 days', isPositive: false, label: 'actions needed' }}
+                  subValue="Next 30 days"
+                  subLabel="actions needed"
+                  subColor="#ef4444"
                 />
               </div>
 

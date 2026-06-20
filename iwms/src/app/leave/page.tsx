@@ -89,13 +89,13 @@ export default function LeavePage() {
 
   return (
     <div className="page-content">
-      <div className="page-header">
+      <div className="page-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="page-title">Leave Management</h1>
           <p className="page-subtitle">Request time off and manage approvals</p>
         </div>
-        <div className="page-actions">
-          <button className="btn-primary-sm" onClick={() => setShowApplyModal(true)}>
+        <div className="page-actions w-full sm:w-auto">
+          <button className="btn-primary w-full sm:w-auto" onClick={() => setShowApplyModal(true)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Request Time Off
           </button>
@@ -103,7 +103,12 @@ export default function LeavePage() {
       </div>
 
       {/* Balances widgets */}
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem',
+      }}>
         {[
           { label: 'Vacation Leave', key: 'vacation' as const, color: '#6366f1' },
           { label: 'Sick Leave', key: 'sick' as const, color: '#ef4444' },
@@ -193,8 +198,9 @@ export default function LeavePage() {
               <span className="spinner" style={{ margin: '0 auto 10px', display: 'block' }} /> Loading leave history...
             </div>
           ) : myLeaves.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-              You have not submitted any leave requests yet.
+            <div className="empty-state">
+              <span style={{ fontSize: 32, marginBottom: 4 }}>🌴</span>
+              You haven't taken any leave yet
             </div>
           ) : (
             <table className="data-table">

@@ -234,31 +234,33 @@ export default function DepartmentDashboardPage() {
       ) : (
         <div className="space-y-6">
           {/* Scoped KPIs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="kpi-grid-4">
             <KpiCard
-              title="Department Headcount"
+              label="Department Headcount"
               value={kpis.headcount}
               icon={Users}
               iconBg="var(--blue-soft)"
               iconColor="var(--blue)"
             />
             <KpiCard
-              title="Attendance Today"
+              label="Attendance Today"
               value={`${kpis.activeToday} / ${kpis.headcount}`}
               icon={UserCheck}
               iconBg="var(--green-soft)"
               iconColor="var(--green)"
-              trend={{ value: `${kpis.activePercent}%`, isPositive: kpis.activePercent > 85, label: 'attendance rate' }}
+              subValue={`${kpis.activePercent}%`}
+              subLabel="attendance rate"
+              subColor={kpis.activePercent > 85 ? '#22c55e' : '#ef4444'}
             />
             <KpiCard
-              title="Tasks in Backlog"
+              label="Tasks in Backlog"
               value={kpis.pendingTasks}
               icon={FolderKanban}
               iconBg="var(--yellow-soft)"
               iconColor="var(--yellow)"
             />
             <KpiCard
-              title="Task Completion Rate"
+              label="Task Completion Rate"
               value={`${kpis.taskCompletionRate}%`}
               icon={CheckSquare}
               iconBg="var(--purple-soft)"

@@ -3371,7 +3371,9 @@ code, kbd, pre, samp {
 
 @media (max-width: 1024px) {
   .chart-row,
-  .chart-row-3 { grid-template-columns: 1fr; }
+  .chart-row-3 { grid-template-columns: 1fr !important; }
+  .chart-row > *,
+  .chart-row-3 > * { grid-column: span 1 !important; }
 }
 
 /* ── Empty states ─────────────────────────────────────── */

@@ -291,44 +291,39 @@ export default function FinancePage() {
           ) : (
             <>
               {/* KPIs Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="kpi-grid-4">
                 <KpiCard
-                  title="Allocated Budget"
+                  label="Allocated Budget"
                   value={`GHS ${(dashboard?.totalBudget ?? 0).toLocaleString()}`}
                   icon={Wallet}
                   iconBg="var(--blue-soft)"
                   iconColor="var(--blue)"
                 />
                 <KpiCard
-                  title="Total Spent"
+                  label="Total Spent"
                   value={`GHS ${(dashboard?.totalSpent ?? 0).toLocaleString()}`}
                   icon={TrendingUp}
                   iconBg="var(--accent-soft)"
                   iconColor="var(--accent)"
-                  trend={{
-                    value: `${dashboard?.totalBudget > 0 ? Math.round((dashboard.totalSpent / dashboard.totalBudget) * 100) : 0}%`,
-                    isPositive: (dashboard?.totalSpent ?? 0) <= (dashboard?.totalBudget ?? 0),
-                    label: 'budget utilization'
-                  }}
+                  subValue={`${dashboard?.totalBudget > 0 ? Math.round((dashboard.totalSpent / dashboard.totalBudget) * 100) : 0}%`}
+                  subLabel="budget utilization"
+                  subColor={(dashboard?.totalSpent ?? 0) <= (dashboard?.totalBudget ?? 0) ? '#22c55e' : '#ef4444'}
                 />
                 <KpiCard
-                  title="Remaining Balance"
+                  label="Remaining Balance"
                   value={`GHS ${(dashboard?.remaining ?? 0).toLocaleString()}`}
                   icon={DollarSign}
                   iconBg="var(--green-soft)"
                   iconColor="var(--green)"
                 />
                 <KpiCard
-                  title="Pending Approvals"
+                  label="Pending Approvals"
                   value={dashboard?.pendingApprovalsCount ?? 0}
                   icon={Receipt}
                   iconBg="var(--yellow-soft)"
                   iconColor="var(--yellow)"
-                  trend={{
-                    value: dashboard?.expenseCountThisMonth ?? 0,
-                    isPositive: true,
-                    label: 'approved this month'
-                  }}
+                  subValue={dashboard?.expenseCountThisMonth ?? 0}
+                  subLabel="approved this month"
                 />
               </div>
 
@@ -711,23 +706,23 @@ export default function FinancePage() {
             <div className="text-center py-10 text-[var(--text-3)]">Recalculating Payroll...</div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="kpi-grid-3">
                 <KpiCard
-                  title="Estimated Total Payroll"
+                  label="Estimated Total Payroll"
                   value={`GHS ${payrollTotals.totalNetPay.toLocaleString()}`}
                   icon={CreditCard}
                   iconBg="var(--blue-soft)"
                   iconColor="var(--blue)"
                 />
                 <KpiCard
-                  title="Average Salary Paid"
+                  label="Average Salary Paid"
                   value={`GHS ${payrollTotals.avgSalary.toLocaleString()}`}
                   icon={Building}
                   iconBg="var(--purple-soft)"
                   iconColor="var(--purple)"
                 />
                 <KpiCard
-                  title="Total Absentee Deductions"
+                  label="Total Absentee Deductions"
                   value={`GHS ${payrollTotals.totalDeductions.toLocaleString()}`}
                   icon={AlertTriangle}
                   iconBg="var(--red-soft)"

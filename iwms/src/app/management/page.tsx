@@ -3,12 +3,13 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  BarChart, Bar, Cell, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  BarChart, Bar, Cell, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { managementApi, organizationApi, usersApi, tasksApi, attendanceApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSocketEvent } from '@/hooks/useSocket';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import KpiCard from '@/components/KpiCard';
 import {
   Users,
@@ -66,6 +67,7 @@ const TASK_STATUS_LABELS = {
 
 export default function ManagementDashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<'tasksCompleted' | 'attendanceRate' | 'hoursWorked'>('tasksCompleted');
@@ -144,12 +146,12 @@ export default function ManagementDashboardPage() {
   };
 
   // Recharts calculations: side-by-side performance comparison
-  const barChartData = useMemo(() => {
+  const departmentData = useMemo(() => {
     if (!dashboardData?.departments) return [];
     return dashboardData.departments.map((d: any) => ({
       name: d.name,
-      'Attendance Rate': Math.round(d.attendanceRate * 100),
-      'Task Completion': Math.round(d.taskCompletionRate * 100),
+      attendanceRate: Math.round(d.attendanceRate * 100),
+      taskCompletionRate: Math.round(d.taskCompletionRate * 100),
     }));
   }, [dashboardData?.departments]);
 
@@ -215,102 +217,117 @@ export default function ManagementDashboardPage() {
       </div>
 
       {/* Row 1: Headcount KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="kpi-grid-4">
         <KpiCard
-          title="Total Headcount"
+          label="Total Headcount"
           value={dashboardData.headcount.total}
           icon={Users}
           iconBg="var(--blue-soft)"
           iconColor="var(--blue)"
-          trend={{ value: 'Registered', isPositive: true, label: 'staff accounts' }}
-          link={{ href: '/team', label: 'Directory' }}
+          subValue="Registered"
+          subLabel="staff accounts"
+          linkLabel="Directory"
+          onLinkClick={() => router.push('/team')}
         />
         <KpiCard
-          title="Active Staff"
+          label="Active Staff"
           value={dashboardData.headcount.active}
           icon={UserCheck}
           iconBg="var(--green-soft)"
           iconColor="var(--green)"
-          trend={{ value: 'Active', isPositive: true, label: 'status profiles' }}
+          subValue="Active"
+          subLabel="status profiles"
         />
         <KpiCard
-          title="On Leave Today"
+          label="On Leave Today"
           value={dashboardData.headcount.onLeave}
           icon={Calendar}
           iconBg="var(--purple-soft)"
           iconColor="var(--purple)"
-          trend={{ value: 'Approved', isPositive: true, label: 'allocations' }}
-          link={{ href: '/leave', label: 'Calendar' }}
+          subValue="Approved"
+          subLabel="allocations"
+          linkLabel="Calendar"
+          onLinkClick={() => router.push('/leave')}
         />
         <KpiCard
-          title="New Hires"
+          label="New Hires"
           value={dashboardData.headcount.new_this_month}
           icon={UserPlus}
           iconBg="var(--accent-soft)"
           iconColor="var(--accent)"
-          trend={{ value: 'Joined', isPositive: true, label: 'this month' }}
+          subValue="Joined"
+          subLabel="this month"
         />
       </div>
 
       {/* Row 2: Performance KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+      <div className="kpi-grid-4">
         <KpiCard
-          title="Attendance Rate"
+          label="Attendance Rate"
           value={`${Math.round(dashboardData.attendance.rate * 100)}%`}
           icon={Clock}
           iconBg="var(--green-soft)"
           iconColor="var(--green)"
-          trend={{ value: `${dashboardData.attendance.present + dashboardData.attendance.late} present`, isPositive: true, label: 'today' }}
-          link={{ href: '/attendance', label: 'View logs' }}
+          subValue={`${dashboardData.attendance.present + dashboardData.attendance.late} present`}
+          subLabel="today"
+          subColor="#22c55e"
+          linkLabel="View logs"
+          onLinkClick={() => router.push('/attendance')}
         />
         <KpiCard
-          title="Avg Hours Worked"
+          label="Avg Hours Worked"
           value={`${dashboardData.attendance.avgHoursWorked.toFixed(1)}h`}
           icon={Timer}
           iconBg="var(--yellow-soft)"
           iconColor="var(--yellow)"
-          trend={{ value: 'Daily avg', isPositive: true, label: 'per employee' }}
+          subValue="Daily avg"
+          subLabel="per employee"
         />
         <KpiCard
-          title="Task Completion"
+          label="Task Completion"
           value={`${Math.round(dashboardData.tasks.completionRate * 100)}%`}
           icon={CheckCircle}
           iconBg="var(--blue-soft)"
           iconColor="var(--blue)"
-          trend={{ value: `${dashboardData.tasks.completed}/${dashboardData.tasks.total}`, isPositive: true, label: 'tasks done' }}
-          link={{ href: '/tasks', label: 'Tasks board' }}
+          subValue={`${dashboardData.tasks.completed}/${dashboardData.tasks.total}`}
+          subLabel="tasks done"
+          linkLabel="Tasks board"
+          onLinkClick={() => router.push('/tasks')}
         />
         <KpiCard
-          title="Overdue Tasks"
+          label="Overdue Tasks"
           value={dashboardData.tasks.overdue}
           icon={AlertCircle}
           iconBg="var(--red-soft)"
           iconColor="var(--red)"
-          trend={{ value: 'Urgent', isPositive: false, label: 'past due dates' }}
+          subValue="Urgent"
+          subLabel="past due dates"
+          subColor="#ef4444"
         />
       </div>
 
       {/* Row 3: Recharts Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+      <div className="chart-row" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
         {/* Left: Department Performance Comparison Bar Chart */}
-        <div className="card lg:col-span-2">
-          <h3 className="section-title mb-4">Department Performance Comparison</h3>
-          <div className="w-full h-[300px]">
-            {barChartData.length > 0 ? (
+        <div className="card" style={{ gridColumn: 'span 2' }}>
+          <div className="section-header">
+            <span className="section-title">Department Performance Comparison</span>
+          </div>
+          <div style={{ width: '100%', height: 280 }}>
+            {departmentData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" stroke="var(--text-3)" fontSize={11} tickLine={false} />
-                  <YAxis stroke="var(--text-3)" fontSize={11} domain={[0, 100]} unit="%" tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                  <Bar dataKey="Attendance Rate" fill="var(--accent)" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                  <Bar dataKey="Task Completion" fill="var(--blue)" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                <BarChart data={departmentData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#8892a4' }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11, fill: '#8892a4' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: '#1e2536', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+                  <Bar dataKey="attendanceRate" name="Attendance" fill="#22c55e" radius={[4,4,0,0]} />
+                  <Bar dataKey="taskCompletionRate" name="Task Completion" fill="#3b82f6" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-full text-[var(--text-3)] text-sm">
-                No department data available
-              </div>
+              <div className="empty-state">No department data available</div>
             )}
           </div>
         </div>
@@ -318,37 +335,34 @@ export default function ManagementDashboardPage() {
         {/* Right: Task Status Donut Chart */}
         <div className="card flex flex-col justify-between">
           <h3 className="section-title mb-4">Task Status Distribution</h3>
-          <div className="w-full h-[200px] relative flex items-center justify-center">
-            {donutChartData.length > 0 ? (
+          {dashboardData.tasks.total === 0 ? (
+            <div className="empty-state">No tasks created yet</div>
+          ) : (
+            <div className="relative w-full h-[240px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={donutChartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={65}
-                    outerRadius={85}
-                    paddingAngle={4}
+                    innerRadius={60}
+                    outerRadius={90}
                     dataKey="value"
                   >
                     {donutChartData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip content={<ChartTooltip />} />
+                  <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-[var(--text-3)] text-sm">
-                No active tasks
+              {/* Center label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-2xl font-extrabold text-[var(--text-1)] leading-none">{dashboardData.tasks.total}</span>
+                <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider font-semibold mt-1">Total Tasks</span>
               </div>
-            )}
-            {/* Center label */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-extrabold text-[var(--text-1)] leading-none">{dashboardData.tasks.total}</span>
-              <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider font-semibold mt-1">Total Tasks</span>
             </div>
-          </div>
+          )}
           {/* Legend */}
           <div className="grid grid-cols-2 gap-2 text-xs pt-4 border-t border-[var(--border)] mt-4">
             {donutChartData.map((item: any) => (
@@ -399,35 +413,37 @@ export default function ManagementDashboardPage() {
         {/* Top Performers Table */}
         <div className="card flex flex-col justify-between">
           <h3 className="section-title mb-4">Top Performers</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
-                  <th className="py-2.5">Employee</th>
-                  <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('tasksCompleted')}>
-                    <span className="inline-flex items-center gap-1">
-                      Tasks Completed <ArrowUpDown size={10} />
-                    </span>
-                  </th>
-                  <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('attendanceRate')}>
-                    <span className="inline-flex items-center gap-1">
-                      Attendance <ArrowUpDown size={10} />
-                    </span>
-                  </th>
-                  <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('hoursWorked')}>
-                    <span className="inline-flex items-center gap-1">
-                      Hours Worked <ArrowUpDown size={10} />
-                    </span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border)]">
-                {sortedTopPerformers.length > 0 ? (
-                  sortedTopPerformers.map((p: any) => {
+          {sortedTopPerformers.length === 0 ? (
+            <div className="empty-state">No performance data yet</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
+                    <th className="py-2.5">Employee</th>
+                    <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('tasksCompleted')}>
+                      <span className="inline-flex items-center gap-1">
+                        Tasks Completed <ArrowUpDown size={10} />
+                      </span>
+                    </th>
+                    <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('attendanceRate')}>
+                      <span className="inline-flex items-center gap-1">
+                        Attendance <ArrowUpDown size={10} />
+                      </span>
+                    </th>
+                    <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('hoursWorked')}>
+                      <span className="inline-flex items-center gap-1">
+                        Hours Worked <ArrowUpDown size={10} />
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {sortedTopPerformers.map((p: any) => {
                     const initials = p.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
                     return (
-                      <tr key={p.userId} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
-                        <td className="py-3">
+                      <tr key={p.userId} style={{ borderTop: '0.5px solid var(--border)' }} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
+                        <td style={{ padding: '12px 0' }}>
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-[var(--accent-soft)] border border-[var(--accent)] text-[var(--accent)] flex items-center justify-center text-xs font-bold">
                               {initials}
@@ -438,20 +454,16 @@ export default function ManagementDashboardPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 font-semibold text-[var(--text-1)] text-center">{p.tasksCompleted}</td>
-                        <td className="py-3 font-semibold text-[var(--green)] text-center">{Math.round(p.attendanceRate * 100)}%</td>
-                        <td className="py-3 text-[var(--text-2)] text-center">{p.hoursWorked.toFixed(1)}h</td>
+                        <td style={{ padding: '12px 0', textAlign: 'center' }} className="font-semibold text-[var(--text-1)]">{p.tasksCompleted}</td>
+                        <td style={{ padding: '12px 0', textAlign: 'center' }} className="font-semibold text-[var(--green)]">{Math.round(p.attendanceRate * 100)}%</td>
+                        <td style={{ padding: '12px 0', textAlign: 'center' }} className="text-[var(--text-2)]">{p.hoursWorked.toFixed(1)}h</td>
                       </tr>
                     );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="text-center py-6 text-[var(--text-3)]">No performance logs recorded this month.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 

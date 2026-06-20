@@ -376,47 +376,116 @@ function AttendancePageContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 space-y-6">
-          {/* Stats Summary Panel */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: 'Present Today', value: stats?.present ?? 0, color: 'var(--green)' },
-              { label: 'Late Clock Ins', value: stats?.late ?? 0, color: 'var(--yellow)' },
-              { label: 'Absent Count', value: stats?.absent ?? 0, color: 'var(--red)' },
-              { label: 'On Leave today', value: stats?.onLeave ?? 0, color: 'var(--purple)' },
-            ].map(s => (
-              <div key={s.label} className="card p-4 flex flex-col justify-between" style={{ borderLeft: `3px solid ${s.color}` }}>
-                <span className="value text-2xl font-bold text-[var(--text-1)]">{s.value}</span>
-                <span className="label text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider mt-1">{s.label}</span>
+      {/* Stats Summary Panel */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: 'Present Today', value: stats?.present ?? 0, color: 'var(--green)' },
+          { label: 'Late Clock Ins', value: stats?.late ?? 0, color: 'var(--yellow)' },
+          { label: 'Absent Count', value: stats?.absent ?? 0, color: 'var(--red)' },
+          { label: 'On Leave today', value: stats?.onLeave ?? 0, color: 'var(--purple)' },
+        ].map(s => (
+          <div key={s.label} className="card p-4 flex flex-col justify-between" style={{ borderLeft: `3px solid ${s.color}` }}>
+            <span className="value text-2xl font-bold text-[var(--text-1)]">{s.value}</span>
+            <span className="label text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider mt-1">{s.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters Toolbar */}
+      <div className="flex flex-col gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl mb-6">
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+          {['today', 'yesterday', 'week', 'month', 'custom'].map((p) => (
+            <button
+              key={p}
+              onClick={() => handlePeriodChange(p)}
+              style={{
+                padding: '5px 14px',
+                borderRadius: 9999,
+                fontSize: 12,
+                fontWeight: 500,
+                border: '0.5px solid',
+                borderColor: period === p ? 'var(--accent)' : 'var(--border)',
+                background: period === p ? 'var(--accent)' : 'transparent',
+                color: period === p ? 'white' : 'var(--text-2)',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              {p === 'today' ? 'Today'
+               : p === 'yesterday' ? 'Yesterday'
+               : p === 'week' ? 'Last 7 Days'
+               : p === 'month' ? 'Last 30 Days'
+               : 'Custom Range'}
+            </button>
+          ))}
+        </div>
+
+        {/* Sub-Filters: Date selection & status selection */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between pt-3 border-t border-[var(--border)]">
+          <div className="flex flex-wrap gap-4 items-center w-full sm:w-auto">
+            {period === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => handleStartDateChange(e.target.value)}
+                  className="py-1 px-2.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                />
+                <span className="text-xs text-[var(--text-3)]">to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={e => handleEndDateChange(e.target.value)}
+                  className="py-1 px-2.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                />
               </div>
-            ))}
+            )}
+
+            {['super_admin', 'admin', 'hr_manager', 'manager'].includes(user?.role || '') && (
+              <select
+                value={departmentFilter}
+                onChange={e => handleDepartmentChange(e.target.value)}
+                className="py-1 px-3 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+              >
+                <option value="all">All Departments</option>
+                {departments
+                  .filter((d: any) => user?.role !== 'manager' || d.id === user.departmentId)
+                  .map((d: any) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+              </select>
+            )}
           </div>
 
-          {/* Filters Toolbar */}
-          <div className="flex flex-col gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
-            <div className="flex flex-wrap gap-2 items-center">
-              {[
-                { id: 'today', label: 'Today' },
-                { id: 'yesterday', label: 'Yesterday' },
-                { id: 'week', label: 'Last 7 Days' },
-                { id: 'month', label: 'Last 30 Days' },
-                { id: 'custom', label: 'Custom Range' },
-              ].map(p => (
-                <button
-                  key={p.id}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                    period === p.id ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)] hover:bg-[var(--bg-surface-2)]'
-                  }`}
-                  onClick={() => handlePeriodChange(p.id)}
-                >
-                  {p.label}
-                </button>
-              ))}
+          {/* Status pills selector */}
+          <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg w-full sm:w-auto overflow-x-auto">
+            {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
+              <button
+                key={s}
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer capitalize ${
+                  statusFilter === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
+                }`}
+                onClick={() => handleStatusChange(s)}
+              >
+                {s === 'all' ? 'All' : STATUS_STYLES[s]?.label || s}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
+      {/* Main & Side panel content flex layout */}
+      <div className="flex flex-col lg:flex-row gap-4 items-start w-full">
+        {/* Main table */}
+        <div style={{ flex: 1, minWidth: 0 }} className="w-full">
+          <div className="card">
+            <div className="flex justify-between items-center mb-4">
+              <span className="section-title">Attendance Logs</span>
               {hasPermission('export_reports') && (
                 <button
-                  className="ml-auto bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold py-1.5 px-3 rounded-lg text-xs flex items-center gap-1.5 border border-[var(--border)] cursor-pointer"
+                  className="bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold py-1.5 px-3 rounded-lg text-xs flex items-center gap-1.5 border border-[var(--border)] cursor-pointer transition-colors"
                   onClick={handleExportCSV}
                 >
                   <Download size={12} /> Export CSV
@@ -424,72 +493,14 @@ function AttendancePageContent() {
               )}
             </div>
 
-            {/* Sub-Filters: Date selection & status selection */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between pt-3 border-t border-[var(--border)]">
-              <div className="flex flex-wrap gap-4 items-center w-full sm:w-auto">
-                {period === 'custom' && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={e => handleStartDateChange(e.target.value)}
-                      className="py-1 px-2.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                    />
-                    <span className="text-xs text-[var(--text-3)]">to</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={e => handleEndDateChange(e.target.value)}
-                      className="py-1 px-2.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                    />
-                  </div>
-                )}
-
-                {['super_admin', 'admin', 'hr_manager', 'manager'].includes(user?.role || '') && (
-                  <select
-                    value={departmentFilter}
-                    onChange={e => handleDepartmentChange(e.target.value)}
-                    className="py-1 px-3 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                  >
-                    <option value="all">All Departments</option>
-                    {departments
-                      .filter((d: any) => user?.role !== 'manager' || d.id === user.departmentId)
-                      .map((d: any) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
-                  </select>
-                )}
-              </div>
-
-              {/* Status pills selector */}
-              <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg w-full sm:w-auto overflow-x-auto">
-                {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
-                  <button
-                    key={s}
-                    className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer capitalize ${
-                      statusFilter === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
-                    }`}
-                    onClick={() => handleStatusChange(s)}
-                  >
-                    {s === 'all' ? 'All' : STATUS_STYLES[s]?.label || s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Table Container */}
-          <div className="card">
             {isLoading ? (
               <div className="text-center py-20 text-[var(--text-3)]">Loading logs...</div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="table-scroll">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
-                      <th className="py-2.5">Employee</th>
+                      <th className="py-2.5 px-3">Employee</th>
                       <th className="py-2.5">Department</th>
                       <th className="py-2.5">Clock In</th>
                       <th className="py-2.5">Clock Out</th>
@@ -589,7 +600,7 @@ function AttendancePageContent() {
                     ) : (
                       records.map((r: any) => (
                         <tr key={r.id} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
-                          <td className="py-3">
+                          <td className="py-3 px-3">
                             <div className="flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center font-bold text-[var(--text-1)]">
                                 {r.userAvatar || r.userName[0]}
@@ -646,8 +657,8 @@ function AttendancePageContent() {
                     )}
                     {records.length === 0 && (
                       <tr>
-                        <td colSpan={hasPermission('edit_attendance') ? 8 : 7} className="text-center py-10 text-[var(--text-3)] font-medium">
-                          No attendance records found.
+                        <td colSpan={hasPermission('edit_attendance') ? 8 : 7}>
+                          <div className="empty-state">No attendance records for this period</div>
                         </td>
                       </tr>
                     )}
@@ -678,8 +689,8 @@ function AttendancePageContent() {
           </div>
         </div>
 
-        {/* Sidebar Clock widget */}
-        <div className="lg:col-span-1 space-y-6">
+        {/* Side panel */}
+        <div style={{ width: 260, flexShrink: 0 }} className="w-full lg:w-auto space-y-6">
           <div className="card">
             <h3 className="section-title mb-4">Clock Widget</h3>
             <ClockWidget />

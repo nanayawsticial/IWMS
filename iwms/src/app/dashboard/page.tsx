@@ -8,6 +8,7 @@ import {
   RadialBarChart, RadialBar
 } from 'recharts';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { attendanceApi, tasksApi, managementApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSocketEvent } from '@/hooks/useSocket';
@@ -65,6 +66,7 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const today = new Date().toISOString().split('T')[0];
   const queryClient = useQueryClient();
   const [newArrivals, setNewArrivals] = useState<Record<string, boolean>>({});
@@ -221,12 +223,23 @@ export default function DashboardPage() {
                 {greeting}, {user?.name?.split(' ')[0]} 👋
               </h2>
               {isAdmin ? (
-                <p className="text-[var(--text-2)] text-sm mt-1.5">
-                  You have <span className="text-[var(--accent)] font-semibold underline">{stats?.onLeave || 0}</span> employees on leave today &amp; <span className="text-[var(--accent)] font-semibold underline">{tasks.filter((t: any) => t.status === 'review').length}</span> tasks awaiting review.
+                <p style={{ fontSize: '0.875rem', opacity: 0.65, marginTop: 4 }}>
+                  You have{' '}
+                  <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{stats?.onLeave || 0}</span>
+                  {' '}employees on leave today &amp;{' '}
+                  <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{tasks.filter((t: any) => t.status === 'review').length}</span>
+                  {' '}tasks awaiting review.
                 </p>
               ) : (
-                <p className="text-[var(--text-2)] text-sm mt-1.5">
-                  You have <span className="text-[var(--accent)] font-semibold underline">{tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length}</span> tasks in progress today &amp; your attendance rate this month is <span className="text-[var(--accent)] font-semibold underline">{stats?.attendanceRate || 0}%</span>.
+                <p style={{ fontSize: '0.875rem', opacity: 0.65, marginTop: 4 }}>
+                  You have{' '}
+                  <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                    {tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length}
+                  </span>
+                  {' '}tasks in progress today &amp; your attendance rate this month is{' '}
+                  <span style={{ color: (stats?.attendanceRate || 0) > 0 ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                    {stats?.attendanceRate || 0}%
+                  </span>
                 </p>
               )}
             </div>
@@ -247,78 +260,95 @@ export default function DashboardPage() {
       {isAdmin ? (
         <>
           {/* Admin Dashboard: Row 1 & 2 KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="kpi-grid-4">
             <KpiCard
-              title="Attendance Today"
+              label="Attendance Today"
               value={`${stats?.presentWithLate ?? 0}/${stats?.totalEmployees ?? 0}`}
               icon={UserCheck}
               iconBg="var(--green-soft)"
               iconColor="var(--green)"
-              trend={{ value: `${stats?.attendanceRate ?? 0}%`, isPositive: (stats?.attendanceRate ?? 0) >= 85, label: 'Present today' }}
-              link={{ href: '/attendance', label: 'View log' }}
+              subValue={`${stats?.attendanceRate ?? 0}%`}
+              subLabel="Present today"
+              subColor={(stats?.attendanceRate ?? 0) >= 85 ? '#22c55e' : '#ef4444'}
+              linkLabel="View log"
+              onLinkClick={() => router.push('/attendance')}
             />
             <KpiCard
-              title="Active Projects"
+              label="Active Projects"
               value="12"
               icon={Briefcase}
               iconBg="var(--blue-soft)"
               iconColor="var(--blue)"
-              trend={{ value: '+2 new', isPositive: true, label: 'this week' }}
-              link={{ href: '/tasks', label: 'View tasks' }}
+              subValue="+2 new"
+              subLabel="this week"
+              linkLabel="View tasks"
+              onLinkClick={() => router.push('/tasks')}
             />
             <KpiCard
-              title="Total Headcount"
+              label="Total Headcount"
               value={managementData?.headcount?.total ?? stats?.totalEmployees ?? '—'}
               icon={Users}
               iconBg="var(--purple-soft)"
               iconColor="var(--purple)"
-              trend={{ value: `+${managementData?.headcount?.new_this_month ?? 2}`, isPositive: true, label: 'this month' }}
-              link={{ href: '/team', label: 'Directory' }}
+              subValue={`+${managementData?.headcount?.new_this_month ?? 2}`}
+              subLabel="this month"
+              linkLabel="Directory"
+              onLinkClick={() => router.push('/team')}
             />
             <KpiCard
-              title="Active Tasks"
+              label="Active Tasks"
               value={tasks.filter((t: any) => t.status !== 'done').length}
               icon={CheckCircle}
               iconBg="var(--kpi-orange-bg)"
               iconColor="var(--accent)"
-              trend={{ value: `${doneTasks} completed`, isPositive: true, label: 'in total' }}
-              link={{ href: '/tasks', label: 'Kanban Board' }}
+              subValue={`${doneTasks} completed`}
+              subLabel="in total"
+              linkLabel="Kanban Board"
+              onLinkClick={() => router.push('/tasks')}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="kpi-grid-4">
             <KpiCard
-              title="Monthly Earnings"
+              label="Monthly Earnings"
               value="GHS 25,430"
               icon={DollarSign}
               iconBg="var(--green-soft)"
               iconColor="var(--green)"
-              trend={{ value: '12.5%', isPositive: true, label: 'vs last month' }}
+              subValue="12.5%"
+              subLabel="vs last month"
+              subColor="#22c55e"
             />
             <KpiCard
-              title="Total Revenue"
+              label="Total Revenue"
               value="GHS 142,500"
               icon={TrendingUp}
               iconBg="var(--teal-soft)"
               iconColor="var(--teal)"
-              trend={{ value: '8%', isPositive: true, label: 'vs last quarter' }}
+              subValue="8%"
+              subLabel="vs last quarter"
+              subColor="#22c55e"
             />
             <KpiCard
-              title="Leaves Approved"
+              label="Leaves Approved"
               value={managementData?.headcount?.onLeave ?? stats?.onLeave ?? 0}
               icon={Calendar}
               iconBg="var(--red-soft)"
               iconColor="var(--red)"
-              trend={{ value: 'Stable', isPositive: true, label: 'daily average' }}
-              link={{ href: '/leave', label: 'Leave calendar' }}
+              subValue="Stable"
+              subLabel="daily average"
+              linkLabel="Leave calendar"
+              onLinkClick={() => router.push('/leave')}
             />
             <KpiCard
-              title="New Hires"
+              label="New Hires"
               value={managementData?.headcount?.new_this_month ?? 4}
               icon={UserPlus}
               iconBg="var(--kpi-pink-bg)"
               iconColor="#ec4899"
-              trend={{ value: '+10% Join Rate', isPositive: true, label: 'MoM increase' }}
+              subValue="+10% Join Rate"
+              subLabel="MoM increase"
+              subColor="#22c55e"
             />
           </div>
 
@@ -389,25 +419,27 @@ export default function DashboardPage() {
               </div>
 
               <div className="relative w-full flex items-center justify-center flex-1">
-                <ResponsiveContainer width="100%" height={180}>
-                  <RadialBarChart
-                    cx="50%"
-                    cy="60%"
-                    innerRadius="80%"
-                    outerRadius="110%"
-                    barSize={12}
-                    data={[{ value: Math.round((managementData?.attendance?.rate || stats?.attendanceRate || 0) * 100) }]}
-                    startAngle={180}
-                    endAngle={0}
-                  >
-                    <RadialBar
-                      background={{ fill: 'var(--bg-surface-2)' }}
-                      dataKey="value"
-                      cornerRadius={6}
-                      fill="var(--accent)"
-                    />
-                  </RadialBarChart>
-                </ResponsiveContainer>
+                <div style={{ width: '100%', height: 180 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                      cx="50%"
+                      cy="60%"
+                      innerRadius="80%"
+                      outerRadius="110%"
+                      barSize={12}
+                      data={[{ value: Math.round((managementData?.attendance?.rate || stats?.attendanceRate || 0) * 100) }]}
+                      startAngle={180}
+                      endAngle={0}
+                    >
+                      <RadialBar
+                        background={{ fill: 'var(--bg-surface-2)' }}
+                        dataKey="value"
+                        cornerRadius={6}
+                        fill="var(--accent)"
+                      />
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                </div>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
                   <span className="text-3xl font-bold text-[var(--text-1)]">
                     {Math.round((managementData?.attendance?.rate || stats?.attendanceRate || 0) * 100)}%
@@ -442,17 +474,19 @@ export default function DashboardPage() {
             <div className="card flex flex-col justify-between">
               <div>
                 <h3 className="section-title mb-4">Department Sizes</h3>
-                <ResponsiveContainer width="100%" height={120}>
-                  <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: -15, right: 10, top: 0, bottom: 0 }}>
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" stroke="var(--text-3)" fontSize={10} width={80} tickLine={false} axisLine={false} />
-                    <Bar dataKey="headcount" fill="var(--accent)" radius={[0, 4, 4, 0]} barSize={8}>
-                      {managementData?.departments?.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={entry.color || 'var(--accent)'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <div style={{ width: '100%', height: 120 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: -15, right: 10, top: 0, bottom: 0 }}>
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" stroke="var(--text-3)" fontSize={10} width={80} tickLine={false} axisLine={false} />
+                      <Bar dataKey="headcount" fill="var(--accent)" radius={[0, 4, 4, 0]} barSize={8}>
+                        {managementData?.departments?.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={entry.color || 'var(--accent)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
               <div className="border-t border-[var(--border)] pt-4">
@@ -629,62 +663,54 @@ export default function DashboardPage() {
       ) : (
         <>
           {/* Employee Dashboard: Redesigned Dashboard cards & charts */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="kpi-grid-4">
             <KpiCard
-              title="My Clock-In Status"
+              label="My Clock-In Status"
               value={recentAttendance.find((a: any) => a.userId === user?.id)?.clockIn ? 'Present' : 'Not Scanned'}
               icon={Clock}
               iconBg={recentAttendance.find((a: any) => a.userId === user?.id)?.clockIn ? 'var(--green-soft)' : 'var(--accent-soft)'}
               iconColor={recentAttendance.find((a: any) => a.userId === user?.id)?.clockIn ? 'var(--green)' : 'var(--accent)'}
-              trend={{
-                value: recentAttendance.find((a: any) => a.userId === user?.id)?.status || 'Absent',
-                isPositive: recentAttendance.find((a: any) => a.userId === user?.id)?.status === 'present',
-                label: 'today'
-              }}
-              link={{ href: '/attendance', label: 'View history' }}
+              subValue={recentAttendance.find((a: any) => a.userId === user?.id)?.status || 'Absent'}
+              subLabel="today"
+              subColor={recentAttendance.find((a: any) => a.userId === user?.id)?.status === 'present' ? '#22c55e' : '#ef4444'}
+              linkLabel="View history"
+              onLinkClick={() => router.push('/attendance')}
             />
             <KpiCard
-              title="Tasks Completed"
+              label="Tasks Completed"
               value={tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length}
               icon={CheckCircle}
               iconBg="var(--blue-soft)"
               iconColor="var(--blue)"
-              trend={{
-                value: `${tasks.filter((t: any) => t.assigneeId === user?.id).length} total`,
-                isPositive: true,
-                label: 'assigned tasks'
-              }}
-              link={{ href: '/tasks', label: 'Board' }}
+              subValue={`${tasks.filter((t: any) => t.assigneeId === user?.id).length} total`}
+              subLabel="assigned tasks"
+              linkLabel="Board"
+              onLinkClick={() => router.push('/tasks')}
             />
             <KpiCard
-              title="In Progress"
+              label="In Progress"
               value={tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length}
               icon={Briefcase}
               iconBg="var(--kpi-orange-bg)"
               iconColor="var(--accent)"
-              trend={{
-                value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length,
-                isPositive: true,
-                label: 'waiting review'
-              }}
+              subValue={tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length}
+              subLabel="waiting review"
             />
             <KpiCard
-              title="Holiday Leaves"
+              label="Holiday Leaves"
               value={stats?.onLeave ?? 0}
               icon={Calendar}
               iconBg="var(--purple-soft)"
               iconColor="var(--purple)"
-              trend={{
-                value: 'Stable',
-                isPositive: true,
-                label: 'team presence'
-              }}
-              link={{ href: '/leave', label: 'Request leave' }}
+              subValue="Stable"
+              subLabel="team presence"
+              linkLabel="Request leave"
+              onLinkClick={() => router.push('/leave')}
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="card lg:col-span-2">
+          <div className="chart-row">
+            <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="section-title">Weekly Attendance Overview</h3>
                 <div className="flex gap-4 text-xs">
@@ -692,58 +718,62 @@ export default function DashboardPage() {
                   <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Late</span>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={WEEKLY_ATTENDANCE} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="presentGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="lateGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="day" stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 11 }} />
-                  <YAxis stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 11 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="present" name="Present" stroke="#10b981" strokeWidth={2} fill="url(#presentGrad)" />
-                  <Area type="monotone" dataKey="late" name="Late" stroke="#f59e0b" strokeWidth={2} fill="url(#lateGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div style={{ width: '100%', height: 240 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={WEEKLY_ATTENDANCE} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="presentGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="lateGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#8892a4' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: '#8892a4' }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area type="monotone" dataKey="present" name="Present" stroke="#10b981" strokeWidth={2} fill="url(#presentGrad)" />
+                    <Area type="monotone" dataKey="late" name="Late" stroke="#f59e0b" strokeWidth={2} fill="url(#lateGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="section-title">My Tasks Status</h3>
               </div>
-              <ResponsiveContainer width="100%" height={160}>
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: 'Done', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length, color: 'var(--green)' },
-                      { name: 'In Progress', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length, color: 'var(--accent)' },
-                      { name: 'Review', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length, color: 'var(--yellow)' },
-                      { name: 'Todo', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'todo').length, color: 'var(--blue)' },
-                    ].filter(d => d.value > 0)}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={70}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {[
-                      { name: 'Done', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length, color: 'var(--green)' },
-                      { name: 'In Progress', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length, color: 'var(--accent)' },
-                      { name: 'Review', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length, color: 'var(--yellow)' },
-                      { name: 'Todo', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'todo').length, color: 'var(--blue)' },
-                    ].filter(d => d.value > 0).map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ width: '100%', height: 240 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Done', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length, color: 'var(--green)' },
+                        { name: 'In Progress', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length, color: 'var(--accent)' },
+                        { name: 'Review', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length, color: 'var(--yellow)' },
+                        { name: 'Todo', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'todo').length, color: 'var(--blue)' },
+                      ].filter(d => d.value > 0)}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={70}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {[
+                        { name: 'Done', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length, color: 'var(--green)' },
+                        { name: 'In Progress', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length, color: 'var(--accent)' },
+                        { name: 'Review', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length, color: 'var(--yellow)' },
+                        { name: 'Todo', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'todo').length, color: 'var(--blue)' },
+                      ].filter(d => d.value > 0).map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
               <div className="grid grid-cols-2 gap-2 text-xs pt-3 mt-2 border-t border-[var(--border)]">
                 <div className="flex items-center gap-1.5 text-[var(--text-2)]">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -765,64 +795,74 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="chart-row">
             {/* Clock in/out Logs */}
-            <div className="card">
+            <div className="card flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="section-title">My Swipe History</h3>
                 <span className="text-[var(--text-3)] text-xs">This Month</span>
               </div>
               <div className="space-y-3">
-                {recentAttendance.filter((a: any) => a.userId === user?.id).map((a: any) => (
-                  <div key={a.id || a.userId} className="flex justify-between items-center text-xs p-2 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
-                    <div>
-                      <p className="font-semibold text-[var(--text-1)]">{a.date}</p>
-                      <p className="text-[10px] text-[var(--text-3)]">RFID scan</p>
-                    </div>
-                    <div className="text-right">
-                      <span className={`badge ${a.status === 'present' ? 'badge-green' : 'badge-yellow'}`}>
-                        {a.status}
-                      </span>
-                      <p className="text-[10px] text-[var(--text-3)] mt-1 font-mono">{a.clockIn || '—'} - {a.clockOut || '—'}</p>
-                    </div>
+                {recentAttendance.filter((a: any) => a.userId === user?.id).length === 0 ? (
+                  <div className="empty-state">
+                    <span style={{ fontSize: 28 }}>📋</span>
+                    No clock records today
                   </div>
-                ))}
-                {recentAttendance.filter((a: any) => a.userId === user?.id).length === 0 && (
-                  <p className="text-xs text-[var(--text-3)] text-center py-6">No clock records today</p>
+                ) : (
+                  recentAttendance.filter((a: any) => a.userId === user?.id).map((a: any) => (
+                    <div key={a.id || a.userId} className="flex justify-between items-center text-xs p-2 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                      <div>
+                        <p className="font-semibold text-[var(--text-1)]">{a.date}</p>
+                        <p className="text-[10px] text-[var(--text-3)]">RFID scan</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`badge ${a.status === 'present' ? 'badge-green' : 'badge-yellow'}`}>
+                          {a.status}
+                        </span>
+                        <p className="text-[10px] text-[var(--text-3)] mt-1 font-mono">{a.clockIn || '—'} - {a.clockOut || '—'}</p>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
 
             {/* My Active Tasks */}
-            <div className="card lg:col-span-2">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="section-title">My Outstanding Tasks</h3>
-                <Link href="/tasks" className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors">
-                  View board →
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {tasks.filter((t: any) => t.assigneeId === user?.id && t.status !== 'done').slice(0, 4).map((task: any) => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)] hover:border-[var(--border-strong)] transition-colors text-xs">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`w-2.5 h-2.5 rounded-full ${
-                        task.priority === 'critical' ? 'bg-red-500' : task.priority === 'high' ? 'bg-orange-500' : 'bg-blue-500'
-                      }`} />
-                      <div className="min-w-0">
-                        <p className="font-semibold text-[var(--text-1)] truncate">{task.title}</p>
-                        <p className="text-[10px] text-[var(--text-3)]">Due {new Date(task.dueDate).toLocaleDateString()}</p>
-                      </div>
+            <div className="card flex flex-col justify-between lg:col-span-1">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="section-title">My Outstanding Tasks</h3>
+                  <Link href="/tasks" className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors">
+                    View board →
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {tasks.filter((t: any) => t.assigneeId === user?.id && t.status !== 'done').length === 0 ? (
+                    <div className="empty-state">
+                      <span style={{ fontSize: 28 }}>📋</span>
+                      All caught up! No pending tasks 🎉
                     </div>
-                    <span className={`badge ${
-                      task.status === 'in_progress' ? 'badge-orange' : task.status === 'review' ? 'badge-yellow' : 'badge-blue'
-                    }`}>
-                      {task.status.replace('_', ' ')}
-                    </span>
-                  </div>
-                ))}
-                {tasks.filter((t: any) => t.assigneeId === user?.id && t.status !== 'done').length === 0 && (
-                  <p className="text-xs text-[var(--text-3)] text-center py-6">All caught up! No pending tasks 🎉</p>
-                )}
+                  ) : (
+                    tasks.filter((t: any) => t.assigneeId === user?.id && t.status !== 'done').slice(0, 4).map((task: any) => (
+                      <div key={task.id} className="flex items-center justify-between p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)] hover:border-[var(--border-strong)] transition-colors text-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-2.5 h-2.5 rounded-full ${
+                            task.priority === 'critical' ? 'bg-red-500' : task.priority === 'high' ? 'bg-orange-500' : 'bg-blue-500'
+                          }`} />
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[var(--text-1)] truncate">{task.title}</p>
+                            <p className="text-[10px] text-[var(--text-3)]">Due {new Date(task.dueDate).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <span className={`badge ${
+                          task.status === 'in_progress' ? 'badge-orange' : task.status === 'review' ? 'badge-yellow' : 'badge-blue'
+                        }`}>
+                          {task.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
