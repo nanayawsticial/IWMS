@@ -670,13 +670,13 @@ function TasksPageContent() {
           </div>
 
           {/* Priority filter pills */}
-          <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[10px]">
+          <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[10px] overflow-x-auto max-w-full flex-shrink-0">
             {(['all', 'critical', 'high', 'medium', 'low'] as const).map(p => (
               <button
                 key={p}
                 onClick={() => setFilter(p)}
-                className={`px-2.5 py-1 font-bold rounded transition-colors cursor-pointer capitalize ${
-                  filter === p ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
+                className={`px-2.5 py-1 font-bold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
+                  filter === p ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
                 }`}
               >
                 {p}
@@ -687,9 +687,9 @@ function TasksPageContent() {
           {/* Create trigger */}
           <button
             onClick={() => setShowModal(true)}
-            className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-1.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            className="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
           >
-            <Plus size={14} /> New Task
+            <Plus size={14} /> Add Task
           </button>
         </div>
       </div>

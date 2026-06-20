@@ -221,14 +221,14 @@ export default function HrDashboardPage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl">
+        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl overflow-x-auto max-w-full flex-shrink-0">
           {(['dashboard', 'directory', 'leaves', 'headcount'] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setSelectedEmployeeId(null); }}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
             >
-              {tab}
+              {tab === 'dashboard' ? 'Dashboard' : tab === 'directory' ? 'Directory' : tab === 'leaves' ? 'Leave Requests' : 'Headcount'}
             </button>
           ))}
         </div>
@@ -418,22 +418,22 @@ export default function HrDashboardPage() {
               />
             </div>
 
-            <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
+            <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg overflow-x-auto max-w-full flex-shrink-0">
               <button
                 onClick={() => setStatusFilter('all')}
-                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${statusFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${statusFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
               >
                 All Employees
               </button>
               <button
                 onClick={() => setStatusFilter('active')}
-                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${statusFilter === 'active' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${statusFilter === 'active' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
               >
                 Active
               </button>
               <button
                 onClick={() => setStatusFilter('probation')}
-                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${statusFilter === 'probation' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${statusFilter === 'probation' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
               >
                 On Probation
               </button>

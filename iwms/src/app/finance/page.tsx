@@ -270,7 +270,7 @@ export default function FinancePage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl flex-shrink-0">
+        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl flex-shrink-0 overflow-x-auto max-w-full">
           {(['dashboard', 'expenses', 'budgets', 'payroll'] as Tab[]).map((tab) => (
             <button
               key={tab}
@@ -615,7 +615,7 @@ export default function FinancePage() {
 
             <button
               onClick={() => setIsBudgetModalOpen(true)}
-              className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
+              className="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
             >
               <Plus size={16} /> Allocate Category Budget
             </button>
@@ -695,7 +695,7 @@ export default function FinancePage() {
             <button
               onClick={handleExportCsv}
               disabled={payrollSummary.length === 0}
-              className="bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer border border-[var(--border)] whitespace-nowrap flex-shrink-0"
+              className="w-full sm:w-auto bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer border border-[var(--border)] whitespace-nowrap flex-shrink-0"
             >
               <Download size={16} /> Export Payroll CSV
             </button>
