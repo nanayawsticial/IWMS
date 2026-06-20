@@ -270,14 +270,14 @@ export default function FinancePage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl">
+        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl flex-shrink-0">
           {(['dashboard', 'expenses', 'budgets', 'payroll'] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
             >
-              {tab === 'dashboard' ? 'Dashboard' : tab}
+              {tab === 'dashboard' ? 'Dashboard' : tab === 'expenses' ? 'Expenses' : tab === 'budgets' ? 'Budgets' : 'Payroll'}
             </button>
           ))}
         </div>
@@ -491,9 +491,9 @@ export default function FinancePage() {
 
             <button
               onClick={() => setIsExpenseModalOpen(true)}
-              className="w-full md:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-1.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full md:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
             >
-              <Plus size={14} /> Submit Expense Claims
+              <Plus size={16} /> Submit Expense Claims
             </button>
           </div>
 
@@ -615,9 +615,9 @@ export default function FinancePage() {
 
             <button
               onClick={() => setIsBudgetModalOpen(true)}
-              className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-1.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
             >
-              <Plus size={14} /> Allocate Category Budget
+              <Plus size={16} /> Allocate Category Budget
             </button>
           </div>
 
@@ -695,9 +695,9 @@ export default function FinancePage() {
             <button
               onClick={handleExportCsv}
               disabled={payrollSummary.length === 0}
-              className="bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold py-1.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-[var(--border)]"
+              className="bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer border border-[var(--border)] whitespace-nowrap flex-shrink-0"
             >
-              <Download size={14} /> Export Payroll CSV
+              <Download size={16} /> Export Payroll CSV
             </button>
           </div>
 
@@ -793,197 +793,219 @@ export default function FinancePage() {
 
       {/* Expense Modal */}
       {isExpenseModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
-          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-md p-6 relative shadow-2xl">
-            <button
-              onClick={() => setIsExpenseModalOpen(false)}
-              className="absolute top-4 right-4 text-[var(--text-3)] hover:text-[var(--text-1)] cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-            <h3 className="text-md font-extrabold text-[var(--text-1)] mb-4 uppercase tracking-wide">Submit Expense Claim</h3>
+        <div className="modal-overlay" onClick={() => setIsExpenseModalOpen(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 className="text-md font-extrabold text-[var(--text-1)] uppercase tracking-wide">Submit Expense Claim</h3>
+              <button className="modal-close" onClick={() => setIsExpenseModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 submitExpenseMutation.mutate(expenseForm);
               }}
-              className="space-y-4 text-xs"
+              style={{ display: 'contents' }}
             >
-              <div>
-                <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Title / Item name</label>
-                <input
-                  type="text"
-                  required
-                  value={expenseForm.title}
-                  onChange={(e) => setExpenseForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="e.g. Server hosting, Office monitor"
-                  className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Amount (GHS)</label>
+              <div className="modal-body text-xs">
+                <div className="form-group">
+                  <label className="form-label font-bold uppercase">Title / Item name</label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     required
-                    value={expenseForm.amount}
-                    onChange={(e) => setExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
-                    placeholder="250.00"
-                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                    value={expenseForm.title}
+                    onChange={(e) => setExpenseForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="e.g. Server hosting, Office monitor"
+                    className="form-input"
                   />
                 </div>
-                <div>
-                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Category</label>
-                  <select
-                    value={expenseForm.category}
-                    onChange={(e) => setExpenseForm(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                    ))}
-                  </select>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label font-bold uppercase">Amount (GHS)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={expenseForm.amount}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
+                      placeholder="250.00"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label font-bold uppercase">Category</label>
+                    <select
+                      value={expenseForm.category}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, category: e.target.value }))}
+                      className="form-input form-select"
+                    >
+                      {CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label font-bold uppercase">Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={expenseForm.date}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, date: e.target.value }))}
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label font-bold uppercase">Receipt URL (optional)</label>
+                    <input
+                      type="url"
+                      value={expenseForm.receiptUrl}
+                      onChange={(e) => setExpenseForm(prev => ({ ...prev, receiptUrl: e.target.value }))}
+                      placeholder="https://imgur.com/xyz.png"
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label font-bold uppercase">Claims Description / Notes</label>
+                  <textarea
+                    value={expenseForm.notes}
+                    onChange={(e) => setExpenseForm(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Details of expense..."
+                    rows={3}
+                    className="form-input"
+                    style={{ minHeight: '80px', resize: 'vertical' }}
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={expenseForm.date}
-                    onChange={(e) => setExpenseForm(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Receipt URL (optional)</label>
-                  <input
-                    type="url"
-                    value={expenseForm.receiptUrl}
-                    onChange={(e) => setExpenseForm(prev => ({ ...prev, receiptUrl: e.target.value }))}
-                    placeholder="https://imgur.com/xyz.png"
-                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                  />
-                </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setIsExpenseModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitExpenseMutation.isPending}
+                  className="btn-primary"
+                  style={{ background: 'var(--accent)', borderColor: 'var(--accent)' }}
+                >
+                  {submitExpenseMutation.isPending ? 'Submitting...' : 'Submit Claim'}
+                </button>
               </div>
-
-              <div>
-                <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Claims Description / Notes</label>
-                <textarea
-                  value={expenseForm.notes}
-                  onChange={(e) => setExpenseForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="Details of expense..."
-                  rows={3}
-                  className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] resize-none"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitExpenseMutation.isPending}
-                className="w-full py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold rounded-lg text-center transition-colors cursor-pointer"
-              >
-                {submitExpenseMutation.isPending ? 'Submitting...' : 'Submit Claim'}
-              </button>
             </form>
           </div>
         </div>
       )}
-
+ 
       {/* Create Budget Modal */}
       {isBudgetModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
-          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-md p-6 relative shadow-2xl">
-            <button
-              onClick={() => setIsBudgetModalOpen(false)}
-              className="absolute top-4 right-4 text-[var(--text-3)] hover:text-[var(--text-1)] cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-            <h3 className="text-md font-extrabold text-[var(--text-1)] mb-4 uppercase tracking-wide">Allocate Category Budget</h3>
+        <div className="modal-overlay" onClick={() => setIsBudgetModalOpen(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 className="text-md font-extrabold text-[var(--text-1)] uppercase tracking-wide">Allocate Category Budget</h3>
+              <button className="modal-close" onClick={() => setIsBudgetModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 createBudgetMutation.mutate(budgetForm);
               }}
-              className="space-y-4 text-xs"
+              style={{ display: 'contents' }}
             >
-              <div>
-                <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Budget Name</label>
-                <input
-                  type="text"
-                  required
-                  value={budgetForm.name}
-                  onChange={(e) => setBudgetForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g. Operations Q3, Travel Allowance"
-                  className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Amount (GHS)</label>
+              <div className="modal-body text-xs">
+                <div className="form-group">
+                  <label className="form-label font-bold uppercase">Budget Name</label>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    value={budgetForm.amount}
-                    onChange={(e) => setBudgetForm(prev => ({ ...prev, amount: e.target.value }))}
-                    placeholder="10000"
-                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                    value={budgetForm.name}
+                    onChange={(e) => setBudgetForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Operations Q3, Travel Allowance"
+                    className="form-input"
                   />
                 </div>
-                <div>
-                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Category</label>
-                  <select
-                    value={budgetForm.category}
-                    onChange={(e) => setBudgetForm(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                    ))}
-                  </select>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label font-bold uppercase">Amount (GHS)</label>
+                    <input
+                      type="number"
+                      required
+                      value={budgetForm.amount}
+                      onChange={(e) => setBudgetForm(prev => ({ ...prev, amount: e.target.value }))}
+                      placeholder="10000"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label font-bold uppercase">Category</label>
+                    <select
+                      value={budgetForm.category}
+                      onChange={(e) => setBudgetForm(prev => ({ ...prev, category: e.target.value }))}
+                      className="form-input form-select"
+                    >
+                      {CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label font-bold uppercase">Period (YYYY-MM)</label>
+                  <input
+                    type="month"
+                    required
+                    value={budgetForm.period}
+                    onChange={(e) => setBudgetForm(prev => ({ ...prev, period: e.target.value }))}
+                    className="form-input"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Period (YYYY-MM)</label>
-                <input
-                  type="month"
-                  required
-                  value={budgetForm.period}
-                  onChange={(e) => setBudgetForm(prev => ({ ...prev, period: e.target.value }))}
-                  className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                />
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setIsBudgetModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createBudgetMutation.isPending}
+                  className="btn-primary"
+                  style={{ background: 'var(--accent)', borderColor: 'var(--accent)' }}
+                >
+                  {createBudgetMutation.isPending ? 'Allocating...' : 'Allocate Budget'}
+                </button>
               </div>
-
-              <button
-                type="submit"
-                disabled={createBudgetMutation.isPending}
-                className="w-full py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold rounded-lg text-center transition-colors cursor-pointer"
-              >
-                {createBudgetMutation.isPending ? 'Allocating...' : 'Allocate Budget'}
-              </button>
             </form>
           </div>
         </div>
       )}
-
+ 
       {/* Adjust Budget Modal */}
       {isAdjustBudgetModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
-          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-md p-6 relative shadow-2xl">
-            <button
-              onClick={() => setIsAdjustBudgetModalOpen(false)}
-              className="absolute top-4 right-4 text-[var(--text-3)] hover:text-[var(--text-1)] cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-            <h3 className="text-md font-extrabold text-[var(--text-1)] mb-4 uppercase tracking-wide">Adjust Budget Allocation</h3>
+        <div className="modal-overlay" onClick={() => setIsAdjustBudgetModalOpen(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="modal-header">
+              <h3 className="text-md font-extrabold text-[var(--text-1)] uppercase tracking-wide">Adjust Budget Allocation</h3>
+              <button className="modal-close" onClick={() => setIsAdjustBudgetModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -994,49 +1016,61 @@ export default function FinancePage() {
                   spent: parseFloat(adjustBudgetForm.spent)
                 });
               }}
-              className="space-y-4 text-xs"
+              style={{ display: 'contents' }}
             >
-              <div>
-                <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Budget Name</label>
-                <input
-                  type="text"
-                  required
-                  value={adjustBudgetForm.name}
-                  onChange={(e) => setAdjustBudgetForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Allocated Amount (GHS)</label>
+              <div className="modal-body text-xs">
+                <div className="form-group">
+                  <label className="form-label font-bold uppercase">Budget Name</label>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    value={adjustBudgetForm.amount}
-                    onChange={(e) => setAdjustBudgetForm(prev => ({ ...prev, amount: e.target.value }))}
-                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                    value={adjustBudgetForm.name}
+                    onChange={(e) => setAdjustBudgetForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="form-input"
                   />
                 </div>
-                <div>
-                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Spent (GHS)</label>
-                  <input
-                    type="number"
-                    required
-                    value={adjustBudgetForm.spent}
-                    onChange={(e) => setAdjustBudgetForm(prev => ({ ...prev, spent: e.target.value }))}
-                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                  />
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label font-bold uppercase">Allocated Amount (GHS)</label>
+                    <input
+                      type="number"
+                      required
+                      value={adjustBudgetForm.amount}
+                      onChange={(e) => setAdjustBudgetForm(prev => ({ ...prev, amount: e.target.value }))}
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label font-bold uppercase">Spent (GHS)</label>
+                    <input
+                      type="number"
+                      required
+                      value={adjustBudgetForm.spent}
+                      onChange={(e) => setAdjustBudgetForm(prev => ({ ...prev, spent: e.target.value }))}
+                      className="form-input"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={updateBudgetMutation.isPending}
-                className="w-full py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold rounded-lg text-center transition-colors cursor-pointer"
-              >
-                {updateBudgetMutation.isPending ? 'Updating...' : 'Update Budget'}
-              </button>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setIsAdjustBudgetModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateBudgetMutation.isPending}
+                  className="btn-primary"
+                  style={{ background: 'var(--accent)', borderColor: 'var(--accent)' }}
+                >
+                  {updateBudgetMutation.isPending ? 'Updating...' : 'Update Budget'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
