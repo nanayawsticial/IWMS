@@ -393,31 +393,35 @@ function AttendancePageContent() {
 
       {/* Filters Toolbar */}
       <div className="flex flex-col gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl mb-6">
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-          {['today', 'yesterday', 'week', 'month', 'custom'].map((p) => (
-            <button
-              key={p}
-              onClick={() => handlePeriodChange(p)}
-              style={{
-                padding: '5px 14px',
-                borderRadius: 9999,
-                fontSize: 12,
-                fontWeight: 500,
-                border: '0.5px solid',
-                borderColor: period === p ? 'var(--accent)' : 'var(--border)',
-                background: period === p ? 'var(--accent)' : 'transparent',
-                color: period === p ? 'white' : 'var(--text-2)',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              {p === 'today' ? 'Today'
-               : p === 'yesterday' ? 'Yesterday'
-               : p === 'week' ? 'Last 7 Days'
-               : p === 'month' ? 'Last 30 Days'
-               : 'Custom Range'}
-            </button>
-          ))}
+        <div className="overflow-x-auto hide-scrollbar" style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap' }}>
+            {['today', 'yesterday', 'week', 'month', 'custom'].map((p) => (
+              <button
+                key={p}
+                onClick={() => handlePeriodChange(p)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 9999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  border: '0.5px solid',
+                  borderColor: period === p ? 'var(--accent)' : 'var(--border)',
+                  background: period === p ? 'var(--accent)' : 'transparent',
+                  color: period === p ? 'white' : 'var(--text-2)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {p === 'today' ? 'Today'
+                 : p === 'yesterday' ? 'Yesterday'
+                 : p === 'week' ? 'Last 7 Days'
+                 : p === 'month' ? 'Last 30 Days'
+                 : 'Custom Range'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Sub-Filters: Date selection & status selection */}
@@ -460,11 +464,11 @@ function AttendancePageContent() {
           </div>
 
           {/* Status pills selector */}
-          <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg w-full sm:w-auto overflow-x-auto">
+          <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg w-full sm:w-auto overflow-x-auto hide-scrollbar">
             {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
               <button
                 key={s}
-                className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer capitalize ${
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
                   statusFilter === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
                 }`}
                 onClick={() => handleStatusChange(s)}
@@ -500,7 +504,7 @@ function AttendancePageContent() {
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
-                      <th className="py-2.5 px-3">Employee</th>
+                      <th className="py-2.5 px-3 sticky-left">Employee</th>
                       <th className="py-2.5">Department</th>
                       <th className="py-2.5">Clock In</th>
                       <th className="py-2.5">Clock Out</th>
@@ -540,7 +544,7 @@ function AttendancePageContent() {
                             {!isCollapsed &&
                               dateRecords.map((r: any) => (
                                 <tr key={r.id} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
-                                  <td className="py-3 px-3">
+                                  <td className="py-3 px-3 sticky-left">
                                     <div className="flex items-center gap-2.5">
                                       <div className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center font-bold text-[var(--text-1)]">
                                         {r.userAvatar || r.userName[0]}
@@ -600,7 +604,7 @@ function AttendancePageContent() {
                     ) : (
                       records.map((r: any) => (
                         <tr key={r.id} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
-                          <td className="py-3 px-3">
+                          <td className="py-3 px-3 sticky-left">
                             <div className="flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center font-bold text-[var(--text-1)]">
                                 {r.userAvatar || r.userName[0]}

@@ -238,6 +238,40 @@ code, kbd, pre, samp {
   background: var(--bg-accent);
 }
 
+/* ── Hide-scrollbar utility ──────────────────────────────────────────────── */
+/* Use on any overflow-x-auto container to keep it scrollable but invisible */
+.hide-scrollbar {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;                  /* Chrome, Safari, Opera */
+}
+
+/* ── Sticky left column for horizontal-scrolling tables ──────────────────── */
+/* Apply to first <th> and first <td> in table-scroll tables */
+.sticky-left {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-secondary);
+}
+/* Subtle right-edge separator */
+.sticky-left::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: var(--border-color, rgba(255,255,255,0.06));
+}
+/* Make header sticky cells sit above body sticky cells */
+thead .sticky-left {
+  z-index: 3;
+  background: var(--bg-secondary);
+}
+
 /* Spinner */
 .spinner {
   width: 32px;
@@ -1717,6 +1751,7 @@ code, kbd, pre, samp {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
+  padding: 24px;
 }
 
 .data-table {
@@ -2847,6 +2882,7 @@ code, kbd, pre, samp {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     width: 100%;
+    padding: 12px !important;
   }
 
   .data-table {
@@ -3044,7 +3080,8 @@ code, kbd, pre, samp {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  height: 40px;
+  padding: 0 20px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   border-radius: 10px;
@@ -3054,6 +3091,7 @@ code, kbd, pre, samp {
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .welcome-btn-secondary:hover {
@@ -3065,8 +3103,9 @@ code, kbd, pre, samp {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  background: var(--color-indigo);
+  height: 40px;
+  padding: 0 20px;
+  background: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-purple) 100%);
   border: none;
   border-radius: 10px;
   color: #fff;
@@ -3076,10 +3115,11 @@ code, kbd, pre, samp {
   text-decoration: none;
   transition: all 0.2s;
   box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+  white-space: nowrap;
 }
 
 .welcome-btn-primary:hover {
-  background: #4f46e5;
+  opacity: 0.92;
   box-shadow: 0 4px 24px rgba(99,102,241,0.45);
   transform: translateY(-1px);
 }

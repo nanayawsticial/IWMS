@@ -610,7 +610,7 @@ function TasksPageContent() {
             <select
               value={assigneeId || ''}
               onChange={e => handleAssigneeChange(e.target.value)}
-              className="py-1.5 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+              className="py-1.5 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] w-full sm:w-auto"
             >
               <option value="">All Assignees</option>
               {dropdownUsers.map((u: any) => (
@@ -622,17 +622,19 @@ function TasksPageContent() {
           )}
 
           {/* Sorting Dropdown */}
-          <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-2.5 py-1 text-xs">
-            <Filter size={12} className="text-[var(--text-3)]" />
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value as any)}
-              className="bg-transparent border-none text-[var(--text-1)] outline-none cursor-pointer text-xs"
-            >
-              <option value="dueDate">Sort by Due Date</option>
-              <option value="priority">Sort by Priority</option>
-              <option value="title">Sort by Title</option>
-            </select>
+          <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-2.5 py-1 text-xs w-full sm:w-auto justify-between sm:justify-start">
+            <div className="flex items-center gap-2">
+              <Filter size={12} className="text-[var(--text-3)]" />
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as any)}
+                className="bg-transparent border-none text-[var(--text-1)] outline-none cursor-pointer text-xs"
+              >
+                <option value="dueDate">Sort by Due Date</option>
+                <option value="priority">Sort by Priority</option>
+                <option value="title">Sort by Title</option>
+              </select>
+            </div>
           </div>
 
           {/* Search Box */}
@@ -650,10 +652,10 @@ function TasksPageContent() {
           </div>
 
           {/* View mode toggle */}
-          <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs">
+          <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs w-full sm:w-auto justify-start sm:justify-center flex-shrink-0">
             <button
               onClick={() => setViewMode('kanban')}
-              className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer ${
+              className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer flex-shrink-0 ${
                 viewMode === 'kanban' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
               }`}
             >
@@ -661,7 +663,7 @@ function TasksPageContent() {
             </button>
             <button
               onClick={() => setViewMode('gantt')}
-              className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer ${
+              className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer flex-shrink-0 ${
                 viewMode === 'gantt' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
               }`}
             >
@@ -670,12 +672,12 @@ function TasksPageContent() {
           </div>
 
           {/* Priority filter pills */}
-          <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[10px] overflow-x-auto max-w-full flex-shrink-0">
+          <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs overflow-x-auto max-w-full flex-shrink-0 hide-scrollbar w-full sm:w-auto">
             {(['all', 'critical', 'high', 'medium', 'low'] as const).map(p => (
               <button
                 key={p}
                 onClick={() => setFilter(p)}
-                className={`px-2.5 py-1 font-bold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
+                className={`px-2.5 py-1.5 font-bold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
                   filter === p ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
                 }`}
               >
@@ -687,7 +689,7 @@ function TasksPageContent() {
           {/* Create trigger */}
           <button
             onClick={() => setShowModal(true)}
-            className="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
+            className="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0 mt-1 sm:mt-0"
           >
             <Plus size={14} /> Add Task
           </button>
@@ -726,7 +728,7 @@ function TasksPageContent() {
       ) : (
         <>
           {/* Kanban Stats Bar */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="card p-3 flex justify-between items-center">
               <span className="text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider">Total Active Tasks</span>
               <span className="text-xl font-bold font-mono text-[var(--text-1)]">{totalCount}</span>

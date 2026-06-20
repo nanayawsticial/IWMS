@@ -203,12 +203,12 @@ export default function PresencePage() {
           </div>
 
           {/* Department filter pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg hide-scrollbar">
             {departments.map(dept => (
               <button
                 key={dept}
                 onClick={() => setActiveDept(dept)}
-                className="capitalize whitespace-nowrap"
+                className="capitalize whitespace-nowrap flex-shrink-0"
                 style={{
                   background: activeDept === dept ? 'var(--accent)' : 'transparent',
                   color: activeDept === dept ? 'white' : 'var(--text-2)',
@@ -219,6 +219,7 @@ export default function PresencePage() {
                   fontSize: 12,
                   cursor: 'pointer',
                   transition: 'all 0.15s',
+                  flexShrink: 0,
                 }}
               >
                 {dept === 'all' ? 'All Departments' : dept}

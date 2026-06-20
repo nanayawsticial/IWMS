@@ -117,7 +117,7 @@ export default function TimesheetsPage() {
           <button className="btn-ghost-sm" onClick={handlePrevWeek} style={{ padding: '8px 12px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <span style={{ color: '#f8fafc', fontWeight: 600, minWidth: '220px', textAlign: 'center' }}>
+          <span style={{ color: '#f8fafc', fontWeight: 600, minWidth: '180px', textAlign: 'center' }}>
             {dateRangeDisplay}
           </span>
           <button className="btn-ghost-sm" onClick={handleNextWeek} style={{ padding: '8px 12px' }}>
@@ -154,7 +154,7 @@ export default function TimesheetsPage() {
       </div>
 
       {/* Timesheet Grid Table */}
-      <div className="table-card" style={{ padding: '24px' }}>
+      <div className="table-card">
         {isTimesheetsLoading ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: '#475569' }}>
             <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />
@@ -165,7 +165,7 @@ export default function TimesheetsPage() {
             <table style={{ tableLayout: 'auto', minWidth: 900 }} className="data-table">
               <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)' }}>
                 <tr>
-                  <th style={{ minWidth: 200, textAlign: 'left', padding: '10px 12px' }}>Employee</th>
+                  <th className="sticky-left" style={{ minWidth: 200, textAlign: 'left', padding: '10px 12px' }}>Employee</th>
                   {DAY_NAMES.map(day => (
                     <th key={day} style={{ textAlign: 'center', width: '90px' }}>{day}</th>
                   ))}
@@ -176,7 +176,7 @@ export default function TimesheetsPage() {
               <tbody>
                 {timesheets.map((row: any) => (
                   <tr key={row.user.id} className="table-row">
-                    <td>
+                    <td className="sticky-left">
                       <div className="table-user-cell">
                         <div className="table-avatar" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
                           {row.user.avatar}

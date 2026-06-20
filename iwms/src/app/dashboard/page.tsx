@@ -213,7 +213,7 @@ export default function DashboardPage() {
     <div className="page-content">
       {/* Welcome Banner */}
       <div className="card bg-gradient-to-r from-[var(--bg-surface)] to-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-lg)] p-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)] font-bold text-xl border border-[var(--border-strong)] shadow-inner">
               {initials}
@@ -244,12 +244,12 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/attendance" className="btn-ghost">
+          <div className="flex items-center gap-3 w-full md:w-auto justify-start md:justify-end mt-2 md:mt-0">
+            <Link href="/attendance" className="welcome-btn-secondary">
               <Clock size={16} />
               View Attendance
             </Link>
-            <Link href="/tasks" className="btn-primary">
+            <Link href="/tasks" className="welcome-btn-primary">
               <Plus size={16} />
               Manage Tasks
             </Link>
