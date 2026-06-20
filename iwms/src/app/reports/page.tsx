@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { attendanceApi, tasksApi, usersApi } from '@/lib/api';
 
@@ -231,17 +231,19 @@ export default function ReportsPage() {
             <h3 className="chart-title">Weekly Attendance Breakdown</h3>
             <span style={{ fontSize: '12px', color: '#475569' }}>This week</span>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={WEEKLY_SHAPE} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="day" stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
-              <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
-              <Tooltip content={<CT />} />
-              <Bar dataKey="present" name="Present" fill="#10b981" radius={[3, 3, 0, 0]} stackId="a" />
-              <Bar dataKey="late"    name="Late"    fill="#f59e0b" radius={[0, 0, 0, 0]} stackId="a" />
-              <Bar dataKey="absent"  name="Absent"  fill="#ef444450" radius={[0, 0, 3, 3]} stackId="a" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={WEEKLY_SHAPE} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="day" stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
+                <Tooltip content={<CT />} />
+                <Bar dataKey="present" name="Present" fill="#22c55e" stackId="a" />
+                <Bar dataKey="late"    name="Late"    fill="#f59e0b" stackId="a" />
+                <Bar dataKey="absent"  name="Absent"  fill="#ef4444" stackId="a" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Real-time Task Status Pie */}
@@ -258,13 +260,12 @@ export default function ReportsPage() {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
-          <div className="pie-legend">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', marginTop: 12 }}>
             {taskStatusCounts.map(s => (
-              <div key={s.name} className="pie-legend-item">
-                <span className="legend-dot" style={{ background: s.color }} />
-                <span className="pie-legend-label">{s.name}</span>
-                <span className="pie-legend-val">{s.value}</span>
-              </div>
+              <span key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                {s.name} <strong>{s.value}</strong>
+              </span>
             ))}
           </div>
         </div>
@@ -278,9 +279,15 @@ export default function ReportsPage() {
             <span className="live-badge"><span className="live-dot" />LIVE</span>
           </div>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={deptData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+            <BarChart data={deptData} margin={{ top: 5, right: 10, left: -20, bottom: 55 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="dept" stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
+              <XAxis
+                dataKey="dept"
+                tick={{ fontSize: 10, fill: '#8892a4', angle: -35, textAnchor: 'end' }}
+                height={55}
+                axisLine={false}
+                tickLine={false}
+              />
               <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
               <Tooltip content={<CT />} />
               <Bar dataKey="attendance" name="Attendance %" fill="#6366f1" radius={[4, 4, 0, 0]} />
@@ -298,6 +305,10 @@ export default function ReportsPage() {
               <XAxis dataKey="month" stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
               <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
               <Tooltip content={<CT />} />
+              <Legend
+                wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
+                formatter={(value) => <span style={{ color: '#8892a4' }}>{value}</span>}
+              />
               <Line type="monotone" dataKey="sick"     name="Sick"     stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444', r: 3 }} />
               <Line type="monotone" dataKey="vacation" name="Vacation" stroke="#6366f1" strokeWidth={2} dot={{ fill: '#6366f1', r: 3 }} />
               <Line type="monotone" dataKey="personal" name="Personal" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 3 }} />
@@ -336,8 +347,8 @@ export default function ReportsPage() {
                 { label: 'On Leave',  value: todayStats?.onLeave ?? 0,   color: '#8b5cf6' },
               ].map(s => (
                 <div key={s.label} style={{ background: '#0f172a', borderRadius: '8px', padding: '10px 12px' }}>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: s.color }}>{s.value}</div>
-                  <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px' }}>{s.label}</div>
+                  <p className="kpi-value" style={{ fontSize: '1.5rem', color: s.color, margin: 0 }}>{s.value}</p>
+                  <p className="kpi-label" style={{ margin: 0, marginTop: 2 }}>{s.label}</p>
                 </div>
               ))}
             </div>

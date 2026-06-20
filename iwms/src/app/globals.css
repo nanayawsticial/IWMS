@@ -3427,3 +3427,8 @@ code, kbd, pre, samp {
   .chart-row,
   .chart-row-3 { grid-template-columns: 1fr !important; }
 }
+
+@media (max-width: 640px) {
+  .settings-actions { flex-direction: column; }
+  .settings-actions button { width: 100%; }
+}

@@ -754,7 +754,11 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="hardware-grid mt-6">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '1rem',
+            }}>
               {loadingDevices ? (
                 <p className="text-slate-400 text-sm">Loading biometric devices...</p>
               ) : devices.length === 0 ? (
@@ -1080,7 +1084,7 @@ export default function SettingsPage() {
       {/* MFA Setup Modal */}
       {showMfaSetupModal && mfaSetupData && (
         <div className="modal-overlay" onClick={() => { setShowMfaSetupModal(false); setMfaSetupData(null); }}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, margin: '0 1rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}>
             <div className="modal-header">
               <h3>Enable Two-Factor (MFA)</h3>
               <button className="modal-close" onClick={() => { setShowMfaSetupModal(false); setMfaSetupData(null); }}>✕</button>
@@ -1136,7 +1140,7 @@ export default function SettingsPage() {
       {/* MFA Disable Modal */}
       {showMfaDisableModal && (
         <div className="modal-overlay" onClick={() => setShowMfaDisableModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, margin: '0 1rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}>
             <div className="modal-header">
               <h3>Disable Two-Factor (MFA)</h3>
               <button className="modal-close" onClick={() => setShowMfaDisableModal(false)}>✕</button>
@@ -1181,7 +1185,7 @@ export default function SettingsPage() {
       {/* Register Biometric Device Modal */}
       {showAddDeviceModal && (
         <div className="modal-overlay" onClick={() => setShowAddDeviceModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, margin: '0 1rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}>
             <div className="modal-header">
               <h3>Register Biometric Device</h3>
               <button className="modal-close" onClick={() => setShowAddDeviceModal(false)}>✕</button>
@@ -1199,7 +1203,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">IP Address *</label>
                   <input
@@ -1223,7 +1227,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Device Type</label>
                   <select
@@ -1299,7 +1303,7 @@ export default function SettingsPage() {
       {/* Pair Physical Device Modal */}
       {showPairDeviceModal && (
         <div className="modal-overlay" onClick={() => setShowPairDeviceModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, margin: '0 1rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}>
             <div className="modal-header">
               <h3>Pair Physical Device</h3>
               <button className="modal-close" onClick={() => setShowPairDeviceModal(false)}>✕</button>
@@ -1368,7 +1372,7 @@ export default function SettingsPage() {
       {/* Hardware Key Modal */}
       {provisionedKey && (
         <div className="modal-overlay" onClick={() => setProvisionedKey(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, margin: '0 1rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}>
             <div className="modal-header">
               <h3>Hardware Key Provisioned</h3>
               <button className="modal-close" onClick={() => setProvisionedKey(null)}>×</button>
@@ -1408,7 +1412,7 @@ export default function SettingsPage() {
       {/* Add Geo-fence Zone Modal */}
       {showAddZoneModal && (
         <div className="modal-overlay" onClick={() => setShowAddZoneModal(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, margin: '0 1rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}>
             <div className="modal-header">
               <h3>Create Geo-fence Zone</h3>
               <button className="modal-close" onClick={() => setShowAddZoneModal(false)}>✕</button>
@@ -1426,7 +1430,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                 <div className="form-group">
                   <label className="form-label">Latitude *</label>
                   <input
@@ -1506,6 +1510,7 @@ export default function SettingsPage() {
               ) : deviceLogs.length === 0 ? (
                 <div className="text-center text-slate-400 text-sm mt-8">No sync events recorded for this device.</div>
               ) : (
+                <div className="table-scroll">
                 <table className="log-table">
                   <thead>
                     <tr>
@@ -1565,6 +1570,7 @@ export default function SettingsPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               )}
             </div>
           </div>

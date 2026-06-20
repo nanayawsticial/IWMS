@@ -240,11 +240,15 @@ export default function WeeklyReportsPage() {
           <h1 className="page-title">Weekly Activity Reports</h1>
           <p className="page-subtitle">Submit, track, and review company weekly performance reports</p>
         </div>
-        {!editingReport && !viewingReport && (
-          <div className="page-actions">
-            <button className="btn-primary-sm" onClick={() => startNewReport()}>
+      {!editingReport && !viewingReport && (
+          <div className="page-actions" style={{ position: 'sticky', top: 0, zIndex: 20 }}>
+            <button
+              className="btn-primary"
+              style={{ position: 'sticky', top: 0, zIndex: 20 }}
+              onClick={() => startNewReport()}
+            >
               <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-              New Weekly Report
+              + New Weekly Report
             </button>
           </div>
         )}
@@ -252,7 +256,7 @@ export default function WeeklyReportsPage() {
 
       {/* Tabs Menu */}
       {!editingReport && !viewingReport && (
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
           <button 
             className={`tab-btn ${activeTab === 'my' ? 'active' : ''}`}
             onClick={() => setActiveTab('my')}
@@ -279,7 +283,7 @@ export default function WeeklyReportsPage() {
           {loadingMy ? (
             <div className="table-loading">Loading submission history...</div>
           ) : myReports.length === 0 ? (
-            <div className="table-empty">You haven't submitted any weekly reports yet.</div>
+            <div className="empty-state">📄 No weekly reports submitted yet. Click &ldquo;+ New Weekly Report&rdquo; to get started.</div>
           ) : (
             <table className="table">
               <thead>
@@ -395,7 +399,7 @@ export default function WeeklyReportsPage() {
             {loadingTeam ? (
               <div className="table-loading">Loading team submissions...</div>
             ) : teamReports.length === 0 ? (
-              <div className="table-empty">No weekly reports found matching filters.</div>
+              <div className="empty-state">🔍 No weekly reports found matching your filters.</div>
             ) : (
               <table className="table">
                 <thead>
