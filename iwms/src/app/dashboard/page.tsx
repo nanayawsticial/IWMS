@@ -244,12 +244,12 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3 w-full md:w-auto justify-start md:justify-end mt-2 md:mt-0">
-            <Link href="/attendance" className="welcome-btn-secondary">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+            <Link href="/attendance" className="welcome-btn-secondary justify-center text-center">
               <Clock size={16} />
               View Attendance
             </Link>
-            <Link href="/tasks" className="welcome-btn-primary">
+            <Link href="/tasks" className="welcome-btn-primary justify-center text-center">
               <Plus size={16} />
               Manage Tasks
             </Link>

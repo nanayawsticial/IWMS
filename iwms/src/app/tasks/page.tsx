@@ -604,95 +604,105 @@ function TasksPageContent() {
         </div>
 
         {/* Filters Toolbar */}
-        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-          {/* Assignee select */}
-          {isManagement && dropdownUsers.length > 0 && (
-            <select
-              value={assigneeId || ''}
-              onChange={e => handleAssigneeChange(e.target.value)}
-              className="py-1.5 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] w-full sm:w-auto"
-            >
-              <option value="">All Assignees</option>
-              {dropdownUsers.map((u: any) => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({u.position})
-                </option>
-              ))}
-            </select>
-          )}
-
-          {/* Sorting Dropdown */}
-          <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-2.5 py-1 text-xs w-full sm:w-auto justify-between sm:justify-start">
-            <div className="flex items-center gap-2">
-              <Filter size={12} className="text-[var(--text-3)]" />
+        <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full xl:w-auto">
+          {/* Row 1 for mobile: Assignee & Sort */}
+          <div className="grid grid-cols-2 gap-2 w-full md:w-auto">
+            {isManagement && dropdownUsers.length > 0 ? (
               <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value as any)}
-                className="bg-transparent border-none text-[var(--text-1)] outline-none cursor-pointer text-xs"
+                value={assigneeId || ''}
+                onChange={e => handleAssigneeChange(e.target.value)}
+                className="py-1.5 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] w-full"
               >
-                <option value="dueDate">Sort by Due Date</option>
-                <option value="priority">Sort by Priority</option>
-                <option value="title">Sort by Title</option>
+                <option value="">All Assignees</option>
+                {dropdownUsers.map((u: any) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.position})
+                  </option>
+                ))}
               </select>
+            ) : (
+              <div className="hidden md:block" />
+            )}
+
+            <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-2.5 py-1 text-xs w-full justify-between">
+              <div className="flex items-center gap-2">
+                <Filter size={12} className="text-[var(--text-3)]" />
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value as any)}
+                  className="bg-transparent border-none text-[var(--text-1)] outline-none cursor-pointer text-xs w-full"
+                >
+                  <option value="dueDate">Sort by Due Date</option>
+                  <option value="priority">Sort by Priority</option>
+                  <option value="title">Sort by Title</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Search Box */}
-          <div className="relative w-full sm:w-48">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
-              <Search size={14} />
-            </span>
-            <input
-              type="text"
-              placeholder="Search title, owner..."
-              value={searchQ}
-              onChange={e => setSearchQ(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
-            />
-          </div>
+          {/* Row 2 for mobile: Search & Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+            {/* Search Box */}
+            <div className="relative w-full sm:w-48">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
+                <Search size={14} />
+              </span>
+              <input
+                type="text"
+                placeholder="Search title, owner..."
+                value={searchQ}
+                onChange={e => setSearchQ(e.target.value)}
+                className="w-full pl-9 pr-4 py-1.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
+              />
+            </div>
 
-          {/* View mode toggle */}
-          <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs w-full sm:w-auto justify-start sm:justify-center flex-shrink-0">
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer flex-shrink-0 ${
-                viewMode === 'kanban' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
-              }`}
-            >
-              Board
-            </button>
-            <button
-              onClick={() => setViewMode('gantt')}
-              className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer flex-shrink-0 ${
-                viewMode === 'gantt' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
-              }`}
-            >
-              Timeline
-            </button>
-          </div>
+            {/* View mode toggle, Priority filter pills, and Add Task */}
+            <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+              {/* View mode toggle */}
+              <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs flex-shrink-0">
+                <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer flex-shrink-0 ${
+                    viewMode === 'kanban' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
+                  }`}
+                >
+                  Board
+                </button>
+                <button
+                  onClick={() => setViewMode('gantt')}
+                  className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer flex-shrink-0 ${
+                    viewMode === 'gantt' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
+                  }`}
+                >
+                  Timeline
+                </button>
+              </div>
 
-          {/* Priority filter pills */}
-          <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs overflow-x-auto max-w-full flex-shrink-0 hide-scrollbar w-full sm:w-auto">
-            {(['all', 'critical', 'high', 'medium', 'low'] as const).map(p => (
+              {/* Priority filter pills */}
+              <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs overflow-x-auto max-w-full flex-shrink-0 hide-scrollbar flex-1 sm:flex-initial">
+                {(['all', 'critical', 'high', 'medium', 'low'] as const).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setFilter(p)}
+                    className={`px-2.5 py-1.5 font-bold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
+                      filter === p ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+
+              {/* Create trigger */}
               <button
-                key={p}
-                onClick={() => setFilter(p)}
-                className={`px-2.5 py-1.5 font-bold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
-                  filter === p ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
-                }`}
+                onClick={() => setShowModal(true)}
+                className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2 px-3 sm:px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
               >
-                {p}
+                <Plus size={14} />
+                <span className="hidden sm:inline">Add Task</span>
               </button>
-            ))}
+            </div>
           </div>
-
-          {/* Create trigger */}
-          <button
-            onClick={() => setShowModal(true)}
-            className="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0 mt-1 sm:mt-0"
-          >
-            <Plus size={14} /> Add Task
-          </button>
         </div>
       </div>
 
@@ -743,8 +753,9 @@ function TasksPageContent() {
             </div>
           </div>
 
-          <div className="kanban-board">
-            {COLUMNS.map(col => {
+          <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="kanban-board" style={{ minWidth: '1200px' }}>
+              {COLUMNS.map(col => {
               const colTasks = filteredAndSortedTasks.filter((t: any) => t.status === col.id);
               return (
                 <div
@@ -815,6 +826,7 @@ function TasksPageContent() {
                 </div>
               );
             })}
+            </div>
           </div>
         </>
       )}

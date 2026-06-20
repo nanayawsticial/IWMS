@@ -161,18 +161,22 @@ export default function TimesheetsPage() {
             Loading Timesheets...
           </div>
         ) : (
-          <div className="table-scroll">
-            <table style={{ tableLayout: 'auto', minWidth: 900 }} className="data-table">
-              <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)' }}>
-                <tr>
-                  <th className="sticky-left" style={{ minWidth: 200, textAlign: 'left', padding: '10px 12px' }}>Employee</th>
-                  {DAY_NAMES.map(day => (
-                    <th key={day} style={{ textAlign: 'center', width: '90px' }}>{day}</th>
-                  ))}
-                  <th style={{ textAlign: 'center', width: '110px' }}>Total Hrs</th>
-                  <th style={{ textAlign: 'center', width: '100px', minWidth: 70 }}>OT Hrs</th>
-                </tr>
-              </thead>
+          <>
+            <div className="mobile-scroll-hint">
+              <span>←</span> Scroll horizontally to see all days <span>→</span>
+            </div>
+            <div className="table-scroll">
+              <table style={{ tableLayout: 'auto', minWidth: 780 }} className="data-table">
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)' }}>
+                  <tr>
+                    <th className="sticky-left" style={{ minWidth: 180, textAlign: 'left', padding: '10px 12px' }}>Employee</th>
+                    {DAY_NAMES.map(day => (
+                      <th key={day} style={{ minWidth: 64, textAlign: 'center', padding: '10px 6px', fontSize: 11, opacity: 0.55 }}>{day}</th>
+                    ))}
+                    <th style={{ minWidth: 72, textAlign: 'center', padding: '10px 6px', fontSize: 11, opacity: 0.55 }}>Total</th>
+                    <th style={{ minWidth: 64, textAlign: 'center', padding: '10px 6px', fontSize: 11, opacity: 0.55 }}>OT Hrs</th>
+                  </tr>
+                </thead>
               <tbody>
                 {timesheets.map((row: any) => (
                   <tr key={row.user.id} className="table-row">
@@ -232,8 +236,9 @@ export default function TimesheetsPage() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </>
+      )}
+    </div>
 
       {/* Details Modal */}
       {selectedCell && (

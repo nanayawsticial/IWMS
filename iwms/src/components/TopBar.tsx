@@ -31,7 +31,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/department-dashboard': 'My Team',
 };
 
-export default function TopBar() {
+export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {}) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -256,7 +256,7 @@ export default function TopBar() {
       <div className="topbar-left" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px' }}>
         <button
           className="mobile-menu-toggle"
-          onClick={() => document.body.classList.toggle('mobile-sidebar-open')}
+          onClick={onMenuClick || (() => document.body.classList.toggle('mobile-sidebar-open'))}
           style={{
             background: 'none',
             border: 'none',
@@ -273,7 +273,7 @@ export default function TopBar() {
         </button>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <h2 className="topbar-title" style={{ margin: 0 }}>{title}</h2>
-          <div className="topbar-breadcrumb">
+          <div className="topbar-breadcrumb hidden sm:flex">
             <span>Home</span>
             <span className="text-[var(--text-3)]">/</span>
             <span className="breadcrumb-current">{title}</span>
@@ -302,7 +302,7 @@ export default function TopBar() {
 
       <div className="topbar-right">
         {/* Live Clock */}
-        <div className="topbar-clock">
+        <div className="topbar-clock hidden sm:flex">
           <ClockIcon size={14} />
           {time}
         </div>

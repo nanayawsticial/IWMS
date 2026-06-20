@@ -500,20 +500,24 @@ function AttendancePageContent() {
             {isLoading ? (
               <div className="text-center py-20 text-[var(--text-3)]">Loading logs...</div>
             ) : (
-              <div className="table-scroll">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
-                      <th className="py-2.5 px-3 sticky-left">Employee</th>
-                      <th className="py-2.5">Department</th>
-                      <th className="py-2.5">Clock In</th>
-                      <th className="py-2.5">Clock Out</th>
-                      <th className="py-2.5">Hours Worked</th>
-                      <th className="py-2.5">Method</th>
-                      <th className="py-2.5">Status</th>
-                      {hasPermission('edit_attendance') && <th className="py-2.5 text-right">Actions</th>}
-                    </tr>
-                  </thead>
+              <>
+                <div className="mobile-scroll-hint">
+                  <span>←</span> Swipe to see all columns <span>→</span>
+                </div>
+                <div className="table-scroll">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
+                        <th className="py-2.5 px-3 sticky-left" style={{ minWidth: '140px' }}>Employee</th>
+                        <th className="py-2.5" style={{ minWidth: '120px' }}>Department</th>
+                        <th className="py-2.5" style={{ minWidth: '72px' }}>Clock In</th>
+                        <th className="py-2.5" style={{ minWidth: '72px' }}>Clock Out</th>
+                        <th className="py-2.5" style={{ minWidth: '64px' }}>Hours Worked</th>
+                        <th className="py-2.5" style={{ minWidth: '70px' }}>Method</th>
+                        <th className="py-2.5" style={{ minWidth: '80px' }}>Status</th>
+                        {hasPermission('edit_attendance') && <th className="py-2.5 text-right" style={{ minWidth: '80px' }}>Actions</th>}
+                      </tr>
+                    </thead>
                   <tbody className="divide-y divide-[var(--border)]">
                     {isMultiDay ? (
                       sortedDates.map((dateStr) => {
@@ -689,8 +693,9 @@ function AttendancePageContent() {
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
+            </>
+          )}
+        </div>
         </div>
 
         {/* Side panel */}

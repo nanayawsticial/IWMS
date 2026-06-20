@@ -83,11 +83,12 @@ export default function DepartmentDashboardPage() {
     enabled: isManager
   });
 
-  const { data: livePresence = [], isLoading: presenceLoading } = useQuery({
+  const { data: livePresenceData, isLoading: presenceLoading } = useQuery({
     queryKey: ['dept-presence'],
     queryFn: () => attendanceApi.presence(),
     enabled: isManager
   });
+  const livePresence = livePresenceData?.presence || [];
 
   const { data: attendanceLogs = [], isLoading: logsLoading } = useQuery({
     queryKey: ['dept-attendance-logs'],
@@ -97,7 +98,8 @@ export default function DepartmentDashboardPage() {
 
   // Scoped department dataset calculations
   const deptUsers = useMemo(() => {
-    return allUsers.filter((u: any) =>
+    const usersArr = Array.isArray(allUsers) ? allUsers : [];
+    return usersArr.filter((u: any) =>
       (u.departmentId && u.departmentId === departmentId) ||
       (u.department && (typeof u.department === 'string' ? u.department : u.department.name) === departmentName)
     );
@@ -106,14 +108,16 @@ export default function DepartmentDashboardPage() {
   const deptUserIds = useMemo(() => new Set(deptUsers.map((u: any) => u.id)), [deptUsers]);
 
   const deptTasks = useMemo(() => {
-    return allTasks.filter((t: any) =>
+    const tasksArr = Array.isArray(allTasks) ? allTasks : [];
+    return tasksArr.filter((t: any) =>
       (t.assigneeId && deptUserIds.has(t.assigneeId)) ||
       (t.departmentId && t.departmentId === departmentId)
     );
   }, [allTasks, deptUserIds, departmentId]);
 
   const deptPresence = useMemo(() => {
-    return livePresence.filter((p: any) => deptUserIds.has(p.userId));
+    const presenceArr = Array.isArray(livePresence) ? livePresence : [];
+    return presenceArr.filter((p: any) => deptUserIds.has(p.userId));
   }, [livePresence, deptUserIds]);
 
   // Calculate task counts per Kanban column

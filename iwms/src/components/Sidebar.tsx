@@ -113,7 +113,12 @@ const SECTIONS: NavSection[] = [
   }
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps = {}) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
@@ -138,7 +143,10 @@ export default function Sidebar() {
   // Close mobile sidebar when a nav item is clicked
   const handleNavClick = useCallback(() => {
     document.body.classList.remove('mobile-sidebar-open');
-  }, []);
+    if (onMobileClose) {
+      onMobileClose();
+    }
+  }, [onMobileClose]);
 
   if (!user) return null;
 
@@ -173,7 +181,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}`}
+      className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`}
       aria-label="Main navigation"
     >
       {/* Header */}

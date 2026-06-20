@@ -909,7 +909,7 @@ thead .sticky-left {
   position: absolute;
   right: 0;
   top: 45px;
-  width: 320px;
+  width: min(320px, calc(100vw - 32px)) !important;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   box-shadow: var(--glass-shadow);
@@ -3497,3 +3497,141 @@ thead .sticky-left {
   .settings-actions { flex-direction: column; }
   .settings-actions button { width: 100%; }
 }
+
+/* ── Mobile base fixes ──────────────────────────────── */
+
+/* Prevent horizontal overflow on all pages */
+html, body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* All tables must scroll horizontally on mobile */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.table-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px;
+}
+
+/* Mobile-friendly buttons */
+@media (max-width: 640px) {
+  button {
+    min-height: 40px;
+    touch-action: manipulation;
+  }
+
+  /* Prevent text overflow in buttons */
+  .btn-primary,
+  .btn-ghost {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Horizontal scrolling tab bars */
+.tabs-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile KPI grid — 2 column by default on mobile */
+@media (max-width: 640px) {
+  .kpi-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .kpi-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* Stack chart rows on mobile */
+  .chart-row,
+  .chart-row-3 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Card padding reduction on mobile */
+@media (max-width: 640px) {
+  .card {
+    padding: 0.875rem !important;
+  }
+
+  main {
+    padding: 0.875rem !important;
+  }
+
+  .page-title {
+    font-size: 1.125rem !important;
+  }
+}
+
+/* Mobile sidebar — slide in from left as overlay */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100vh !important;
+    width: 240px !important;
+    transform: translateX(-100%);
+    transition: transform 200ms ease !important;
+    z-index: 1000;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+  
+  .mobile-overlay {
+    display: block !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Swipe horizontal scroll hint for tables on mobile */
+.mobile-scroll-hint {
+  display: none;
+  font-size: 11px;
+  opacity: 0.45;
+  margin-bottom: 8px;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-2);
+}
+
+@media (max-width: 768px) {
+  .mobile-scroll-hint {
+    display: flex !important;
+  }
+}
+

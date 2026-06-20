@@ -203,7 +203,7 @@ export default function PresencePage() {
           </div>
 
           {/* Department filter pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg hide-scrollbar">
+          <div className="tabs-scroll w-full sm:w-auto p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
             {departments.map(dept => (
               <button
                 key={dept}
