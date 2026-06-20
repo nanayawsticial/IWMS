@@ -2183,7 +2183,27 @@ code, kbd, pre, samp {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  max-width: 800px;
+  max-width: 1600px;
+  width: 100%;
+}
+
+.settings-grid-top {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+
+.settings-column {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+@media (min-width: 1024px) {
+  .settings-grid-top {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
 }
 
 .settings-section {
@@ -2675,9 +2695,14 @@ code, kbd, pre, samp {
   background: rgba(255, 255, 255, 0.01);
 }
 .geofence-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 12px;
+}
+@media (min-width: 768px) {
+  .geofence-list {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
 }
 .geofence-card {
   background: var(--bg-tertiary);

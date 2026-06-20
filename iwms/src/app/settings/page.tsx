@@ -509,204 +509,210 @@ export default function SettingsPage() {
       </div>
 
       <div className="settings-container">
-        {/* Profile Card */}
-        <div className="settings-section">
-          <h3 className="settings-sec-title">Admin Profile</h3>
-          <div className="settings-profile-card">
-            <div className="profile-avatar">{user?.avatar}</div>
-            <div className="profile-details">
-              <h4>{user?.name}</h4>
-              <p className="profile-email">{user?.email}</p>
-              <span className="profile-badge">{user?.role.replace('_', ' ')}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Company Settings (Admin Only) */}
-        {isAdmin && (
-          <div className="settings-section">
-            <h3 className="settings-sec-title">Company Settings</h3>
-            <div className="settings-card">
-              <form onSubmit={handleUpdateOrgName} className="settings-row" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '20px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label className="form-label" style={{ margin: 0 }}>Company / Organization Name</label>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <input
-                      type="text"
-                      value={orgNameInput}
-                      onChange={e => setOrgNameInput(e.target.value)}
-                      className="form-input"
-                      placeholder="Organization Name"
-                      style={{ flex: 1, margin: 0 }}
-                      required
-                    />
-                    <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px', margin: 0 }} disabled={savingOrg || loadingOrg}>
-                      {savingOrg ? 'Saving...' : 'Save Name'}
-                    </button>
-                  </div>
+        <div className="settings-grid-top">
+          <div className="settings-column">
+            {/* Profile Card */}
+            <div className="settings-section">
+              <h3 className="settings-sec-title">Admin Profile</h3>
+              <div className="settings-profile-card">
+                <div className="profile-avatar">{user?.avatar}</div>
+                <div className="profile-details">
+                  <h4>{user?.name}</h4>
+                  <p className="profile-email">{user?.email}</p>
+                  <span className="profile-badge">{user?.role.replace('_', ' ')}</span>
                 </div>
-              </form>
+              </div>
+            </div>
 
-              <div className="settings-row" style={{ paddingTop: '10px' }}>
-                <div className="settings-info">
-                  <h4>Employee Invite Code</h4>
-                  <p>Share this code with employees so they can register and automatically join your organization.</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
-                    <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '10px 16px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)', fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '1px', color: '#8b5cf6', fontWeight: 'bold' }}>
-                      {loadingOrg ? 'Loading...' : (orgDetails?.joinCode || '—')}
+            {/* Company Settings (Admin Only) */}
+            {isAdmin && (
+              <div className="settings-section">
+                <h3 className="settings-sec-title">Company Settings</h3>
+                <div className="settings-card">
+                  <form onSubmit={handleUpdateOrgName} className="settings-row" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label className="form-label" style={{ margin: 0 }}>Company / Organization Name</label>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <input
+                          type="text"
+                          value={orgNameInput}
+                          onChange={e => setOrgNameInput(e.target.value)}
+                          className="form-input"
+                          placeholder="Organization Name"
+                          style={{ flex: 1, margin: 0 }}
+                          required
+                        />
+                        <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px', margin: 0 }} disabled={savingOrg || loadingOrg}>
+                          {savingOrg ? 'Saving...' : 'Save Name'}
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (orgDetails?.joinCode) {
-                          navigator.clipboard.writeText(orgDetails.joinCode);
-                          addToast('Invite code copied to clipboard!', 'success');
-                        }
-                      }}
-                      className="demo-btn"
-                      style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}
-                      disabled={loadingOrg || !orgDetails?.joinCode}
-                    >
-                      Copy Code
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (orgDetails?.joinCode) {
-                          const inviteLink = `${window.location.origin}/register?code=${orgDetails.joinCode}`;
-                          navigator.clipboard.writeText(inviteLink);
-                          addToast('Invite link copied to clipboard!', 'success');
-                        }
-                      }}
-                      className="demo-btn"
-                      style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}
-                      disabled={loadingOrg || !orgDetails?.joinCode}
-                    >
-                      Copy Link
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRegenerateJoinCode}
-                      className="demo-btn"
-                      style={{ margin: 0, padding: '10px 16px', height: '100%', color: '#f43f5e', borderColor: 'rgba(244, 63, 94, 0.2)', background: 'rgba(244, 63, 94, 0.05)' }}
-                      disabled={loadingOrg}
-                    >
-                      Regenerate
-                    </button>
+                  </form>
+
+                  <div className="settings-row" style={{ paddingTop: '10px' }}>
+                    <div className="settings-info">
+                      <h4>Employee Invite Code</h4>
+                      <p>Share this code with employees so they can register and automatically join your organization.</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
+                        <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '10px 16px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)', fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '1px', color: '#8b5cf6', fontWeight: 'bold' }}>
+                          {loadingOrg ? 'Loading...' : (orgDetails?.joinCode || '—')}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (orgDetails?.joinCode) {
+                              navigator.clipboard.writeText(orgDetails.joinCode);
+                              addToast('Invite code copied to clipboard!', 'success');
+                            }
+                          }}
+                          className="demo-btn"
+                          style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          disabled={loadingOrg || !orgDetails?.joinCode}
+                        >
+                          Copy Code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (orgDetails?.joinCode) {
+                              const inviteLink = `${window.location.origin}/register?code=${orgDetails.joinCode}`;
+                              navigator.clipboard.writeText(inviteLink);
+                              addToast('Invite link copied to clipboard!', 'success');
+                            }
+                          }}
+                          className="demo-btn"
+                          style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          disabled={loadingOrg || !orgDetails?.joinCode}
+                        >
+                          Copy Link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRegenerateJoinCode}
+                          className="demo-btn"
+                          style={{ margin: 0, padding: '10px 16px', height: '100%', color: '#f43f5e', borderColor: 'rgba(244, 63, 94, 0.2)', background: 'rgba(244, 63, 94, 0.05)' }}
+                          disabled={loadingOrg}
+                        >
+                          Regenerate
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="settings-column">
+            {/* Security Settings */}
+            <div className="settings-section">
+              <h3 className="settings-sec-title">Security & Authentication</h3>
+              <div className="settings-card">
+                <div className="settings-row">
+                  <div className="settings-info">
+                    <h4>Multi-Factor Authentication (MFA)</h4>
+                    <p>Require a verification code in addition to your password to sign in.</p>
+                  </div>
+                  <div className="toggle-wrapper">
+                    <input
+                      type="checkbox"
+                      id="mfa"
+                      checked={!!user?.mfaEnabled}
+                      onChange={handleToggleMfa}
+                      className="toggle-checkbox"
+                      disabled={loading}
+                    />
+                    <label htmlFor="mfa" className="toggle-label"></label>
+                  </div>
+                </div>
+
+                <div className="settings-row">
+                  <div className="settings-info">
+                    <h4>Session Timeout</h4>
+                    <p>Automatically sign out users after a period of inactivity.</p>
+                  </div>
+                  <select className="form-input form-select max-w-xs" defaultValue="30">
+                    <option value="15">15 Minutes</option>
+                    <option value="30">30 Minutes</option>
+                    <option value="60">1 Hour</option>
+                    <option value="120">2 Hours</option>
+                  </select>
+                </div>
+
+                <div className="settings-row">
+                  <div className="settings-info">
+                    <h4>Authentication Security Level</h4>
+                    <p>Select the strictness level of passwords and access restrictions.</p>
+                  </div>
+                  <div className="filter-tabs mt-0">
+                    {['standard', 'high', 'strict'].map(level => (
+                      <button
+                        key={level}
+                        className={`filter-tab ${securityLevel === level ? 'filter-tab-active' : ''}`}
+                        onClick={() => setSecurityLevel(level)}
+                      >
+                        {level.toUpperCase()}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Security Settings */}
-        <div className="settings-section">
-          <h3 className="settings-sec-title">Security & Authentication</h3>
-          <div className="settings-card">
-            <div className="settings-row">
-              <div className="settings-info">
-                <h4>Multi-Factor Authentication (MFA)</h4>
-                <p>Require a verification code in addition to your password to sign in.</p>
-              </div>
-              <div className="toggle-wrapper">
-                <input
-                  type="checkbox"
-                  id="mfa"
-                  checked={!!user?.mfaEnabled}
-                  onChange={handleToggleMfa}
-                  className="toggle-checkbox"
-                  disabled={loading}
-                />
-                <label htmlFor="mfa" className="toggle-label"></label>
-              </div>
-            </div>
+            {/* Notification Settings */}
+            <div className="settings-section">
+              <h3 className="settings-sec-title">Notification Preferences</h3>
+              <div className="settings-card">
+                <div className="settings-row">
+                  <div className="settings-info">
+                    <h4>Email Digests</h4>
+                    <p>Receive weekly summary reports and activity statistics via email.</p>
+                  </div>
+                  <div className="toggle-wrapper">
+                    <input
+                      type="checkbox"
+                      id="notif-email"
+                      checked={notifications.email}
+                      onChange={e => setNotifications(p => ({ ...p, email: e.target.checked }))}
+                      className="toggle-checkbox"
+                    />
+                    <label htmlFor="notif-email" className="toggle-label"></label>
+                  </div>
+                </div>
 
-            <div className="settings-row">
-              <div className="settings-info">
-                <h4>Session Timeout</h4>
-                <p>Automatically sign out users after a period of inactivity.</p>
-              </div>
-              <select className="form-input form-select max-w-xs" defaultValue="30">
-                <option value="15">15 Minutes</option>
-                <option value="30">30 Minutes</option>
-                <option value="60">1 Hour</option>
-                <option value="120">2 Hours</option>
-              </select>
-            </div>
+                <div className="settings-row">
+                  <div className="settings-info">
+                    <h4>Push Notifications</h4>
+                    <p>Receive real-time notifications on the desktop app and mobile devices.</p>
+                  </div>
+                  <div className="toggle-wrapper">
+                    <input
+                      type="checkbox"
+                      id="notif-push"
+                      checked={notifications.push}
+                      onChange={e => setNotifications(p => ({ ...p, push: e.target.checked }))}
+                      className="toggle-checkbox"
+                    />
+                    <label htmlFor="notif-push" className="toggle-label"></label>
+                  </div>
+                </div>
 
-            <div className="settings-row">
-              <div className="settings-info">
-                <h4>Authentication Security Level</h4>
-                <p>Select the strictness level of passwords and access restrictions.</p>
-              </div>
-              <div className="filter-tabs mt-0">
-                {['standard', 'high', 'strict'].map(level => (
-                  <button
-                    key={level}
-                    className={`filter-tab ${securityLevel === level ? 'filter-tab-active' : ''}`}
-                    onClick={() => setSecurityLevel(level)}
-                  >
-                    {level.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Notification Settings */}
-        <div className="settings-section">
-          <h3 className="settings-sec-title">Notification Preferences</h3>
-          <div className="settings-card">
-            <div className="settings-row">
-              <div className="settings-info">
-                <h4>Email Digests</h4>
-                <p>Receive weekly summary reports and activity statistics via email.</p>
-              </div>
-              <div className="toggle-wrapper">
-                <input
-                  type="checkbox"
-                  id="notif-email"
-                  checked={notifications.email}
-                  onChange={e => setNotifications(p => ({ ...p, email: e.target.checked }))}
-                  className="toggle-checkbox"
-                />
-                <label htmlFor="notif-email" className="toggle-label"></label>
-              </div>
-            </div>
-
-            <div className="settings-row">
-              <div className="settings-info">
-                <h4>Push Notifications</h4>
-                <p>Receive real-time notifications on the desktop app and mobile devices.</p>
-              </div>
-              <div className="toggle-wrapper">
-                <input
-                  type="checkbox"
-                  id="notif-push"
-                  checked={notifications.push}
-                  onChange={e => setNotifications(p => ({ ...p, push: e.target.checked }))}
-                  className="toggle-checkbox"
-                />
-                <label htmlFor="notif-push" className="toggle-label"></label>
-              </div>
-            </div>
-
-            <div className="settings-row">
-              <div className="settings-info">
-                <h4>Attendance Anomalies</h4>
-                <p>Notify managers instantly if employees clock in late, fail to clock out, or request manual edits.</p>
-              </div>
-              <div className="toggle-wrapper">
-                <input
-                  type="checkbox"
-                  id="notif-alerts"
-                  checked={notifications.alerts}
-                  onChange={e => setNotifications(p => ({ ...p, alerts: e.target.checked }))}
-                  className="toggle-checkbox"
-                />
-                <label htmlFor="notif-alerts" className="toggle-label"></label>
+                <div className="settings-row">
+                  <div className="settings-info">
+                    <h4>Attendance Anomalies</h4>
+                    <p>Notify managers instantly if employees clock in late, fail to clock out, or request manual edits.</p>
+                  </div>
+                  <div className="toggle-wrapper">
+                    <input
+                      type="checkbox"
+                      id="notif-alerts"
+                      checked={notifications.alerts}
+                      onChange={e => setNotifications(p => ({ ...p, alerts: e.target.checked }))}
+                      className="toggle-checkbox"
+                    />
+                    <label htmlFor="notif-alerts" className="toggle-label"></label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
