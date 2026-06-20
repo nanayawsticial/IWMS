@@ -132,3 +132,21 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
+
+export function getPostLoginRoute(user: any): string {
+  if (!user) return '/login';
+  if (['super_admin', 'admin'].includes(user.role)) {
+    return '/management';
+  }
+  const dept = (typeof user.department === 'string' ? user.department : user.department?.name || '').toLowerCase();
+  if (dept.includes('hr') || dept.includes('human resource')) {
+    return '/hr';
+  }
+  if (dept.includes('finance')) {
+    return '/finance';
+  }
+  if (user.role === 'manager') {
+    return '/department-dashboard';
+  }
+  return '/dashboard';
+}

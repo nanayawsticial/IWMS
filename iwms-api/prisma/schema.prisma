@@ -30,6 +30,9 @@ model Organization {
   notifications    Notification[]
   overtimeRequests OvertimeRequest[]
   publicHolidays   PublicHoliday[]
+  employeeProfiles EmployeeProfile[]
+  expenses         Expense[]
+  budgets          Budget[]
 }
 
 model Department {
@@ -83,6 +86,8 @@ model User {
   shifts          Shift[]
   reports         WeeklyReport[]
   overtimeRequests OvertimeRequest[]
+  employeeProfile  EmployeeProfile?
+  expenses        Expense[]
 
   @@index([departmentId])
   @@index([organizationId])
@@ -427,5 +432,67 @@ model PublicHoliday {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([date, organizationId])
+  @@index([organizationId])
+}
+
+model EmployeeProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employmentType    String   @default("full_time") // full_time | part_time | contract | intern
+  probationEndDate  String?
+  noticePeriodDays  Int      @default(30)
+  salary            Float?
+  bankName          String   @default("")
+  bankAccount       String   @default("")
+  emergencyContact  String   @default("")
+  emergencyPhone    String   @default("")
+  onboardingStatus  String   @default("pending") // pending | in_progress | complete
+  offboardingStatus String?  // null | initiated | in_progress | complete
+  terminationDate   String?
+  terminationReason String?
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model Expense {
+  id             String   @id @default(cuid())
+  title          String
+  amount         Float
+  currency       String   @default("GHS")
+  category       String   // salary | operations | equipment | travel | other
+  submittedBy    String
+  user           User     @relation(fields: [submittedBy], references: [id])
+  status         String   @default("pending") // pending | approved | rejected | paid
+  receiptUrl     String?
+  notes          String?
+  date           String
+  approvedBy     String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([submittedBy])
+  @@index([organizationId])
+}
+
+model Budget {
+  id             String   @id @default(cuid())
+  name           String
+  amount         Float
+  spent          Float    @default(0)
+  period         String   // YYYY-MM
+  category       String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
   @@index([organizationId])
 }

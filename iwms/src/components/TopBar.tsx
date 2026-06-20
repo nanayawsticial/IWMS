@@ -6,6 +6,16 @@ import { usePathname, useRouter } from 'next/navigation';
 import { attendanceApi, notificationsApi } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useSocket } from '@/hooks/useSocket';
+import {
+  Search,
+  Bell,
+  Clock as ClockIcon,
+  ChevronDown,
+  LogOut,
+  Menu,
+  Copy,
+  Check
+} from 'lucide-react';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':  'Dashboard',
@@ -14,6 +24,11 @@ const PAGE_TITLES: Record<string, string> = {
   '/team':       'Team Directory',
   '/reports':    'Reports',
   '/settings':   'Settings',
+  '/hr':         'HR Dashboard',
+  '/finance':    'Finance Dashboard',
+  '/presence':   'Team Presence',
+  '/weekly-reports': 'Weekly Reports',
+  '/department-dashboard': 'My Team',
 };
 
 export default function TopBar() {
@@ -31,13 +46,6 @@ export default function TopBar() {
   ]);
 
   const today = new Date().toISOString().split('T')[0];
-
-  const { data: todayStats } = useQuery({
-    queryKey: ['attendance-stats', today],
-    queryFn: () => attendanceApi.stats(today),
-    refetchInterval: 60000,
-    enabled: !!user,
-  });
 
   const { data: dbNotifications } = useQuery({
     queryKey: ['notifications'],
@@ -137,7 +145,6 @@ export default function TopBar() {
       }
     });
 
-    // Personal targeted: reviewer gets alerted when their assigned task enters review
     const offReviewRequested = on('task:reviewRequested', (data: any) => {
       setNotifications((prev) => [
         {
@@ -150,7 +157,6 @@ export default function TopBar() {
       ]);
     });
 
-    // Personal targeted: assignee gets notified when their task is approved to done
     const offTaskApproved = on('task:approved', (data: any) => {
       setNotifications((prev) => [
         {
@@ -202,7 +208,6 @@ export default function TopBar() {
   }, []);
 
   const title = Object.entries(PAGE_TITLES).find(([key]) => pathname.startsWith(key))?.[1] || 'IWMS';
-
   const notifCount = notifications.length;
 
   const handleLogout = () => {
@@ -236,9 +241,14 @@ export default function TopBar() {
   };
 
   const ROLE_COLORS: Record<string, string> = {
-    super_admin: '#ef4444', admin: '#6366f1', hr_manager: '#f59e0b',
-    manager: '#8b5cf6', team_lead: '#06b6d4', employee: '#10b981',
+    super_admin: '#ef4444',
+    admin: '#6366f1',
+    hr_manager: '#f59e0b',
+    manager: '#8b5cf6',
+    team_lead: '#06b6d4',
+    employee: '#10b981',
   };
+  
   const avatarColor = user ? (ROLE_COLORS[user.role] || '#6366f1') : '#6366f1';
 
   return (
@@ -259,37 +269,48 @@ export default function TopBar() {
           }}
           aria-label="Toggle Menu"
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
+          <Menu size={22} />
         </button>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <h2 className="topbar-title" style={{ margin: 0 }}>{title}</h2>
           <div className="topbar-breadcrumb">
             <span>Home</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
+            <span className="text-[var(--text-3)]">/</span>
             <span className="breadcrumb-current">{title}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Centered Search Bar */}
+      <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
+        <div className="relative w-full">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
+            <Search size={16} />
+          </span>
+          <input
+            type="text"
+            placeholder="Search tasks, employees, or attendance..."
+            className="w-full pl-10 pr-12 py-1.5 text-xs bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+          />
+          <kbd className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <span className="px-1.5 py-0.5 text-[9px] font-medium bg-[var(--bg-surface-2)] border border-[var(--border-strong)] rounded text-[var(--text-2)]">
+              ⌘K
+            </span>
+          </kbd>
         </div>
       </div>
 
       <div className="topbar-right">
         {/* Live Clock */}
         <div className="topbar-clock">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
+          <ClockIcon size={14} />
           {time}
         </div>
 
         {/* Notifications */}
         <div className="notif-wrapper">
           <button className="notif-btn" onClick={() => setNotifOpen(!notifOpen)} aria-label="Notifications">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-            </svg>
+            <Bell size={18} />
             {notifCount > 0 && <span className="notif-badge">{notifCount}</span>}
           </button>
 
@@ -321,18 +342,17 @@ export default function TopBar() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   navigator.clipboard.writeText(n.metadata?.uid || '');
-                                  
                                   const target = e.currentTarget;
                                   const originalText = target.innerText;
                                   target.innerText = 'Copied!';
                                   target.style.background = '#10b981';
                                   setTimeout(() => {
                                     target.innerText = originalText;
-                                    target.style.background = 'var(--color-indigo)';
+                                    target.style.background = 'var(--accent)';
                                   }, 1500);
                                 }}
                                 style={{
-                                  padding: '2px 8px', fontSize: '11px', background: 'var(--color-indigo)',
+                                  padding: '2px 8px', fontSize: '11px', background: 'var(--accent)',
                                   color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
                                   fontWeight: '600', transition: 'background 0.2s'
                                 }}
@@ -364,7 +384,7 @@ export default function TopBar() {
                   )}
                 </div>
                 {notifications.length > 0 && (
-                  <button className="notif-clear" onClick={clearAllNotifications} style={{ width: '100%', background: 'none', border: 'none', padding: '12px', color: 'var(--color-indigo)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textAlign: 'center', borderTop: '1px solid var(--border-color)', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
+                  <button className="notif-clear" onClick={clearAllNotifications} style={{ width: '100%', background: 'none', border: 'none', padding: '12px', color: 'var(--accent)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textAlign: 'center', borderTop: '1px solid var(--border-color)', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-soft)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
                     Clear all notifications
                   </button>
                 )}
@@ -389,11 +409,9 @@ export default function TopBar() {
               </div>
               <div className="topbar-user-info">
                 <span className="topbar-user-name">{user.name.split(' ')[0]}</span>
-                <span className="topbar-user-dept">{user.department}</span>
+                <span className="topbar-user-dept">{typeof user.department === 'string' ? user.department : (user.department as any)?.name || 'General'}</span>
               </div>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
+              <ChevronDown size={14} className="text-[var(--text-3)]" />
             </button>
 
             {showLogoutConfirm && (
@@ -401,13 +419,13 @@ export default function TopBar() {
                 <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setShowLogoutConfirm(false)} />
                 <div style={{
                   position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                  background: '#1e293b', border: '1px solid #334155', borderRadius: '12px',
+                  background: 'var(--bg-surface-2)', border: '1px solid var(--border)', borderRadius: '12px',
                   padding: '8px', minWidth: '200px', zIndex: 50,
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                  boxShadow: 'var(--glass-shadow)',
                 }}>
-                  <div style={{ padding: '10px 12px', borderBottom: '1px solid #334155', marginBottom: '4px' }}>
-                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>{user.name}</p>
-                    <p style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{user.email}</p>
+                  <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)', marginBottom: '4px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-1)' }}>{user.name}</p>
+                    <p style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '2px' }}>{user.email}</p>
                     <span style={{
                       display: 'inline-block', marginTop: '6px', fontSize: '10px', fontWeight: 600,
                       color: avatarColor, background: `${avatarColor}20`,
@@ -427,9 +445,7 @@ export default function TopBar() {
                     onMouseEnter={e => (e.currentTarget.style.background = '#ef444415')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                   >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
+                    <LogOut size={15} />
                     Sign Out
                   </button>
                 </div>

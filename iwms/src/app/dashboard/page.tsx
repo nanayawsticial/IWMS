@@ -5,13 +5,31 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  RadialBarChart, RadialBar
 } from 'recharts';
 import Link from 'next/link';
-import { attendanceApi, tasksApi } from '@/lib/api';
+import { attendanceApi, tasksApi, managementApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSocketEvent } from '@/hooks/useSocket';
+import KpiCard from '@/components/KpiCard';
+import {
+  Users,
+  Briefcase,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  UserPlus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Plus,
+  Trash2,
+  Check,
+  Building,
+  UserCheck
+} from 'lucide-react';
 
-// ── Static weekly shapes (will be real WebSocket data in Phase 2) ─
 const WEEKLY_ATTENDANCE = [
   { day: 'Mon', present: 48, absent: 6, late: 4 },
   { day: 'Tue', present: 52, absent: 4, late: 2 },
@@ -21,75 +39,26 @@ const WEEKLY_ATTENDANCE = [
   { day: 'Sat', present: 20, absent: 40, late: 0 },
   { day: 'Sun', present: 10, absent: 50, late: 0 },
 ];
-const MONTHLY_TREND = [
-  { week: 'W1', attendance: 88, tasks: 42 },
-  { week: 'W2', attendance: 91, tasks: 55 },
-  { week: 'W3', attendance: 85, tasks: 48 },
-  { week: 'W4', attendance: 93, tasks: 67 },
-];
 
 const TOOLTIP_STYLE = {
-  background: '#1e293b', border: '1px solid #334155',
-  borderRadius: '8px', color: '#e2e8f0', padding: '10px 14px', fontSize: '13px',
+  background: 'var(--bg-surface-2)',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '8px',
+  color: 'var(--text-1)',
+  padding: '10px 14px',
+  fontSize: '12px',
 };
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div style={TOOLTIP_STYLE}>
-      <p style={{ fontWeight: 600, marginBottom: 6, color: '#94a3b8' }}>{label}</p>
+      <p style={{ fontWeight: 600, marginBottom: 6, color: 'var(--text-2)' }}>{label}</p>
       {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.color }}>{p.name}: <strong>{p.value}</strong></p>
+        <p key={p.name} style={{ color: p.color || 'var(--text-1)' }}>
+          {p.name}: <strong>{p.value}</strong>
+        </p>
       ))}
-    </div>
-  );
-}
-
-// ── Welcome Banner ──────────────────────────────────────────────────
-function WelcomeBanner({
-  user,
-  pendingLeave,
-  tasksDue,
-  onCreateTask,
-}: {
-  user: any;
-  pendingLeave: number;
-  tasksDue: number;
-  onCreateTask?: () => void;
-}) {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const initials = user?.name
-    ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-    : '?';
-
-  return (
-    <div className="welcome-banner">
-      <div className="welcome-banner-left">
-        <div className="welcome-avatar">{initials}</div>
-        <div className="welcome-text">
-          <h2>{greeting}, {user?.name?.split(' ')[0]} 👋</h2>
-          <p>
-            You have{' '}
-            <strong>{pendingLeave}</strong> pending leave request{pendingLeave !== 1 ? 's' : ''} &amp;{' '}
-            <strong>{tasksDue}</strong> task{tasksDue !== 1 ? 's' : ''} in progress today.
-          </p>
-        </div>
-      </div>
-      <div className="welcome-actions">
-        <Link href="/attendance" className="welcome-btn-secondary">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-          View Attendance
-        </Link>
-        <button className="welcome-btn-primary" onClick={onCreateTask}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Create Task
-        </button>
-      </div>
     </div>
   );
 }
@@ -100,6 +69,32 @@ export default function DashboardPage() {
   const queryClient = useQueryClient();
   const [newArrivals, setNewArrivals] = useState<Record<string, boolean>>({});
 
+  // Todo list state
+  const [todoInput, setTodoInput] = useState('');
+  const [todos, setTodos] = useState<{ id: number; text: string; completed: boolean }[]>([
+    { id: 1, text: 'Approve pending overtime requests', completed: false },
+    { id: 2, text: 'Review HR onboarding checklist', completed: true },
+    { id: 3, text: 'Audit geofence zone logs', completed: false },
+  ]);
+
+  // Applicants filter state
+  const [applicantFilter, setApplicantFilter] = useState<'all' | 'shortlisted' | 'interviewing'>('all');
+
+  const applicantsData = [
+    { id: 1, name: 'Godfred Lawson', position: 'UI Designer', status: 'interviewing', date: '2026-06-18' },
+    { id: 2, name: 'Abena Osei', position: 'Frontend Eng', status: 'shortlisted', date: '2026-06-19' },
+    { id: 3, name: 'Kwesi Mensah', position: 'DevOps Lead', status: 'applied', date: '2026-06-15' },
+    { id: 4, name: 'Eshun Kofi', position: 'HR Assistant', status: 'applied', date: '2026-06-16' },
+  ];
+
+  const filteredApplicants = applicantsData.filter(a => {
+    if (applicantFilter === 'all') return true;
+    return a.status === applicantFilter;
+  });
+
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
+
+  // 1. Fetch live metrics
   const { data: stats } = useQuery({
     queryKey: ['attendance-stats', today],
     queryFn: () => attendanceApi.stats(today),
@@ -113,6 +108,12 @@ export default function DashboardPage() {
   const { data: recentAttendance = [] } = useQuery({
     queryKey: ['attendance', today],
     queryFn: () => attendanceApi.list({ date: today }),
+  });
+
+  const { data: managementData } = useQuery({
+    queryKey: ['management-dashboard'],
+    queryFn: () => managementApi.getDashboard(),
+    enabled: !!user && isAdmin,
   });
 
   // Socket updates for KPI stats
@@ -140,6 +141,9 @@ export default function DashboardPage() {
     });
 
     queryClient.invalidateQueries({ queryKey: ['attendance-stats', today] });
+    if (isAdmin) {
+      queryClient.invalidateQueries({ queryKey: ['management-dashboard'] });
+    }
   });
 
   // Socket updates for clock-out (Activity Feed + Stats)
@@ -158,238 +162,672 @@ export default function DashboardPage() {
     });
 
     queryClient.invalidateQueries({ queryKey: ['attendance-stats', today] });
+    if (isAdmin) {
+      queryClient.invalidateQueries({ queryKey: ['management-dashboard'] });
+    }
   });
 
+  // Tasks counts
+  const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t: any) => t.status === 'done').length;
   const inProgressTasks = tasks.filter((t: any) => t.status === 'in_progress').length;
-  const totalTasks = tasks.length;
-  const pendingLeaveCount = (stats?.onLeave ?? 0);
+  const reviewTasks = tasks.filter((t: any) => t.status === 'review').length;
+  const todoTasks = tasks.filter((t: any) => t.status === 'todo').length;
+  const backlogTasks = tasks.filter((t: any) => t.status === 'backlog').length;
 
   const taskStatusCounts = [
-    { name: 'Done',        value: tasks.filter((t: any) => t.status === 'done').length,        color: '#10b981' },
-    { name: 'In Progress', value: tasks.filter((t: any) => t.status === 'in_progress').length, color: '#6366f1' },
-    { name: 'Review',      value: tasks.filter((t: any) => t.status === 'review').length,      color: '#f59e0b' },
-    { name: 'Todo',        value: tasks.filter((t: any) => t.status === 'todo').length,        color: '#64748b' },
-    { name: 'Backlog',     value: tasks.filter((t: any) => t.status === 'backlog').length,     color: '#334155' },
+    { name: 'Done', value: doneTasks, color: 'var(--green)' },
+    { name: 'In Progress', value: inProgressTasks, color: 'var(--accent)' },
+    { name: 'Review', value: reviewTasks, color: 'var(--yellow)' },
+    { name: 'Todo', value: todoTasks, color: 'var(--blue)' },
+    { name: 'Backlog', value: backlogTasks, color: 'var(--text-3)' },
   ];
 
-  const kpiCards = [
-    {
-      label: 'Present Today',
-      value: stats?.presentWithLate ?? '—',
-      total: stats?.totalEmployees ?? '—',
-      pct: stats?.attendanceRate ?? 0,
-      color: '#10b981', glow: '0 0 20px #10b98140',
-      href: '/attendance', hrefLabel: 'View Attendance',
-      icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>,
-    },
-    {
-      label: 'Tasks Completed',
-      value: doneTasks,
-      total: totalTasks,
-      pct: totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0,
-      color: '#6366f1', glow: '0 0 20px #6366f140',
-      href: '/tasks', hrefLabel: 'View Tasks',
-      icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>,
-    },
-    {
-      label: 'In Progress',
-      value: inProgressTasks,
-      total: totalTasks,
-      pct: totalTasks > 0 ? Math.round((inProgressTasks / totalTasks) * 100) : 0,
-      color: '#f59e0b', glow: '0 0 20px #f59e0b40',
-      href: '/tasks', hrefLabel: 'View Board',
-      icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-    },
-    {
-      label: 'On Leave / Absent',
-      value: (stats?.onLeave ?? 0) + (stats?.absent ?? 0),
-      total: stats?.totalEmployees ?? '—',
-      pct: stats?.totalEmployees ? Math.round(((stats.onLeave + stats.absent) / stats.totalEmployees) * 100) : 0,
-      color: '#8b5cf6', glow: '0 0 20px #8b5cf640',
-      href: '/attendance', hrefLabel: 'View Details',
-      icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-    },
-  ];
+  // Todo action handlers
+  const handleAddTodo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!todoInput.trim()) return;
+    setTodos(prev => [...prev, { id: Date.now(), text: todoInput.trim(), completed: false }]);
+    setTodoInput('');
+  };
 
-  const criticalTasks = tasks
-    .filter((t: any) => (t.priority === 'critical' || t.priority === 'high') && t.status !== 'done')
-    .slice(0, 4);
+  const handleToggleTodo = (id: number) => {
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  };
 
+  const handleDeleteTodo = (id: number) => {
+    setTodos(prev => prev.filter(t => t.id !== id));
+  };
+
+  // Greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const initials = user?.name
+    ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : '?';
+
+  // Admin and Employee layouts rendering
   return (
     <div className="page-content">
       {/* Welcome Banner */}
-      <WelcomeBanner
-        user={user}
-        pendingLeave={pendingLeaveCount}
-        tasksDue={inProgressTasks}
-        onCreateTask={() => { window.location.href = '/tasks'; }}
-      />
-
-      {/* KPI Cards */}
-      <div className="kpi-grid">
-        {kpiCards.map((card, i) => (
-          <div key={i} className="kpi-card" style={{ '--kpi-color': card.color, '--kpi-glow': card.glow } as React.CSSProperties}>
-            <div className="kpi-header">
-              <div className="kpi-icon" style={{ color: card.color, background: `${card.color}20` }}>{card.icon}</div>
-              <span className="kpi-pct" style={{ color: card.color }}>{card.pct}%</span>
+      <div className="card bg-gradient-to-r from-[var(--bg-surface)] to-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-lg)] p-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)] font-bold text-xl border border-[var(--border-strong)] shadow-inner">
+              {initials}
             </div>
-            <div className="kpi-value">{card.value}<span className="kpi-total">/{card.total}</span></div>
-            <div className="kpi-label">{card.label}</div>
-            <div className="kpi-bar">
-              <div className="kpi-bar-fill" style={{ width: `${card.pct}%`, background: card.color }} />
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-[var(--text-1)]">
+                {greeting}, {user?.name?.split(' ')[0]} 👋
+              </h2>
+              {isAdmin ? (
+                <p className="text-[var(--text-2)] text-sm mt-1.5">
+                  You have <span className="text-[var(--accent)] font-semibold underline">{stats?.onLeave || 0}</span> employees on leave today &amp; <span className="text-[var(--accent)] font-semibold underline">{tasks.filter((t: any) => t.status === 'review').length}</span> tasks awaiting review.
+                </p>
+              ) : (
+                <p className="text-[var(--text-2)] text-sm mt-1.5">
+                  You have <span className="text-[var(--accent)] font-semibold underline">{tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length}</span> tasks in progress today &amp; your attendance rate this month is <span className="text-[var(--accent)] font-semibold underline">{stats?.attendanceRate || 0}%</span>.
+                </p>
+              )}
             </div>
-            <Link href={card.href} className="kpi-link" style={{ '--kpi-color': card.color } as React.CSSProperties}>
-              {card.hrefLabel}
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/attendance" className="btn-ghost">
+              <Clock size={16} />
+              View Attendance
+            </Link>
+            <Link href="/tasks" className="btn-primary">
+              <Plus size={16} />
+              Manage Tasks
             </Link>
           </div>
-        ))}
+        </div>
       </div>
 
-      {/* Charts Row */}
-      <div className="charts-grid">
-        <div className="chart-card chart-wide">
-          <div className="chart-header">
-            <h3 className="chart-title">Weekly Attendance Overview</h3>
-            <div className="chart-legend-row">
-              {[{ color: '#10b981', label: 'Present' }, { color: '#ef4444', label: 'Absent' }, { color: '#f59e0b', label: 'Late' }].map(l => (
-                <span key={l.label} className="legend-chip">
-                  <span className="legend-dot" style={{ background: l.color }} />{l.label}
-                </span>
-              ))}
+      {isAdmin ? (
+        <>
+          {/* Admin Dashboard: Row 1 & 2 KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <KpiCard
+              title="Attendance Today"
+              value={`${stats?.presentWithLate ?? 0}/${stats?.totalEmployees ?? 0}`}
+              icon={UserCheck}
+              iconBg="var(--green-soft)"
+              iconColor="var(--green)"
+              trend={{ value: `${stats?.attendanceRate ?? 0}%`, isPositive: (stats?.attendanceRate ?? 0) >= 85, label: 'Present today' }}
+              link={{ href: '/attendance', label: 'View log' }}
+            />
+            <KpiCard
+              title="Active Projects"
+              value="12"
+              icon={Briefcase}
+              iconBg="var(--blue-soft)"
+              iconColor="var(--blue)"
+              trend={{ value: '+2 new', isPositive: true, label: 'this week' }}
+              link={{ href: '/tasks', label: 'View tasks' }}
+            />
+            <KpiCard
+              title="Total Headcount"
+              value={managementData?.headcount?.total ?? stats?.totalEmployees ?? '—'}
+              icon={Users}
+              iconBg="var(--purple-soft)"
+              iconColor="var(--purple)"
+              trend={{ value: `+${managementData?.headcount?.new_this_month ?? 2}`, isPositive: true, label: 'this month' }}
+              link={{ href: '/team', label: 'Directory' }}
+            />
+            <KpiCard
+              title="Active Tasks"
+              value={tasks.filter((t: any) => t.status !== 'done').length}
+              icon={CheckCircle}
+              iconBg="var(--kpi-orange-bg)"
+              iconColor="var(--accent)"
+              trend={{ value: `${doneTasks} completed`, isPositive: true, label: 'in total' }}
+              link={{ href: '/tasks', label: 'Kanban Board' }}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <KpiCard
+              title="Monthly Earnings"
+              value="GHS 25,430"
+              icon={DollarSign}
+              iconBg="var(--green-soft)"
+              iconColor="var(--green)"
+              trend={{ value: '12.5%', isPositive: true, label: 'vs last month' }}
+            />
+            <KpiCard
+              title="Total Revenue"
+              value="GHS 142,500"
+              icon={TrendingUp}
+              iconBg="var(--teal-soft)"
+              iconColor="var(--teal)"
+              trend={{ value: '8%', isPositive: true, label: 'vs last quarter' }}
+            />
+            <KpiCard
+              title="Leaves Approved"
+              value={managementData?.headcount?.onLeave ?? stats?.onLeave ?? 0}
+              icon={Calendar}
+              iconBg="var(--red-soft)"
+              iconColor="var(--red)"
+              trend={{ value: 'Stable', isPositive: true, label: 'daily average' }}
+              link={{ href: '/leave', label: 'Leave calendar' }}
+            />
+            <KpiCard
+              title="New Hires"
+              value={managementData?.headcount?.new_this_month ?? 4}
+              icon={UserPlus}
+              iconBg="var(--kpi-pink-bg)"
+              iconColor="#ec4899"
+              trend={{ value: '+10% Join Rate', isPositive: true, label: 'MoM increase' }}
+            />
+          </div>
+
+          {/* Row 3 (3-Column Layout) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Column 1: Employee Status Panel */}
+            <div className="card flex flex-col justify-between">
+              <div>
+                <h3 className="section-title mb-4">Employee Status</h3>
+                <div className="flex justify-between items-baseline mb-2">
+                  <span className="text-sm text-[var(--text-2)]">Active Employees</span>
+                  <span className="text-xl font-bold text-[var(--text-1)]">
+                    {managementData?.headcount?.active ?? 0}/{managementData?.headcount?.total ?? 0}
+                  </span>
+                </div>
+                {/* Horizontal proportion bar */}
+                <div className="h-2 w-full rounded-full bg-[var(--bg-hover)] overflow-hidden flex mb-4">
+                  <div style={{ width: '70%' }} className="bg-var(--green) bg-emerald-500" title="Full Time: 70%" />
+                  <div style={{ width: '15%' }} className="bg-var(--blue) bg-blue-500" title="Part Time: 15%" />
+                  <div style={{ width: '10%' }} className="bg-var(--yellow) bg-amber-500" title="Contract: 10%" />
+                  <div style={{ width: '5%' }} className="bg-var(--red) bg-red-500" title="Intern: 5%" />
+                </div>
+                {/* 2x2 grid stats */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <span className="label block text-[var(--text-3)] text-xs mb-1">Gender Ratio</span>
+                    <span className="text-sm font-semibold text-[var(--text-1)]">62% M / 38% F</span>
+                  </div>
+                  <div className="p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <span className="label block text-[var(--text-3)] text-xs mb-1">Workspace</span>
+                    <span className="text-sm font-semibold text-[var(--text-1)]">84% Onsite / 16% Rem</span>
+                  </div>
+                  <div className="p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <span className="label block text-[var(--text-3)] text-xs mb-1">Shift Coverage</span>
+                    <span className="text-sm font-semibold text-[var(--text-1)]">94% Day / 6% Night</span>
+                  </div>
+                  <div className="p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <span className="label block text-[var(--text-3)] text-xs mb-1">Engagement</span>
+                    <span className="text-sm font-semibold text-[var(--text-1)]">88% score</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Top Performer Section */}
+              {managementData?.topPerformers?.[0] && (
+                <div className="p-4 bg-gradient-to-r from-[var(--bg-surface-2)] to-[var(--bg-hover)] rounded-[var(--radius-md)] border border-[var(--border-strong)] flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[var(--accent-soft)] border border-[var(--accent)] flex items-center justify-center text-[var(--accent)] font-semibold text-lg">
+                    {managementData.topPerformers[0].avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[var(--text-3)] text-[10px] uppercase font-bold tracking-wider">Top Performer</span>
+                    <h4 className="text-sm font-semibold text-[var(--text-1)] truncate">{managementData.topPerformers[0].name}</h4>
+                    <p className="text-xs text-[var(--text-2)] truncate">{managementData.topPerformers[0].department}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-[var(--green)]">+{managementData.topPerformers[0].tasksCompleted}</span>
+                    <p className="text-[10px] text-[var(--text-3)]">tasks done</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Column 2: Attendance Gauge */}
+            <div className="card flex flex-col justify-between items-center relative min-h-[300px]">
+              <div className="w-full flex items-center justify-between mb-4">
+                <h3 className="section-title">Attendance Gauge</h3>
+                <span className="badge badge-green">Healthy</span>
+              </div>
+
+              <div className="relative w-full flex items-center justify-center flex-1">
+                <ResponsiveContainer width="100%" height={180}>
+                  <RadialBarChart
+                    cx="50%"
+                    cy="60%"
+                    innerRadius="80%"
+                    outerRadius="110%"
+                    barSize={12}
+                    data={[{ value: Math.round((managementData?.attendance?.rate || stats?.attendanceRate || 0) * 100) }]}
+                    startAngle={180}
+                    endAngle={0}
+                  >
+                    <RadialBar
+                      background={{ fill: 'var(--bg-surface-2)' }}
+                      dataKey="value"
+                      cornerRadius={6}
+                      fill="var(--accent)"
+                    />
+                  </RadialBarChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
+                  <span className="text-3xl font-bold text-[var(--text-1)]">
+                    {Math.round((managementData?.attendance?.rate || stats?.attendanceRate || 0) * 100)}%
+                  </span>
+                  <span className="text-xs text-[var(--text-3)] mt-1">Attendance Rate</span>
+                </div>
+              </div>
+
+              <div className="w-full grid grid-cols-3 gap-2 text-center pt-4 border-t border-[var(--border)]">
+                <div>
+                  <span className="text-sm font-bold text-[var(--green)]">
+                    {managementData?.attendance?.present ?? stats?.presentCount ?? 0}
+                  </span>
+                  <p className="text-[10px] text-[var(--text-3)] mt-0.5">Present</p>
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-[var(--yellow)]">
+                    {managementData?.attendance?.late ?? stats?.lateCount ?? 0}
+                  </span>
+                  <p className="text-[10px] text-[var(--text-3)] mt-0.5">Late</p>
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-[var(--red)]">
+                    {managementData?.attendance?.absent ?? stats?.absentCount ?? 0}
+                  </span>
+                  <p className="text-[10px] text-[var(--text-3)] mt-0.5">Absent</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 3: Departments Size & Clock Logs */}
+            <div className="card flex flex-col justify-between">
+              <div>
+                <h3 className="section-title mb-4">Department Sizes</h3>
+                <ResponsiveContainer width="100%" height={120}>
+                  <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: -15, right: 10, top: 0, bottom: 0 }}>
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" stroke="var(--text-3)" fontSize={10} width={80} tickLine={false} axisLine={false} />
+                    <Bar dataKey="headcount" fill="var(--accent)" radius={[0, 4, 4, 0]} barSize={8}>
+                      {managementData?.departments?.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || 'var(--accent)'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="border-t border-[var(--border)] pt-4">
+                <h4 className="text-xs font-semibold text-[var(--text-2)] uppercase tracking-wider mb-3">Today's Scans</h4>
+                <div className="space-y-3">
+                  {recentAttendance.slice(0, 3).map((a: any) => {
+                    const isClockedOut = !!a.clockOut;
+                    const isPresent = a.status === 'present';
+                    const isLate = a.status === 'late';
+                    
+                    const statusText = isClockedOut ? 'Out' : isPresent ? 'In' : isLate ? 'Late' : 'Scanned';
+                    const statusColor = isClockedOut ? 'badge-blue' : isPresent ? 'badge-green' : isLate ? 'badge-yellow' : 'badge-orange';
+                    const timeVal = isClockedOut ? a.clockOut : a.clockIn;
+
+                    return (
+                      <div key={a.id || a.userId} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center text-[var(--text-2)] font-semibold">
+                            {a.userAvatar}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-[var(--text-1)]">{a.userName}</p>
+                            <p className="text-[10px] text-[var(--text-3)]">{a.userDepartment || 'General'}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`badge ${statusColor}`}>{statusText}</span>
+                          <p className="text-[10px] text-[var(--text-3)] mt-1 font-mono">{timeVal || '—'}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {recentAttendance.length === 0 && (
+                    <p className="text-xs text-[var(--text-3)] text-center py-2">No scans registered today</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={WEEKLY_ATTENDANCE} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="presentGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="lateGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="day" stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
-              <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="present" name="Present" stroke="#10b981" strokeWidth={2} fill="url(#presentGrad)" />
-              <Area type="monotone" dataKey="late" name="Late" stroke="#f59e0b" strokeWidth={2} fill="url(#lateGrad)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
 
-        <div className="chart-card">
-          <div className="chart-header"><h3 className="chart-title">Task Distribution</h3></div>
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie data={taskStatusCounts} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
-                {taskStatusCounts.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="pie-legend">
-            {taskStatusCounts.map(s => (
-              <div key={s.name} className="pie-legend-item">
-                <span className="legend-dot" style={{ background: s.color }} />
-                <span className="pie-legend-label">{s.name}</span>
-                <span className="pie-legend-val">{s.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Row */}
-      <div className="bottom-grid">
-        <div className="chart-card">
-          <div className="chart-header"><h3 className="chart-title">Monthly Performance Trend</h3></div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={MONTHLY_TREND} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="week" stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
-              <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="attendance" name="Attendance %" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="tasks" name="Tasks Done" fill="#10b981" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Enhanced Live Activity Feed — Clock-In/Out style */}
-        <div className="chart-card activity-card">
-          <div className="chart-header">
-            <h3 className="chart-title">Clock-In / Out</h3>
-            <span className="live-badge"><span className="live-dot" />LIVE</span>
-          </div>
-          <div className="activity-list">
-            {recentAttendance.slice(0, 6).map((a: any) => {
-              const isClockedOut = !!a.clockOut;
-              const isPresent = a.status === 'present';
-              const isLate = a.status === 'late';
-              const isLeave = a.status === 'on_leave';
-
-              const pillColor = isClockedOut
-                ? { bg: 'rgba(99,102,241,0.12)', text: '#818cf8' }
-                : isPresent
-                ? { bg: 'rgba(16,185,129,0.12)', text: '#10b981' }
-                : isLate
-                ? { bg: 'rgba(245,158,11,0.12)', text: '#f59e0b' }
-                : isLeave
-                ? { bg: 'rgba(139,92,246,0.12)', text: '#8b5cf6' }
-                : { bg: 'rgba(239,68,68,0.12)', text: '#ef4444' };
-
-              const timeDisplay = isClockedOut ? a.clockOut : (a.clockIn || '');
-              const statusLabel = isClockedOut ? 'Clocked out' : isPresent ? 'Clocked in' : isLate ? 'Late' : isLeave ? 'On Leave' : 'Absent';
-
-              return (
-                <div key={a.id || a.userId} className={`activity-item ${newArrivals[a.userId] ? 'activity-item-new' : ''}`}>
-                  <div className="activity-avatar" style={{ background: pillColor.bg, border: `2px solid ${pillColor.text}50`, color: pillColor.text }}>
-                    {a.userAvatar}
-                  </div>
-                  <div className="activity-info">
-                    <p className="activity-name">{a.userName}</p>
-                    {a.userRole && <p className="activity-role">{a.userRole}</p>}
-                  </div>
-                  <div className="activity-pill" style={{ background: pillColor.bg, color: pillColor.text }}>
-                    <span className="activity-pill-dot" />
-                    {statusLabel}{timeDisplay ? ` · ${timeDisplay}` : ''}
+          {/* Row 4: Applicants, Active Employees, Quick Action Todo List */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Column 1 & 2: Applicants and Active Directory */}
+            <div className="card lg:col-span-2 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-4 flex-wrap gap-4">
+                  <h3 className="section-title">Recruitment Pipeline</h3>
+                  <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
+                    <button
+                      onClick={() => setApplicantFilter('all')}
+                      className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${applicantFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setApplicantFilter('shortlisted')}
+                      className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${applicantFilter === 'shortlisted' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                    >
+                      Shortlisted
+                    </button>
+                    <button
+                      onClick={() => setApplicantFilter('interviewing')}
+                      className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${applicantFilter === 'interviewing' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                    >
+                      Interviewing
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-            {recentAttendance.length === 0 && (
-              <p style={{ color: '#475569', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>No attendance records today</p>
-            )}
-          </div>
-        </div>
 
-        {/* Critical Tasks */}
-        <div className="chart-card">
-          <div className="chart-header"><h3 className="chart-title">Critical &amp; High Priority Tasks</h3></div>
-          <div className="task-list">
-            {criticalTasks.map((task: any) => (
-              <div key={task.id} className="task-item-mini">
-                <div className={`task-priority-dot priority-${task.priority}`} />
-                <div className="task-mini-info">
-                  <p className="task-mini-title">{task.title}</p>
-                  <p className="task-mini-meta">{task.assigneeName} · Due {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[11px] uppercase font-semibold">
+                        <th className="py-2.5">Candidate</th>
+                        <th className="py-2.5">Position Applied</th>
+                        <th className="py-2.5">Status</th>
+                        <th className="py-2.5 text-right">Applied Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {filteredApplicants.map((a) => (
+                        <tr key={a.id} className="text-xs hover:bg-[var(--bg-hover)]/30 transition-colors">
+                          <td className="py-3 font-semibold text-[var(--text-1)]">{a.name}</td>
+                          <td className="py-3 text-[var(--text-2)]">{a.position}</td>
+                          <td className="py-3">
+                            <span className={`badge ${
+                              a.status === 'interviewing' ? 'badge-orange' : a.status === 'shortlisted' ? 'badge-blue' : 'badge-yellow'
+                            }`}>
+                              {a.status}
+                            </span>
+                          </td>
+                          <td className="py-3 text-right text-[var(--text-3)] font-mono">{a.date}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <span className={`task-status-badge status-${task.status}`}>
-                  {task.status.replace('_', ' ')}
-                </span>
               </div>
-            ))}
-            {criticalTasks.length === 0 && (
-              <p style={{ color: '#475569', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>No critical tasks 🎉</p>
-            )}
+
+              {/* Active employee avatar strip */}
+              <div className="border-t border-[var(--border)] pt-4 mt-6">
+                <h4 className="text-xs font-semibold text-[var(--text-3)] uppercase tracking-wider mb-3">Today's Active Team</h4>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {recentAttendance.slice(0, 10).map((a: any) => (
+                    <div
+                      key={a.id || a.userId}
+                      className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] border-2 border-emerald-500/80 flex items-center justify-center text-xs font-bold text-[var(--text-1)] cursor-pointer hover:scale-105 transition-transform"
+                      title={`${a.userName} is active`}
+                    >
+                      {a.userAvatar}
+                    </div>
+                  ))}
+                  {recentAttendance.length === 0 && (
+                    <p className="text-xs text-[var(--text-3)]">No team members active currently</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Column 3: Quick Action Todo List */}
+            <div className="card flex flex-col justify-between min-h-[350px]">
+              <div>
+                <h3 className="section-title mb-4">Quick Todo List</h3>
+                
+                <form onSubmit={handleAddTodo} className="flex gap-2 mb-4">
+                  <input
+                    type="text"
+                    value={todoInput}
+                    onChange={(e) => setTodoInput(e.target.value)}
+                    placeholder="Add a quick task..."
+                    className="flex-1 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--radius-md)] px-3 py-1.5 text-xs text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
+                  />
+                  <button type="submit" className="p-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-[var(--radius-md)] transition-colors flex items-center justify-center">
+                    <Plus size={16} />
+                  </button>
+                </form>
+
+                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                  {todos.map((todo) => (
+                    <div
+                      key={todo.id}
+                      className="flex items-center justify-between p-2.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-md)] hover:border-[var(--border-strong)] transition-colors"
+                    >
+                      <button
+                        onClick={() => handleToggleTodo(todo.id)}
+                        className={`flex items-center gap-2.5 text-left text-xs ${todo.completed ? 'text-[var(--text-3)] line-through' : 'text-[var(--text-1)]'}`}
+                      >
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${todo.completed ? 'bg-[var(--green)] border-[var(--green)] text-white' : 'border-[var(--border-strong)] bg-transparent'}`}>
+                          {todo.completed && <Check size={12} />}
+                        </div>
+                        <span className="truncate max-w-[170px]">{todo.text}</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTodo(todo.id)}
+                        className="text-[var(--text-3)] hover:text-red-500 transition-colors p-1"
+                        title="Delete task"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                  {todos.length === 0 && (
+                    <p className="text-xs text-[var(--text-3)] text-center py-6">No quick todos. Enjoy your day! 🎉</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-xs text-[var(--text-3)] text-center border-t border-[var(--border)] pt-3 mt-4">
+                Saved in local state · {todos.filter(t => t.completed).length}/{todos.length} completed
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      ) : (
+        <>
+          {/* Employee Dashboard: Redesigned Dashboard cards & charts */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <KpiCard
+              title="My Clock-In Status"
+              value={recentAttendance.find((a: any) => a.userId === user?.id)?.clockIn ? 'Present' : 'Not Scanned'}
+              icon={Clock}
+              iconBg={recentAttendance.find((a: any) => a.userId === user?.id)?.clockIn ? 'var(--green-soft)' : 'var(--accent-soft)'}
+              iconColor={recentAttendance.find((a: any) => a.userId === user?.id)?.clockIn ? 'var(--green)' : 'var(--accent)'}
+              trend={{
+                value: recentAttendance.find((a: any) => a.userId === user?.id)?.status || 'Absent',
+                isPositive: recentAttendance.find((a: any) => a.userId === user?.id)?.status === 'present',
+                label: 'today'
+              }}
+              link={{ href: '/attendance', label: 'View history' }}
+            />
+            <KpiCard
+              title="Tasks Completed"
+              value={tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length}
+              icon={CheckCircle}
+              iconBg="var(--blue-soft)"
+              iconColor="var(--blue)"
+              trend={{
+                value: `${tasks.filter((t: any) => t.assigneeId === user?.id).length} total`,
+                isPositive: true,
+                label: 'assigned tasks'
+              }}
+              link={{ href: '/tasks', label: 'Board' }}
+            />
+            <KpiCard
+              title="In Progress"
+              value={tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length}
+              icon={Briefcase}
+              iconBg="var(--kpi-orange-bg)"
+              iconColor="var(--accent)"
+              trend={{
+                value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length,
+                isPositive: true,
+                label: 'waiting review'
+              }}
+            />
+            <KpiCard
+              title="Holiday Leaves"
+              value={stats?.onLeave ?? 0}
+              icon={Calendar}
+              iconBg="var(--purple-soft)"
+              iconColor="var(--purple)"
+              trend={{
+                value: 'Stable',
+                isPositive: true,
+                label: 'team presence'
+              }}
+              link={{ href: '/leave', label: 'Request leave' }}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="card lg:col-span-2">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="section-title">Weekly Attendance Overview</h3>
+                <div className="flex gap-4 text-xs">
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Present</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Late</span>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={WEEKLY_ATTENDANCE} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="presentGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="lateGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="day" stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 11 }} />
+                  <YAxis stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 11 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="present" name="Present" stroke="#10b981" strokeWidth={2} fill="url(#presentGrad)" />
+                  <Area type="monotone" dataKey="late" name="Late" stroke="#f59e0b" strokeWidth={2} fill="url(#lateGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="section-title">My Tasks Status</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Done', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length, color: 'var(--green)' },
+                      { name: 'In Progress', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length, color: 'var(--accent)' },
+                      { name: 'Review', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length, color: 'var(--yellow)' },
+                      { name: 'Todo', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'todo').length, color: 'var(--blue)' },
+                    ].filter(d => d.value > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={70}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {[
+                      { name: 'Done', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length, color: 'var(--green)' },
+                      { name: 'In Progress', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length, color: 'var(--accent)' },
+                      { name: 'Review', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length, color: 'var(--yellow)' },
+                      { name: 'Todo', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'todo').length, color: 'var(--blue)' },
+                    ].filter(d => d.value > 0).map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-2 text-xs pt-3 mt-2 border-t border-[var(--border)]">
+                <div className="flex items-center gap-1.5 text-[var(--text-2)]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Done: <strong className="text-[var(--text-1)]">{tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'done').length}</strong>
+                </div>
+                <div className="flex items-center gap-1.5 text-[var(--text-2)]">
+                  <span className="w-2 h-2 rounded-full bg-orange-500" />
+                  In Progress: <strong className="text-[var(--text-1)]">{tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length}</strong>
+                </div>
+                <div className="flex items-center gap-1.5 text-[var(--text-2)]">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  Review: <strong className="text-[var(--text-1)]">{tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'review').length}</strong>
+                </div>
+                <div className="flex items-center gap-1.5 text-[var(--text-2)]">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                  Todo: <strong className="text-[var(--text-1)]">{tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'todo').length}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Clock in/out Logs */}
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="section-title">My Swipe History</h3>
+                <span className="text-[var(--text-3)] text-xs">This Month</span>
+              </div>
+              <div className="space-y-3">
+                {recentAttendance.filter((a: any) => a.userId === user?.id).map((a: any) => (
+                  <div key={a.id || a.userId} className="flex justify-between items-center text-xs p-2 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <div>
+                      <p className="font-semibold text-[var(--text-1)]">{a.date}</p>
+                      <p className="text-[10px] text-[var(--text-3)]">RFID scan</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`badge ${a.status === 'present' ? 'badge-green' : 'badge-yellow'}`}>
+                        {a.status}
+                      </span>
+                      <p className="text-[10px] text-[var(--text-3)] mt-1 font-mono">{a.clockIn || '—'} - {a.clockOut || '—'}</p>
+                    </div>
+                  </div>
+                ))}
+                {recentAttendance.filter((a: any) => a.userId === user?.id).length === 0 && (
+                  <p className="text-xs text-[var(--text-3)] text-center py-6">No clock records today</p>
+                )}
+              </div>
+            </div>
+
+            {/* My Active Tasks */}
+            <div className="card lg:col-span-2">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="section-title">My Outstanding Tasks</h3>
+                <Link href="/tasks" className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors">
+                  View board →
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {tasks.filter((t: any) => t.assigneeId === user?.id && t.status !== 'done').slice(0, 4).map((task: any) => (
+                  <div key={task.id} className="flex items-center justify-between p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)] hover:border-[var(--border-strong)] transition-colors text-xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-2.5 h-2.5 rounded-full ${
+                        task.priority === 'critical' ? 'bg-red-500' : task.priority === 'high' ? 'bg-orange-500' : 'bg-blue-500'
+                      }`} />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[var(--text-1)] truncate">{task.title}</p>
+                        <p className="text-[10px] text-[var(--text-3)]">Due {new Date(task.dueDate).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <span className={`badge ${
+                      task.status === 'in_progress' ? 'badge-orange' : task.status === 'review' ? 'badge-yellow' : 'badge-blue'
+                    }`}>
+                      {task.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                ))}
+                {tasks.filter((t: any) => t.assigneeId === user?.id && t.status !== 'done').length === 0 && (
+                  <p className="text-xs text-[var(--text-3)] text-center py-6">All caught up! No pending tasks 🎉</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

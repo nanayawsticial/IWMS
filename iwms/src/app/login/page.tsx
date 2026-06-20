@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth, getPostLoginRoute } from '@/lib/auth-context';
 import { clearTokens } from '@/lib/api';
 
 export default function LoginPage() {
@@ -24,7 +24,9 @@ export default function LoginPage() {
     const result = await login(email, password);
     setLoading(false);
     if (result.success) {
-      window.location.href = '/dashboard';
+      const savedUser = localStorage.getItem('iwms_user');
+      const userObj = savedUser ? JSON.parse(savedUser) : null;
+      window.location.href = getPostLoginRoute(userObj);
     } else if (result.mfaRequired && result.tempToken) {
       setMfaRequired(true);
       setTempToken(result.tempToken);
@@ -40,7 +42,9 @@ export default function LoginPage() {
     const result = await loginMfa(tempToken, mfaCode);
     setLoading(false);
     if (result.success) {
-      window.location.href = '/dashboard';
+      const savedUser = localStorage.getItem('iwms_user');
+      const userObj = savedUser ? JSON.parse(savedUser) : null;
+      window.location.href = getPostLoginRoute(userObj);
     } else {
       setError(result.error || 'Verification failed');
     }

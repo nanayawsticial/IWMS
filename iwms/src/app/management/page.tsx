@@ -9,24 +9,38 @@ import { managementApi, organizationApi, usersApi, tasksApi, attendanceApi } fro
 import { useAuth } from '@/lib/auth-context';
 import { useSocketEvent } from '@/hooks/useSocket';
 import Link from 'next/link';
+import KpiCard from '@/components/KpiCard';
+import {
+  Users,
+  UserCheck,
+  Calendar,
+  UserPlus,
+  Clock,
+  Timer,
+  CheckCircle,
+  AlertCircle,
+  X,
+  ArrowUpDown,
+  Building
+} from 'lucide-react';
 
 // Custom tooltip styling
 const TOOLTIP_STYLE = {
-  background: '#1e293b',
-  border: '1px solid #334155',
+  background: 'var(--bg-surface-2)',
+  border: '1px solid var(--border-strong)',
   borderRadius: '8px',
-  color: '#e2e8f0',
+  color: 'var(--text-1)',
   padding: '10px 14px',
-  fontSize: '13px',
+  fontSize: '12px',
 };
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div style={TOOLTIP_STYLE}>
-      <p style={{ fontWeight: 600, marginBottom: 6, color: '#94a3b8' }}>{label || payload[0].name}</p>
+      <p style={{ fontWeight: 600, marginBottom: 6, color: 'var(--text-2)' }}>{label || payload[0].name}</p>
       {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.fill || p.color || '#fff', margin: 0 }}>
+        <p key={p.name} style={{ color: p.fill || p.color || 'var(--text-1)', margin: 0 }}>
           {p.name}: <strong>{p.value}</strong>
         </p>
       ))}
@@ -34,61 +48,12 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
-// Icons Map
-const ICONS = {
-  users: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
-    </svg>
-  ),
-  active: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-    </svg>
-  ),
-  leave: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  ),
-  newHire: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
-    </svg>
-  ),
-  attendance: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-    </svg>
-  ),
-  hours: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-    </svg>
-  ),
-  tasks: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-    </svg>
-  ),
-  overdue: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-  ),
-  clock: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-    </svg>
-  ),
-};
-
 const TASK_STATUS_COLORS = {
-  backlog: '#475569',
-  todo: '#64748b',
-  in_progress: '#6366f1',
-  review: '#f59e0b',
-  done: '#10b981',
+  backlog: 'var(--text-3)',
+  todo: 'var(--blue)',
+  in_progress: 'var(--accent)',
+  review: 'var(--yellow)',
+  done: 'var(--green)',
 };
 
 const TASK_STATUS_LABELS = {
@@ -178,13 +143,13 @@ export default function ManagementDashboardPage() {
     }
   };
 
-  // Recharts calculations
+  // Recharts calculations: side-by-side performance comparison
   const barChartData = useMemo(() => {
     if (!dashboardData?.departments) return [];
     return dashboardData.departments.map((d: any) => ({
       name: d.name,
       'Attendance Rate': Math.round(d.attendanceRate * 100),
-      color: d.color || '#6366f1'
+      'Task Completion': Math.round(d.taskCompletionRate * 100),
     }));
   }, [dashboardData?.departments]);
 
@@ -211,18 +176,18 @@ export default function ManagementDashboardPage() {
 
   if (!isAuthorized) {
     return (
-      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center' }}>
-        <h2 style={{ color: '#ef4444', marginBottom: '10px' }}>Access Denied</h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>You do not have the required permissions to view the management dashboard.</p>
-        <Link href="/dashboard" className="btn-primary-sm">Go to Dashboard</Link>
+      <div className="page-content flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <h2 className="text-red-500 text-lg font-bold mb-2">Access Denied</h2>
+        <p className="text-[var(--text-3)] text-sm mb-4">You do not have the required permissions to view the management dashboard.</p>
+        <Link href="/dashboard" className="btn-primary">Go to Dashboard</Link>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="page-content" style={{ textAlign: 'center', padding: '100px 0', color: 'var(--text-muted)' }}>
-        <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />
+      <div className="page-content text-center py-20 text-[var(--text-3)]">
+        <span className="spinner block mx-auto mb-3" />
         Loading Management Insights...
       </div>
     );
@@ -230,9 +195,9 @@ export default function ManagementDashboardPage() {
 
   if (error || !dashboardData) {
     return (
-      <div className="page-content" style={{ textAlign: 'center', padding: '100px 0', color: '#ef4444' }}>
-        <h3>Error Loading Dashboard</h3>
-        <p>Failed to retrieve management details. Please try again later.</p>
+      <div className="page-content text-center py-20 text-red-500">
+        <h3 className="text-lg font-bold mb-2">Error Loading Dashboard</h3>
+        <p className="text-sm">Failed to retrieve management details. Please try again later.</p>
       </div>
     );
   }
@@ -242,122 +207,108 @@ export default function ManagementDashboardPage() {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Management Dashboard</h1>
-          <p className="page-subtitle">
+          <h1 className="page-title text-[var(--text-1)] text-2xl font-bold">Management Dashboard</h1>
+          <p className="page-subtitle text-[var(--text-3)] text-xs mt-1">
             Overview of {orgData?.name || 'Organization'} • {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
       </div>
 
       {/* Row 1: Headcount KPIs */}
-      <div className="kpi-grid" style={{ marginBottom: '24px' }}>
-        <div className="kpi-card" style={{ '--kpi-color': '#6366f1', '--kpi-glow': 'rgba(99, 102, 241, 0.15)' } as any}>
-          <div className="kpi-header">
-            <span className="kpi-total">Total Headcount</span>
-            <div className="kpi-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>{ICONS.users}</div>
-          </div>
-          <div className="kpi-value">{dashboardData.headcount.total}</div>
-          <div className="kpi-label">Registered accounts</div>
-        </div>
-
-        <div className="kpi-card" style={{ '--kpi-color': '#10b981', '--kpi-glow': 'rgba(16, 185, 129, 0.15)' } as any}>
-          <div className="kpi-header">
-            <span className="kpi-total">Active Staff</span>
-            <div className="kpi-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>{ICONS.active}</div>
-          </div>
-          <div className="kpi-value">{dashboardData.headcount.active}</div>
-          <div className="kpi-label">Currently active profile status</div>
-        </div>
-
-        <div className="kpi-card" style={{ '--kpi-color': '#3b82f6', '--kpi-glow': 'rgba(59, 130, 246, 0.15)' } as any}>
-          <div className="kpi-header">
-            <span className="kpi-total">On Leave Today</span>
-            <div className="kpi-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>{ICONS.leave}</div>
-          </div>
-          <div className="kpi-value">{dashboardData.headcount.onLeave}</div>
-          <div className="kpi-label">Approved leave allocations</div>
-        </div>
-
-        <div className="kpi-card" style={{ '--kpi-color': '#a855f7', '--kpi-glow': 'rgba(168, 85, 247, 0.15)' } as any}>
-          <div className="kpi-header">
-            <span className="kpi-total">New Hires</span>
-            <div className="kpi-icon" style={{ background: 'rgba(168,85,247,0.1)', color: '#a855f7' }}>{ICONS.newHire}</div>
-          </div>
-          <div className="kpi-value">{dashboardData.headcount.new_this_month}</div>
-          <div className="kpi-label">Joined this calendar month</div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KpiCard
+          title="Total Headcount"
+          value={dashboardData.headcount.total}
+          icon={Users}
+          iconBg="var(--blue-soft)"
+          iconColor="var(--blue)"
+          trend={{ value: 'Registered', isPositive: true, label: 'staff accounts' }}
+          link={{ href: '/team', label: 'Directory' }}
+        />
+        <KpiCard
+          title="Active Staff"
+          value={dashboardData.headcount.active}
+          icon={UserCheck}
+          iconBg="var(--green-soft)"
+          iconColor="var(--green)"
+          trend={{ value: 'Active', isPositive: true, label: 'status profiles' }}
+        />
+        <KpiCard
+          title="On Leave Today"
+          value={dashboardData.headcount.onLeave}
+          icon={Calendar}
+          iconBg="var(--purple-soft)"
+          iconColor="var(--purple)"
+          trend={{ value: 'Approved', isPositive: true, label: 'allocations' }}
+          link={{ href: '/leave', label: 'Calendar' }}
+        />
+        <KpiCard
+          title="New Hires"
+          value={dashboardData.headcount.new_this_month}
+          icon={UserPlus}
+          iconBg="var(--accent-soft)"
+          iconColor="var(--accent)"
+          trend={{ value: 'Joined', isPositive: true, label: 'this month' }}
+        />
       </div>
 
       {/* Row 2: Performance KPIs */}
-      <div className="kpi-grid" style={{ marginBottom: '24px' }}>
-        <div className="kpi-card" style={{ '--kpi-color': '#10b981', '--kpi-glow': 'rgba(16, 185, 129, 0.15)' } as any}>
-          <div className="kpi-header">
-            <span className="kpi-total">Attendance Rate</span>
-            <div className="kpi-icon" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>{ICONS.attendance}</div>
-          </div>
-          <div className="kpi-value">{Math.round(dashboardData.attendance.rate * 100)}%</div>
-          <div className="kpi-label">This calendar month</div>
-          <div className="kpi-bar">
-            <div className="kpi-bar-fill" style={{ width: `${dashboardData.attendance.rate * 100}%`, background: '#10b981' }} />
-          </div>
-        </div>
-
-        <div className="kpi-card" style={{ '--kpi-color': '#f59e0b', '--kpi-glow': 'rgba(245, 158, 11, 0.15)' } as any}>
-          <div className="kpi-header">
-            <span className="kpi-total">Avg Hours Worked</span>
-            <div className="kpi-icon" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>{ICONS.hours}</div>
-          </div>
-          <div className="kpi-value">{dashboardData.attendance.avgHoursWorked.toFixed(1)}h</div>
-          <div className="kpi-label">Daily average per employee</div>
-          <div className="kpi-bar">
-            <div className="kpi-bar-fill" style={{ width: `${Math.min(100, (dashboardData.attendance.avgHoursWorked / 8) * 100)}%`, background: '#f59e0b' }} />
-          </div>
-        </div>
-
-        <div className="kpi-card" style={{ '--kpi-color': '#6366f1', '--kpi-glow': 'rgba(99, 102, 241, 0.15)' } as any}>
-          <div className="kpi-header">
-            <span className="kpi-total">Task Completion</span>
-            <div className="kpi-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>{ICONS.tasks}</div>
-          </div>
-          <div className="kpi-value">{Math.round(dashboardData.tasks.completionRate * 100)}%</div>
-          <div className="kpi-label">{dashboardData.tasks.completed}/{dashboardData.tasks.total} tasks completed</div>
-          <div className="kpi-bar">
-            <div className="kpi-bar-fill" style={{ width: `${dashboardData.tasks.completionRate * 100}%`, background: '#6366f1' }} />
-          </div>
-        </div>
-
-        <div className="kpi-card" style={{ '--kpi-color': '#ef4444', '--kpi-glow': 'rgba(239, 68, 68, 0.15)' } as any}>
-          <div className="kpi-header">
-            <span className="kpi-total">Overdue Tasks</span>
-            <div className="kpi-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>{ICONS.overdue}</div>
-          </div>
-          <div className="kpi-value" style={{ color: dashboardData.tasks.overdue > 0 ? '#ef4444' : '#fff' }}>{dashboardData.tasks.overdue}</div>
-          <div className="kpi-label">Tasks past their due date</div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+        <KpiCard
+          title="Attendance Rate"
+          value={`${Math.round(dashboardData.attendance.rate * 100)}%`}
+          icon={Clock}
+          iconBg="var(--green-soft)"
+          iconColor="var(--green)"
+          trend={{ value: `${dashboardData.attendance.present + dashboardData.attendance.late} present`, isPositive: true, label: 'today' }}
+          link={{ href: '/attendance', label: 'View logs' }}
+        />
+        <KpiCard
+          title="Avg Hours Worked"
+          value={`${dashboardData.attendance.avgHoursWorked.toFixed(1)}h`}
+          icon={Timer}
+          iconBg="var(--yellow-soft)"
+          iconColor="var(--yellow)"
+          trend={{ value: 'Daily avg', isPositive: true, label: 'per employee' }}
+        />
+        <KpiCard
+          title="Task Completion"
+          value={`${Math.round(dashboardData.tasks.completionRate * 100)}%`}
+          icon={CheckCircle}
+          iconBg="var(--blue-soft)"
+          iconColor="var(--blue)"
+          trend={{ value: `${dashboardData.tasks.completed}/${dashboardData.tasks.total}`, isPositive: true, label: 'tasks done' }}
+          link={{ href: '/tasks', label: 'Tasks board' }}
+        />
+        <KpiCard
+          title="Overdue Tasks"
+          value={dashboardData.tasks.overdue}
+          icon={AlertCircle}
+          iconBg="var(--red-soft)"
+          iconColor="var(--red)"
+          trend={{ value: 'Urgent', isPositive: false, label: 'past due dates' }}
+        />
       </div>
 
       {/* Row 3: Recharts Charts */}
-      <div className="charts-grid" style={{ marginBottom: '24px' }}>
-        {/* Left: Attendance Bar Chart */}
-        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '20px' }}>Department Attendance Rates</h3>
-          <div style={{ width: '100%', height: '300px' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        {/* Left: Department Performance Comparison Bar Chart */}
+        <div className="card lg:col-span-2">
+          <h3 className="section-title mb-4">Department Performance Comparison</h3>
+          <div className="w-full h-[300px]">
             {barChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={12} domain={[0, 100]} unit="%" tickLine={false} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                  <Bar dataKey="Attendance Rate" radius={[6, 6, 0, 0]} maxBarSize={45}>
-                    {barChartData.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="name" stroke="var(--text-3)" fontSize={11} tickLine={false} />
+                  <YAxis stroke="var(--text-3)" fontSize={11} domain={[0, 100]} unit="%" tickLine={false} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                  <Bar dataKey="Attendance Rate" fill="var(--accent)" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                  <Bar dataKey="Task Completion" fill="var(--blue)" radius={[4, 4, 0, 0]} maxBarSize={30} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+              <div className="flex items-center justify-center h-full text-[var(--text-3)] text-sm">
                 No department data available
               </div>
             )}
@@ -365,9 +316,9 @@ export default function ManagementDashboardPage() {
         </div>
 
         {/* Right: Task Status Donut Chart */}
-        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '20px' }}>Task Status Distribution</h3>
-          <div style={{ width: '100%', height: '220px', position: 'relative' }}>
+        <div className="card flex flex-col justify-between">
+          <h3 className="section-title mb-4">Task Status Distribution</h3>
+          <div className="w-full h-[200px] relative flex items-center justify-center">
             {donutChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -388,22 +339,22 @@ export default function ManagementDashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
+              <div className="flex items-center justify-center h-full text-[var(--text-3)] text-sm">
                 No active tasks
               </div>
             )}
             {/* Center label */}
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-              <span style={{ fontSize: '24px', fontWeight: 800, color: '#fff', display: 'block', lineHeight: 1 }}>{dashboardData.tasks.total}</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>Total Tasks</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-extrabold text-[var(--text-1)] leading-none">{dashboardData.tasks.total}</span>
+              <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider font-semibold mt-1">Total Tasks</span>
             </div>
           </div>
           {/* Legend */}
-          <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px 16px', fontSize: '12px' }}>
+          <div className="grid grid-cols-2 gap-2 text-xs pt-4 border-t border-[var(--border)] mt-4">
             {donutChartData.map((item: any) => (
-              <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.color, display: 'inline-block' }} />
-                <span style={{ color: 'var(--text-secondary)' }}>{item.name}: <strong>{item.value}</strong></span>
+              <div key={item.name} className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full block" style={{ background: item.color }} />
+                <span className="text-[var(--text-2)] truncate">{item.name}: <strong className="text-[var(--text-1)]">{item.value}</strong></span>
               </div>
             ))}
           </div>
@@ -411,44 +362,33 @@ export default function ManagementDashboardPage() {
       </div>
 
       {/* Row 4: Department Drilldown & Top Performers */}
-      <div className="bottom-grid" style={{ marginBottom: '24px' }}>
-        {/* Department Overview list (Clickable to trigger drilldown drawer) */}
-        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>Departments performance</h3>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>Click any department row below to drill down into member metrics.</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {/* Department Overview list */}
+        <div className="card">
+          <h3 className="section-title mb-2">Departments Performance</h3>
+          <p className="text-xs text-[var(--text-3)] mb-4">Click any department row below to drill down into member metrics.</p>
+          <div className="flex flex-col gap-3">
             {dashboardData.departments.map((d: any) => (
               <div
                 key={d.id}
                 onClick={() => setSelectedDeptId(d.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                className="dept-hover-row"
+                className="flex items-center justify-between p-3.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--bg-hover)]/20 transition-all"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ width: '12px', height: '12px', borderRadius: '4px', background: d.color || '#6366f1' }} />
+                <div className="flex items-center gap-3">
+                  <span className="w-3 h-3 rounded-md block" style={{ background: d.color || 'var(--accent)' }} />
                   <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#fff', margin: 0 }}>{d.name}</h4>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{d.headcount} employee{d.headcount !== 1 ? 's' : ''}</span>
+                    <h4 className="text-sm font-semibold text-[var(--text-1)]">{d.name}</h4>
+                    <span className="text-[11px] text-[var(--text-3)]">{d.headcount} employee{d.headcount !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '24px', textAlign: 'right' }}>
+                <div className="flex gap-6 text-right">
                   <div>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>ATTENDANCE</span>
-                    <strong style={{ fontSize: '13px', color: '#10b981' }}>{Math.round(d.attendanceRate * 100)}%</strong>
+                    <span className="text-[9px] text-[var(--text-3)] block uppercase tracking-wider font-semibold">Attendance</span>
+                    <strong className="text-xs text-[var(--green)] font-semibold">{Math.round(d.attendanceRate * 100)}%</strong>
                   </div>
                   <div>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>TASK COMPL.</span>
-                    <strong style={{ fontSize: '13px', color: '#6366f1' }}>{Math.round(d.taskCompletionRate * 100)}%</strong>
+                    <span className="text-[9px] text-[var(--text-3)] block uppercase tracking-wider font-semibold">Tasks Completed</span>
+                    <strong className="text-xs text-[var(--accent)] font-semibold">{Math.round(d.taskCompletionRate * 100)}%</strong>
                   </div>
                 </div>
               </div>
@@ -457,64 +397,56 @@ export default function ManagementDashboardPage() {
         </div>
 
         {/* Top Performers Table */}
-        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '20px' }}>Top Performers</h3>
-          <div className="table-responsive" style={{ flexGrow: 1 }}>
-            <table className="table" style={{ width: '100%', fontSize: '13px' }}>
+        <div className="card flex flex-col justify-between">
+          <h3 className="section-title mb-4">Top Performers</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th onClick={() => handleSort('tasksCompleted')} style={{ cursor: 'pointer' }}>
-                    Tasks Completed {sortField === 'tasksCompleted' ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
+                <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
+                  <th className="py-2.5">Employee</th>
+                  <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('tasksCompleted')}>
+                    <span className="inline-flex items-center gap-1">
+                      Tasks Completed <ArrowUpDown size={10} />
+                    </span>
                   </th>
-                  <th onClick={() => handleSort('attendanceRate')} style={{ cursor: 'pointer' }}>
-                    Attendance {sortField === 'attendanceRate' ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
+                  <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('attendanceRate')}>
+                    <span className="inline-flex items-center gap-1">
+                      Attendance <ArrowUpDown size={10} />
+                    </span>
                   </th>
-                  <th onClick={() => handleSort('hoursWorked')} style={{ cursor: 'pointer' }}>
-                    Hours {sortField === 'hoursWorked' ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
+                  <th className="py-2.5 cursor-pointer hover:text-[var(--text-1)]" onClick={() => handleSort('hoursWorked')}>
+                    <span className="inline-flex items-center gap-1">
+                      Hours Worked <ArrowUpDown size={10} />
+                    </span>
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--border)]">
                 {sortedTopPerformers.length > 0 ? (
                   sortedTopPerformers.map((p: any) => {
                     const initials = p.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
                     return (
-                      <tr key={p.userId} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0' }}>
-                            <div
-                              style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '50%',
-                                background: 'rgba(99,102,241,0.15)',
-                                color: '#818cf8',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                              }}
-                              title={p.name}
-                            >
+                      <tr key={p.userId} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
+                        <td className="py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-[var(--accent-soft)] border border-[var(--accent)] text-[var(--accent)] flex items-center justify-center text-xs font-bold">
                               {initials}
                             </div>
                             <div>
-                              <strong style={{ display: 'block', color: '#fff' }}>{p.name}</strong>
-                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.department}</span>
+                              <strong className="text-xs text-[var(--text-1)] block">{p.name}</strong>
+                              <span className="text-[10px] text-[var(--text-3)]">{p.department}</span>
                             </div>
                           </div>
                         </td>
-                        <td style={{ fontWeight: 600, color: '#fff' }}>{p.tasksCompleted}</td>
-                        <td style={{ color: '#10b981', fontWeight: 600 }}>{Math.round(p.attendanceRate * 100)}%</td>
-                        <td>{p.hoursWorked.toFixed(1)}h</td>
+                        <td className="py-3 font-semibold text-[var(--text-1)] text-center">{p.tasksCompleted}</td>
+                        <td className="py-3 font-semibold text-[var(--green)] text-center">{Math.round(p.attendanceRate * 100)}%</td>
+                        <td className="py-3 text-[var(--text-2)] text-center">{p.hoursWorked.toFixed(1)}h</td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={4} style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>No performance logs recorded this month.</td>
+                    <td colSpan={4} className="text-center py-6 text-[var(--text-3)]">No performance logs recorded this month.</td>
                   </tr>
                 )}
               </tbody>
@@ -524,140 +456,83 @@ export default function ManagementDashboardPage() {
       </div>
 
       {/* Row 5: Recent Activity Log */}
-      <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '20px' }}>Recent Activity Feed</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
+      <div className="card mt-6">
+        <h3 className="section-title mb-4">Recent Activity Feed</h3>
+        <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-1">
           {dashboardData.recentActivity.length > 0 ? (
             dashboardData.recentActivity.map((activity: any, index: number) => {
               const timeLabel = new Date(activity.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' - ' + new Date(activity.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
               const initials = activity.user?.name ? activity.user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : '?';
 
               return (
-                <div key={index} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', paddingBottom: '14px', borderBottom: index < dashboardData.recentActivity.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '50%',
-                      background: 'rgba(255,255,255,0.05)',
-                      color: 'var(--text-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      flexShrink: 0,
-                    }}
-                  >
+                <div key={index} className="flex gap-4 items-start pb-4 border-b border-[var(--border)] last:border-b-0 last:pb-0">
+                  <div className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-strong)] text-[var(--text-2)] flex items-center justify-center text-xs font-bold flex-shrink-0">
                     {initials}
                   </div>
-                  <div style={{ flexGrow: 1 }}>
-                    <p style={{ fontSize: '13.5px', color: '#e2e8f0', margin: 0, lineHeight: 1.4 }}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-[var(--text-1)] leading-relaxed">
                       {activity.description}
                     </p>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                      {ICONS.clock} {timeLabel}
+                    <span className="text-[10px] text-[var(--text-3)] flex items-center gap-1 mt-1 font-mono">
+                      <Clock size={10} /> {timeLabel}
                     </span>
                   </div>
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      background:
-                        activity.type === 'attendance' ? 'rgba(16,185,129,0.1)' :
-                        activity.type === 'task' ? 'rgba(99,102,241,0.1)' :
-                        activity.type === 'leave' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)',
-                      color:
-                        activity.type === 'attendance' ? '#10b981' :
-                        activity.type === 'task' ? '#818cf8' :
-                        activity.type === 'leave' ? '#f59e0b' : '#3b82f6',
-                      textTransform: 'uppercase',
-                    }}
-                  >
+                  <span className={`badge ${
+                    activity.type === 'attendance' ? 'badge-green' :
+                    activity.type === 'task' ? 'badge-blue' :
+                    activity.type === 'leave' ? 'badge-yellow' : 'badge-orange'
+                  } uppercase text-[9px]`}>
                     {activity.type}
                   </span>
                 </div>
               );
             })
           ) : (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px 0' }}>No recent activities logged.</p>
+            <p className="text-center text-[var(--text-3)] py-6">No recent activities logged.</p>
           )}
         </div>
       </div>
 
       {/* Slide-out Drawer for Department drilldown */}
       {selectedDeptId && drawerDept && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          background: 'rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 1000,
-          display: 'flex',
-          justifyContent: 'flex-end',
-        }} onClick={handleCloseDrawer}>
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex justify-end"
+          onClick={handleCloseDrawer}
+        >
           <div
-            style={{
-              width: '100%',
-              maxWidth: '460px',
-              height: '100%',
-              background: '#0f172a',
-              borderLeft: '1px solid var(--border-color)',
-              padding: '30px',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '-10px 0 25px rgba(0,0,0,0.3)',
-              overflowY: 'auto',
-            }}
+            className="w-full max-w-[460px] h-full bg-[var(--bg-surface)] border-l border-[var(--border)] p-8 flex flex-col shadow-2xl overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
+            <div className="flex items-center justify-between mb-6 border-b border-[var(--border)] pb-4">
               <div>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: drawerDept.color || '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>DEPARTMENT DRILL DOWN</span>
-                <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', margin: '4px 0 0' }}>{drawerDept.name}</h2>
+                <span className="text-[10px] font-bold text-[var(--accent)] tracking-wider uppercase">Department Drill Down</span>
+                <h2 className="text-xl font-extrabold text-[var(--text-1)] mt-1">{drawerDept.name}</h2>
               </div>
               <button
                 onClick={handleCloseDrawer}
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                }}
+                className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] text-[var(--text-3)] hover:text-[var(--text-1)] flex items-center justify-center transition-colors cursor-pointer border border-[var(--border)]"
+                title="Close"
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
 
             {/* Department Summary stats inside drawer */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Attendance Rate</span>
-                <strong style={{ fontSize: '20px', color: '#10b981' }}>{Math.round(drawerDept.attendanceRate * 100)}%</strong>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl p-4 text-center">
+                <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider block mb-1">Attendance Rate</span>
+                <strong className="text-lg text-[var(--green)] font-bold">{Math.round(drawerDept.attendanceRate * 100)}%</strong>
               </div>
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Task Completion</span>
-                <strong style={{ fontSize: '20px', color: '#6366f1' }}>{Math.round(drawerDept.taskCompletionRate * 100)}%</strong>
+              <div className="bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl p-4 text-center">
+                <span className="text-[10px] text-[var(--text-3)] uppercase tracking-wider block mb-1">Task Completion</span>
+                <strong className="text-lg text-[var(--accent)] font-bold">{Math.round(drawerDept.taskCompletionRate * 100)}%</strong>
               </div>
             </div>
 
             {/* Member List */}
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '16px' }}>Team Members ({drawerMembers.length})</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
+            <h3 className="text-xs font-bold text-[var(--text-2)] uppercase tracking-wider mb-4">Team Members ({drawerMembers.length})</h3>
+            <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1">
               {drawerMembers.length > 0 ? (
                 drawerMembers.map((m: any) => {
                   const initials = m.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
@@ -668,56 +543,36 @@ export default function ManagementDashboardPage() {
                   const statusLabel = presenceRec?.status || 'not_clocked_in';
 
                   const badgeColors =
-                    statusLabel === 'present' ? { bg: 'rgba(16,185,129,0.1)', color: '#10b981', label: 'Present' } :
-                    statusLabel === 'late' ? { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', label: 'Late' } :
-                    statusLabel === 'absent' ? { bg: 'rgba(239,68,68,0.1)', color: '#ef4444', label: 'Absent' } :
-                    statusLabel === 'on_leave' ? { bg: 'rgba(59,130,246,0.1)', color: '#3b82f6', label: 'On Leave' } :
-                    { bg: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', label: 'Not Clocked In' };
+                    statusLabel === 'present' ? { bg: 'badge-green', label: 'Present' } :
+                    statusLabel === 'late' ? { bg: 'badge-yellow', label: 'Late' } :
+                    statusLabel === 'absent' ? { bg: 'badge-red', label: 'Absent' } :
+                    statusLabel === 'on_leave' ? { bg: 'badge-blue', label: 'On Leave' } :
+                    { bg: 'bg-[var(--bg-hover)] text-[var(--text-3)] border border-[var(--border)]', label: 'Not Clocked In' };
 
                   // Count active tasks for this member
                   const activeTasksCount = allTasks.filter((t: any) => t.assigneeId === m.id && t.status !== 'done').length;
 
                   return (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div key={m.id} className="flex items-center justify-between p-3.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl">
+                      <div className="flex items-center gap-3">
                         <div
+                          className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] text-[var(--text-2)] flex items-center justify-center text-xs font-bold"
                           style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.03)',
-                            color: '#e2e8f0',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            border: `2px solid ${isClockedIn ? '#10b981' : 'transparent'}`,
+                            border: `2px solid ${isClockedIn ? 'var(--green)' : 'transparent'}`,
                           }}
                         >
                           {initials}
                         </div>
                         <div>
-                          <strong style={{ display: 'block', color: '#fff', fontSize: '13px' }}>{m.name}</strong>
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{m.position}</span>
+                          <strong className="text-xs text-[var(--text-1)] block">{m.name}</strong>
+                          <span className="text-[10px] text-[var(--text-3)]">{m.position}</span>
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <span
-                          style={{
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: '10px',
-                            background: badgeColors.bg,
-                            color: badgeColors.color,
-                            display: 'inline-block',
-                            marginBottom: '4px',
-                          }}
-                        >
+                      <div className="text-right">
+                        <span className={`badge ${badgeColors.bg} text-[9px] mb-1.5`}>
                           {badgeColors.label}
                         </span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block' }}>
+                        <span className="text-[10px] text-[var(--text-3)] block font-medium">
                           {activeTasksCount} active task{activeTasksCount !== 1 ? 's' : ''}
                         </span>
                       </div>
@@ -725,7 +580,7 @@ export default function ManagementDashboardPage() {
                   );
                 })
               ) : (
-                <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No active team members in this department.</p>
+                <p className="text-xs text-[var(--text-3)] text-center py-6">No active team members in this department.</p>
               )}
             </div>
           </div>

@@ -256,4 +256,26 @@ export const managementApi = {
   getDashboard: () => api.get('/api/management/dashboard').then(r => r.data),
 };
 
+export const hrApi = {
+  getDashboard: () => api.get('/api/hr/dashboard').then(r => r.data),
+  listEmployees: () => api.get('/api/hr/employees').then(r => r.data),
+  getEmployee: (id: string) => api.get(`/api/hr/employees/${id}`).then(r => r.data),
+  updateProfile: (id: string, data: any) => api.patch(`/api/hr/employees/${id}/profile`, data).then(r => r.data),
+  onboard: (id: string) => api.post(`/api/hr/employees/${id}/onboard`, {}).then(r => r.data),
+  offboard: (id: string) => api.post(`/api/hr/employees/${id}/offboard`, {}).then(r => r.data),
+  listLeaveRequests: () => api.get('/api/hr/leave-requests').then(r => r.data),
+  getHeadcount: () => api.get('/api/hr/headcount').then(r => r.data),
+};
+
+export const financeApi = {
+  getDashboard: () => api.get('/api/finance/dashboard').then(r => r.data),
+  listExpenses: (params?: any) => api.get('/api/finance/expenses', { params }).then(r => r.data),
+  submitExpense: (data: any) => api.post('/api/finance/expenses', data).then(r => r.data),
+  approveExpense: (id: string, data: { status: string; managerNotes?: string }) => api.patch(`/api/finance/expenses/${id}`, data).then(r => r.data),
+  listBudgets: (params?: any) => api.get('/api/finance/budgets', { params }).then(r => r.data),
+  createBudget: (data: any) => api.post('/api/finance/budgets', data).then(r => r.data),
+  updateBudget: (id: string, data: any) => api.patch(`/api/finance/budgets/${id}`, data).then(r => r.data),
+  getPayrollSummary: (params?: any) => api.get('/api/finance/payroll-summary', { params }).then(r => r.data),
+};
+
 

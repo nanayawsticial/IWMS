@@ -1,22 +1,38 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceApi, departmentsApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSocketEvent } from '@/hooks/useSocket';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import {
+  Globe,
+  Smartphone,
+  QrCode,
+  Cpu,
+  Clock,
+  Check,
+  X,
+  Search,
+  Download,
+  AlertTriangle,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
+  Edit,
+  User,
+  Fingerprint,
+  Moon,
+  Coffee
+} from 'lucide-react';
 
-const STATUS_STYLES: Record<string, { color: string; bg: string; label: string }> = {
-  present:  { color: '#10b981', bg: '#10b98120', label: 'Present' },
-  late:     { color: '#f59e0b', bg: '#f59e0b20', label: 'Late' },
-  absent:   { color: '#ef4444', bg: '#ef444420', label: 'Absent' },
-  half_day: { color: '#06b6d4', bg: '#06b6d420', label: 'Half Day' },
-  on_leave: { color: '#8b5cf6', bg: '#8b5cf620', label: 'On Leave' },
-};
-
-const METHOD_ICONS: Record<string, string> = {
-  biometric: '🖐️', web: '🌐', mobile: '📱', qr: '📷',
+const STATUS_STYLES: Record<string, { color: string; badgeClass: string; label: string }> = {
+  present:  { color: 'var(--green)', badgeClass: 'badge-green', label: 'Present' },
+  late:     { color: 'var(--yellow)', badgeClass: 'badge-yellow', label: 'Late' },
+  absent:   { color: 'var(--red)', badgeClass: 'badge-red', label: 'Absent' },
+  half_day: { color: 'var(--blue)', badgeClass: 'badge-blue', label: 'Half Day' },
+  on_leave: { color: 'var(--purple)', badgeClass: 'badge-purple', label: 'On Leave' },
 };
 
 function ClockWidget() {
@@ -78,56 +94,54 @@ function ClockWidget() {
   const alreadyClockedOut = !!todayRecord?.clockOut;
 
   return (
-    <div className={`clock-widget ${clockedIn ? 'clocked-in' : ''}`}>
-      <div className="clock-ring">
-        <div className={`clock-ring-inner ${clockedIn ? 'ring-active' : ''}`}>
+    <div className={`p-5 rounded-xl border border-[var(--border)] bg-[var(--bg-surface-2)] flex flex-col items-center text-center space-y-4`}>
+      <div className="relative w-36 h-36 flex items-center justify-center rounded-full border-4 border-[var(--border)]">
+        <div className="absolute inset-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border-strong)] flex flex-col items-center justify-center">
           {clockedIn ? (
-            <div className="clock-elapsed">
-              <span className="elapsed-time">{formatElapsed(elapsed)}</span>
-              <span className="elapsed-label">Time Elapsed</span>
+            <div className="space-y-1">
+              <span className="text-xl font-bold font-mono text-[var(--accent)] block leading-none">{formatElapsed(elapsed)}</span>
+              <span className="text-[10px] text-[var(--text-3)] font-semibold uppercase block tracking-wider">Elapsed Time</span>
             </div>
           ) : alreadyClockedOut ? (
-            <div className="clock-idle">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-              </svg>
-              <span style={{ color: '#10b981' }}>Done for today</span>
+            <div className="flex flex-col items-center space-y-1">
+              <Fingerprint size={28} className="text-[var(--green)]" />
+              <span className="text-[10px] text-[var(--green)] font-bold uppercase tracking-wider">Clocked Out</span>
             </div>
           ) : (
-            <div className="clock-idle">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              <span>Not clocked in</span>
+            <div className="flex flex-col items-center space-y-1 text-[var(--text-3)]">
+              <Fingerprint size={28} />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Inactive</span>
             </div>
           )}
         </div>
       </div>
 
-      <div className="clock-info">
+      <div className="w-full space-y-3">
         {clockedIn && clockInTime && (
-          <p className="clock-since">Clocked in since <strong>{clockInTime}</strong></p>
+          <p className="text-xs text-[var(--text-2)]">Clocked in since <strong className="text-[var(--text-1)]">{clockInTime}</strong></p>
         )}
         {alreadyClockedOut && (
-          <p className="clock-since">Worked <strong>{todayRecord?.hoursWorked?.toFixed(1)}h</strong> today</p>
+          <p className="text-xs text-[var(--text-2)]">Worked <strong className="text-[var(--text-1)]">{todayRecord?.hoursWorked?.toFixed(1)} hours</strong> today</p>
         )}
         {!alreadyClockedOut && (
           <button
-            className={`clock-btn ${clockedIn ? 'clock-out-btn' : 'clock-in-btn'}`}
+            className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
+              clockedIn
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white'
+            }`}
             onClick={() => clockedIn ? clockOut.mutate() : clockIn.mutate()}
             disabled={isLoading}
           >
-            {isLoading ? <span className="spinner sm-spinner" /> : clockedIn ? (
-              <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Clock Out</>
-            ) : (
-              <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Clock In</>
-            )}
+            {isLoading ? 'Processing...' : clockedIn ? 'Clock Out' : 'Clock In'}
           </button>
         )}
-        <p className="clock-method">
-          <span>Method: Web App</span>
-          <span className="method-badge">🌐 Web + GPS</span>
-        </p>
+        <div className="flex justify-between items-center text-[10px] text-[var(--text-3)] border-t border-[var(--border)] pt-2.5">
+          <span>Reporting Method:</span>
+          <span className="font-semibold text-[var(--text-2)] inline-flex items-center gap-1">
+            <Globe size={10} /> Web / Geofence
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -263,17 +277,23 @@ function AttendancePageContent() {
   };
 
   // Group records by date if spanning multiple days
-  const distinctDates = Array.from(new Set(records.map((r: any) => r.date))).sort((a: any, b: any) => b.localeCompare(a));
+  const distinctDates = useMemo(() => {
+    return Array.from(new Set(records.map((r: any) => r.date))).sort((a: any, b: any) => b.localeCompare(a));
+  }, [records]);
   const isMultiDay = distinctDates.length > 1;
 
-  const groupedRecords = records.reduce((groups: Record<string, any[]>, record: any) => {
-    const d = record.date;
-    if (!groups[d]) groups[d] = [];
-    groups[d].push(record);
-    return groups;
-  }, {});
+  const groupedRecords = useMemo(() => {
+    return records.reduce((groups: Record<string, any[]>, record: any) => {
+      const d = record.date;
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(record);
+      return groups;
+    }, {});
+  }, [records]);
 
-  const sortedDates = Object.keys(groupedRecords).sort((a, b) => b.localeCompare(a));
+  const sortedDates = useMemo(() => {
+    return Object.keys(groupedRecords).sort((a, b) => b.localeCompare(a));
+  }, [groupedRecords]);
 
   const toggleDateCollapse = (date: string) => {
     setCollapsedDates(prev => ({ ...prev, [date]: !prev[date] }));
@@ -293,7 +313,7 @@ function AttendancePageContent() {
       `"${r.status}"`,
       `"${r.date}"`,
     ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + [headers.join(','), ...rows.map((e: any) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -304,35 +324,78 @@ function AttendancePageContent() {
     document.body.removeChild(link);
   };
 
+  // Upgraded method badge helper utilizing premium Lucide icons
+  const renderMethodBadge = (method: string) => {
+    const norm = (method || '').toLowerCase();
+    if (norm === 'rfid' || norm === 'biometric') {
+      return (
+        <span className="badge badge-accent inline-flex items-center gap-1 font-semibold">
+          <Cpu size={12} className="text-[var(--accent)]" />
+          RFID Badge
+        </span>
+      );
+    }
+    if (norm === 'web') {
+      return (
+        <span className="badge badge-blue inline-flex items-center gap-1 font-semibold">
+          <Globe size={12} className="text-[var(--blue)]" />
+          Web App
+        </span>
+      );
+    }
+    if (norm === 'mobile') {
+      return (
+        <span className="badge badge-green inline-flex items-center gap-1 font-semibold">
+          <Smartphone size={12} className="text-[var(--green)]" />
+          Mobile App
+        </span>
+      );
+    }
+    if (norm === 'qr') {
+      return (
+        <span className="badge badge-purple inline-flex items-center gap-1 font-semibold">
+          <QrCode size={12} className="text-[var(--purple)]" />
+          QR Terminal
+        </span>
+      );
+    }
+    return (
+      <span className="badge badge-yellow inline-flex items-center gap-1 font-semibold">
+        <Fingerprint size={12} className="text-[var(--yellow)]" />
+        Biometric
+      </span>
+    );
+  };
+
   return (
     <div className="page-content">
-      <div className="page-header">
+      <div className="page-header flex justify-between items-center">
         <div>
-          <h1 className="page-title">Attendance</h1>
-          <p className="page-subtitle">Track and manage employee attendance records</p>
+          <h1 className="page-title text-2xl font-bold text-[var(--text-1)]">Attendance Records</h1>
+          <p className="page-subtitle text-xs text-[var(--text-3)]">Track and correct employee check-ins, methods, and durations.</p>
         </div>
       </div>
 
-      <div className="attendance-layout">
-        <div className="attendance-main">
-          {/* Stats row */}
-          <div className="attendance-stats">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3 space-y-6">
+          {/* Stats Summary Panel */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: 'Present', value: stats?.present ?? 0,  color: '#10b981' },
-              { label: 'Late',    value: stats?.late ?? 0,     color: '#f59e0b' },
-              { label: 'Absent',  value: stats?.absent ?? 0,   color: '#ef4444' },
-              { label: 'On Leave',value: stats?.onLeave ?? 0,  color: '#8b5cf6' },
+              { label: 'Present Today', value: stats?.present ?? 0, color: 'var(--green)' },
+              { label: 'Late Clock Ins', value: stats?.late ?? 0, color: 'var(--yellow)' },
+              { label: 'Absent Count', value: stats?.absent ?? 0, color: 'var(--red)' },
+              { label: 'On Leave today', value: stats?.onLeave ?? 0, color: 'var(--purple)' },
             ].map(s => (
-              <div key={s.label} className="att-stat-card" style={{ '--stat-color': s.color } as React.CSSProperties}>
-                <span className="att-stat-value" style={{ color: s.color }}>{s.value}</span>
-                <span className="att-stat-label">{s.label}</span>
+              <div key={s.label} className="card p-4 flex flex-col justify-between" style={{ borderLeft: `3px solid ${s.color}` }}>
+                <span className="value text-2xl font-bold text-[var(--text-1)]">{s.value}</span>
+                <span className="label text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider mt-1">{s.label}</span>
               </div>
             ))}
           </div>
 
           {/* Filters Toolbar */}
-          <div className="table-toolbar" style={{ gap: '12px', alignItems: 'center' }}>
-            <div className="filter-tabs">
+          <div className="flex flex-col gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
+            <div className="flex flex-wrap gap-2 items-center">
               {[
                 { id: 'today', label: 'Today' },
                 { id: 'yesterday', label: 'Yesterday' },
@@ -342,286 +405,296 @@ function AttendancePageContent() {
               ].map(p => (
                 <button
                   key={p.id}
-                  className={`filter-tab ${period === p.id ? 'filter-tab-active' : ''}`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                    period === p.id ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)] hover:bg-[var(--bg-surface-2)]'
+                  }`}
                   onClick={() => handlePeriodChange(p.id)}
                 >
                   {p.label}
                 </button>
               ))}
-            </div>
 
-            {period === 'custom' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={e => handleStartDateChange(e.target.value)}
-                  className="form-input date-picker"
-                  style={{ padding: '4px 8px', fontSize: '13px' }}
-                />
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>to</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={e => handleEndDateChange(e.target.value)}
-                  className="form-input date-picker"
-                  style={{ padding: '4px 8px', fontSize: '13px' }}
-                />
-              </div>
-            )}
-
-            {['super_admin', 'admin', 'hr_manager', 'manager'].includes(user?.role || '') && (
-              <select
-                value={departmentFilter}
-                onChange={e => handleDepartmentChange(e.target.value)}
-                className="form-input form-select"
-                style={{ width: '150px', padding: '6px 12px', fontSize: '13px' }}
-              >
-                <option value="all">All Departments</option>
-                {departments
-                  .filter((d: any) => user?.role !== 'manager' || d.id === user.departmentId)
-                  .map((d: any) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-              </select>
-            )}
-
-            <div className="filter-tabs" style={{ marginLeft: 'auto' }}>
-              {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
+              {hasPermission('export_reports') && (
                 <button
-                  key={s}
-                  className={`filter-tab ${statusFilter === s ? 'filter-tab-active' : ''}`}
-                  onClick={() => handleStatusChange(s)}
+                  className="ml-auto bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold py-1.5 px-3 rounded-lg text-xs flex items-center gap-1.5 border border-[var(--border)] cursor-pointer"
+                  onClick={handleExportCSV}
                 >
-                  {s === 'all' ? 'All' : STATUS_STYLES[s]?.label || s}
+                  <Download size={12} /> Export CSV
                 </button>
-              ))}
+              )}
             </div>
 
-            {hasPermission('export_reports') && (
-              <button className="btn-ghost-sm" onClick={handleExportCSV}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Export CSV
-              </button>
-            )}
+            {/* Sub-Filters: Date selection & status selection */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between pt-3 border-t border-[var(--border)]">
+              <div className="flex flex-wrap gap-4 items-center w-full sm:w-auto">
+                {period === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={e => handleStartDateChange(e.target.value)}
+                      className="py-1 px-2.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                    />
+                    <span className="text-xs text-[var(--text-3)]">to</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={e => handleEndDateChange(e.target.value)}
+                      className="py-1 px-2.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                    />
+                  </div>
+                )}
+
+                {['super_admin', 'admin', 'hr_manager', 'manager'].includes(user?.role || '') && (
+                  <select
+                    value={departmentFilter}
+                    onChange={e => handleDepartmentChange(e.target.value)}
+                    className="py-1 px-3 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                  >
+                    <option value="all">All Departments</option>
+                    {departments
+                      .filter((d: any) => user?.role !== 'manager' || d.id === user.departmentId)
+                      .map((d: any) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Status pills selector */}
+              <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg w-full sm:w-auto overflow-x-auto">
+                {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
+                  <button
+                    key={s}
+                    className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer capitalize ${
+                      statusFilter === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
+                    }`}
+                    onClick={() => handleStatusChange(s)}
+                  >
+                    {s === 'all' ? 'All' : STATUS_STYLES[s]?.label || s}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Table */}
-          <div className="table-card">
+          {/* Table Container */}
+          <div className="card">
             {isLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px 0', color: '#475569' }}>
-                <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />Loading...
-              </div>
+              <div className="text-center py-20 text-[var(--text-3)]">Loading logs...</div>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Employee</th><th>Department</th><th>Clock In</th>
-                    <th>Clock Out</th><th>Hours</th><th>Method</th><th>Status</th>
-                    {hasPermission('edit_attendance') && <th>Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {isMultiDay ? (
-                    sortedDates.map((dateStr) => {
-                      const dateRecords = groupedRecords[dateStr] || [];
-                      const isCollapsed = !!collapsedDates[dateStr];
-                      const dateObj = new Date(dateStr);
-                      const formattedDate = isNaN(dateObj.getTime())
-                        ? dateStr
-                        : dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
+                      <th className="py-2.5">Employee</th>
+                      <th className="py-2.5">Department</th>
+                      <th className="py-2.5">Clock In</th>
+                      <th className="py-2.5">Clock Out</th>
+                      <th className="py-2.5">Hours Worked</th>
+                      <th className="py-2.5">Method</th>
+                      <th className="py-2.5">Status</th>
+                      {hasPermission('edit_attendance') && <th className="py-2.5 text-right">Actions</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {isMultiDay ? (
+                      sortedDates.map((dateStr) => {
+                        const dateRecords = groupedRecords[dateStr] || [];
+                        const isCollapsed = !!collapsedDates[dateStr];
+                        const dateObj = new Date(dateStr);
+                        const formattedDate = isNaN(dateObj.getTime())
+                          ? dateStr
+                          : dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-                      return (
-                        <React.Fragment key={dateStr}>
-                          <tr
-                            onClick={() => toggleDateCollapse(dateStr)}
-                            className="table-row"
-                            style={{
-                              background: 'rgba(30,41,59,0.5)',
-                              cursor: 'pointer',
-                              userSelect: 'none',
-                              fontWeight: 600,
-                            }}
-                          >
-                            <td colSpan={hasPermission('edit_attendance') ? 8 : 7} style={{ padding: '10px 16px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ transition: 'transform 0.2s', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}>
-                                  ▼
-                                </span>
-                                <span style={{ color: '#fff' }}>{formattedDate}</span>
-                                <span className="dept-chip" style={{ background: 'var(--color-bg-surface-hover)', color: 'var(--color-text-secondary)' }}>
-                                  {dateRecords.length} {dateRecords.length === 1 ? 'record' : 'records'}
-                                </span>
-                              </div>
-                            </td>
-                          </tr>
+                        return (
+                          <React.Fragment key={dateStr}>
+                            <tr
+                              onClick={() => toggleDateCollapse(dateStr)}
+                              className="bg-[var(--bg-surface-2)]/60 cursor-pointer select-none font-bold"
+                            >
+                              <td colSpan={hasPermission('edit_attendance') ? 8 : 7} className="py-2.5 px-3">
+                                <div className="flex items-center gap-2 text-xs">
+                                  {isCollapsed ? <ChevronRight size={14} className="text-[var(--text-3)]" /> : <ChevronDown size={14} className="text-[var(--text-3)]" />}
+                                  <span className="text-[var(--text-1)]">{formattedDate}</span>
+                                  <span className="badge badge-blue ml-2 font-mono">
+                                    {dateRecords.length} {dateRecords.length === 1 ? 'record' : 'records'}
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
 
-                          {!isCollapsed &&
-                            dateRecords.map((r: any) => (
-                              <tr key={r.id} className="table-row">
-                                <td>
-                                  <div className="table-user-cell">
-                                    <div className="table-avatar">{r.userAvatar}</div>
-                                    <div>
-                                      <p className="table-user-name">{r.userName}</p>
-                                      <p className="table-user-email">{r.userEmail}</p>
+                            {!isCollapsed &&
+                              dateRecords.map((r: any) => (
+                                <tr key={r.id} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
+                                  <td className="py-3 px-3">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center font-bold text-[var(--text-1)]">
+                                        {r.userAvatar || r.userName[0]}
+                                      </div>
+                                      <div>
+                                        <p className="font-semibold text-[var(--text-1)]">{r.userName}</p>
+                                        <p className="text-[10px] text-[var(--text-3)]">{r.userEmail}</p>
+                                      </div>
                                     </div>
-                                  </div>
-                                </td>
-                                <td><span className="dept-chip">{r.userDepartment}</span></td>
-                                <td>
-                                  <span className="time-cell">{r.clockIn || '—'}</span>
-                                  {r.correctedBy && (
-                                    <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', textDecoration: 'line-through' }}>
-                                      {r.correctedIn || '—'}
-                                    </span>
-                                  )}
-                                </td>
-                                <td>
-                                  <span className="time-cell">{r.clockOut || '—'}</span>
-                                  {r.correctedBy && (
-                                    <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', textDecoration: 'line-through' }}>
-                                      {r.correctedOut || '—'}
-                                    </span>
-                                  )}
-                                </td>
-                                <td><span className="time-cell">{r.hoursWorked != null ? `${r.hoursWorked.toFixed(1)}h` : '—'}</span></td>
-                                <td><span className="method-cell">{METHOD_ICONS[r.method] || '⚙️'} {r.method}</span></td>
-                                <td>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <span className="status-pill" style={{ color: STATUS_STYLES[r.status]?.color, background: STATUS_STYLES[r.status]?.bg }}>
-                                      {STATUS_STYLES[r.status]?.label || r.status}
-                                    </span>
+                                  </td>
+                                  <td className="py-3 text-[var(--text-2)]">{r.userDepartment}</td>
+                                  <td className="py-3 font-mono text-[var(--text-1)]">
+                                    <span>{r.clockIn || '—'}</span>
                                     {r.correctedBy && (
-                                      <span
-                                        style={{ cursor: 'help', fontSize: '12px' }}
-                                        title={`Correction by: ${r.correctedBy}\nReason: ${r.correctionReason}`}
-                                      >
-                                        ✏️
+                                      <span className="text-[10px] text-[var(--text-3)] block line-through">
+                                        {r.correctedIn || '—'}
                                       </span>
                                     )}
-                                  </div>
-                                </td>
-                                {hasPermission('edit_attendance') && (
-                                  <td>
-                                    <button className="table-action-btn" onClick={() => handleEditClick(r)}>
-                                      Edit
-                                    </button>
                                   </td>
-                                )}
-                              </tr>
-                            ))}
-                        </React.Fragment>
-                      );
-                    })
-                  ) : (
-                    records.map((r: any) => (
-                      <tr key={r.id} className="table-row">
-                        <td>
-                          <div className="table-user-cell">
-                            <div className="table-avatar">{r.userAvatar}</div>
-                            <div>
-                              <p className="table-user-name">{r.userName}</p>
-                              <p className="table-user-email">{r.userEmail}</p>
+                                  <td className="py-3 font-mono text-[var(--text-1)]">
+                                    <span>{r.clockOut || '—'}</span>
+                                    {r.correctedBy && (
+                                      <span className="text-[10px] text-[var(--text-3)] block line-through">
+                                        {r.correctedOut || '—'}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3 font-mono text-[var(--text-2)]">{r.hoursWorked != null ? `${r.hoursWorked.toFixed(1)}h` : '—'}</td>
+                                  <td className="py-3">{renderMethodBadge(r.method)}</td>
+                                  <td className="py-3">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`badge ${STATUS_STYLES[r.status]?.badgeClass || 'badge-yellow'} uppercase font-bold text-[9px]`}>
+                                        {STATUS_STYLES[r.status]?.label || r.status}
+                                      </span>
+                                      {r.correctedBy && (
+                                        <span
+                                          className="cursor-help text-xs"
+                                          title={`Correction by: ${r.correctedBy}\nReason: ${r.correctionReason}`}
+                                        >
+                                          ✏️
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  {hasPermission('edit_attendance') && (
+                                    <td className="py-3 text-right">
+                                      <button className="text-[var(--accent)] font-semibold hover:underline cursor-pointer" onClick={() => handleEditClick(r)}>
+                                        Correct
+                                      </button>
+                                    </td>
+                                  )}
+                                </tr>
+                              ))}
+                          </React.Fragment>
+                        );
+                      })
+                    ) : (
+                      records.map((r: any) => (
+                        <tr key={r.id} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
+                          <td className="py-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center font-bold text-[var(--text-1)]">
+                                {r.userAvatar || r.userName[0]}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-[var(--text-1)]">{r.userName}</p>
+                                <p className="text-[10px] text-[var(--text-3)]">{r.userEmail}</p>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td><span className="dept-chip">{r.userDepartment}</span></td>
-                        <td>
-                          <span className="time-cell">{r.clockIn || '—'}</span>
-                          {r.correctedBy && (
-                            <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', textDecoration: 'line-through' }}>
-                              {r.correctedIn || '—'}
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          <span className="time-cell">{r.clockOut || '—'}</span>
-                          {r.correctedBy && (
-                            <span style={{ fontSize: '10px', color: 'var(--color-text-muted)', display: 'block', textDecoration: 'line-through' }}>
-                              {r.correctedOut || '—'}
-                            </span>
-                          )}
-                        </td>
-                        <td><span className="time-cell">{r.hoursWorked != null ? `${r.hoursWorked.toFixed(1)}h` : '—'}</span></td>
-                        <td><span className="method-cell">{METHOD_ICONS[r.method] || '⚙️'} {r.method}</span></td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span className="status-pill" style={{ color: STATUS_STYLES[r.status]?.color, background: STATUS_STYLES[r.status]?.bg }}>
-                              {STATUS_STYLES[r.status]?.label || r.status}
-                            </span>
+                          </td>
+                          <td className="py-3 text-[var(--text-2)]">{r.userDepartment}</td>
+                          <td className="py-3 font-mono text-[var(--text-1)]">
+                            <span>{r.clockIn || '—'}</span>
                             {r.correctedBy && (
-                              <span
-                                style={{ cursor: 'help', fontSize: '12px' }}
-                                title={`Correction by: ${r.correctedBy}\nReason: ${r.correctionReason}`}
-                              >
-                                ✏️
+                              <span className="text-[10px] text-[var(--text-3)] block line-through">
+                                {r.correctedIn || '—'}
                               </span>
                             )}
-                          </div>
-                        </td>
-                        {hasPermission('edit_attendance') && (
-                          <td>
-                            <button className="table-action-btn" onClick={() => handleEditClick(r)}>
-                              Edit
-                            </button>
                           </td>
-                        )}
+                          <td className="py-3 font-mono text-[var(--text-1)]">
+                            <span>{r.clockOut || '—'}</span>
+                            {r.correctedBy && (
+                              <span className="text-[10px] text-[var(--text-3)] block line-through">
+                                {r.correctedOut || '—'}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 font-mono text-[var(--text-2)]">{r.hoursWorked != null ? `${r.hoursWorked.toFixed(1)}h` : '—'}</td>
+                          <td className="py-3">{renderMethodBadge(r.method)}</td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`badge ${STATUS_STYLES[r.status]?.badgeClass || 'badge-yellow'} uppercase font-bold text-[9px]`}>
+                                {STATUS_STYLES[r.status]?.label || r.status}
+                              </span>
+                              {r.correctedBy && (
+                                <span
+                                  className="cursor-help text-xs"
+                                  title={`Correction by: ${r.correctedBy}\nReason: ${r.correctionReason}`}
+                                >
+                                  ✏️
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          {hasPermission('edit_attendance') && (
+                            <td className="py-3 text-right">
+                              <button className="text-[var(--accent)] font-semibold hover:underline cursor-pointer" onClick={() => handleEditClick(r)}>
+                                Correct
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      ))
+                    )}
+                    {records.length === 0 && (
+                      <tr>
+                        <td colSpan={hasPermission('edit_attendance') ? 8 : 7} className="text-center py-10 text-[var(--text-3)] font-medium">
+                          No attendance records found.
+                        </td>
                       </tr>
-                    ))
-                  )}
-                  {records.length === 0 && (
-                    <tr>
-                      <td colSpan={hasPermission('edit_attendance') ? 8 : 7} style={{ textAlign: 'center', padding: '32px', color: '#475569' }}>
-                        No records found
-                      </td>
-                    </tr>
-                  )}
+                    )}
 
-                  {/* Summary Row */}
-                  {isMultiDay && records.length > 0 && (() => {
-                    let totalHoursWorked = 0;
-                    let lateDays = 0;
-                    records.forEach((r: any) => {
-                      if (r.hoursWorked) totalHoursWorked += r.hoursWorked;
-                      if (r.status === 'late') lateDays++;
-                    });
-                    const avgDailyHours = distinctDates.length > 0 ? (totalHoursWorked / distinctDates.length) : 0;
+                    {/* Summary Row */}
+                    {isMultiDay && records.length > 0 && (() => {
+                      let totalHoursWorked = 0;
+                      let lateDays = 0;
+                      records.forEach((r: any) => {
+                        if (r.hoursWorked) totalHoursWorked += r.hoursWorked;
+                        if (r.status === 'late') lateDays++;
+                      });
+                      const avgDailyHours = distinctDates.length > 0 ? (totalHoursWorked / distinctDates.length) : 0;
 
-                    return (
-                      <tr className="table-summary-row" style={{ background: 'rgba(99,102,241,0.08)', fontWeight: 'bold' }}>
-                        <td colSpan={2} style={{ color: 'var(--color-text-primary)' }}>Summary ({distinctDates.length} Days)</td>
-                        <td colSpan={2} style={{ color: 'var(--color-warning)' }}>Late Days: {lateDays}</td>
-                        <td style={{ color: 'var(--color-success)' }}>Total: {totalHoursWorked.toFixed(1)}h</td>
-                        <td colSpan={hasPermission('edit_attendance') ? 3 : 2} style={{ color: 'var(--color-info)' }}>Avg/Day: {avgDailyHours.toFixed(1)}h</td>
-                      </tr>
-                    );
-                  })()}
-                </tbody>
-              </table>
+                      return (
+                        <tr className="bg-[var(--accent-soft)]/20 font-bold">
+                          <td colSpan={2} className="py-3 px-3 text-[var(--text-1)]">Summary ({distinctDates.length} Days)</td>
+                          <td colSpan={2} className="py-3 text-[var(--yellow)]">Late Logs: {lateDays}</td>
+                          <td className="py-3 text-[var(--green)] font-mono">Total: {totalHoursWorked.toFixed(1)}h</td>
+                          <td colSpan={hasPermission('edit_attendance') ? 3 : 2} className="py-3 text-[var(--blue)] font-mono">Avg/Day: {avgDailyHours.toFixed(1)}h</td>
+                        </tr>
+                      );
+                    })()}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Clock-In Widget */}
-        <div className="attendance-sidebar">
-          <div className="chart-card">
-            <div className="chart-header"><h3 className="chart-title">Your Attendance</h3></div>
+        {/* Sidebar Clock widget */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="card">
+            <h3 className="section-title mb-4">Clock Widget</h3>
             <ClockWidget />
           </div>
-          <div className="chart-card">
-            <div className="chart-header"><h3 className="chart-title">Period Summary</h3></div>
-            <div className="month-stats">
+          <div className="card">
+            <h3 className="section-title mb-4">Period Overview</h3>
+            <div className="space-y-4">
               {[
-                { label: 'Total Employees', value: stats?.totalEmployees ?? 0, color: '#6366f1' },
-                { label: 'Attendance Rate', value: `${stats?.attendanceRate ?? 0}%`, color: '#10b981' },
-                { label: 'Not Recorded', value: stats?.notRecorded ?? 0, color: '#f59e0b' },
+                { label: 'Total Employees', value: stats?.totalEmployees ?? 0, color: 'text-[var(--blue)]' },
+                { label: 'Attendance Rate', value: `${stats?.attendanceRate ?? 0}%`, color: 'text-[var(--green)]' },
+                { label: 'Missing Logs', value: stats?.notRecorded ?? 0, color: 'text-[var(--yellow)]' },
               ].map(s => (
-                <div key={s.label} className="month-stat">
-                  <span className="month-stat-val" style={{ color: s.color }}>{s.value}</span>
-                  <span className="month-stat-label">{s.label}</span>
+                <div key={s.label} className="flex justify-between items-center text-xs p-2.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl">
+                  <span className="text-[var(--text-3)] font-semibold">{s.label}</span>
+                  <span className={`font-bold font-mono ${s.color}`}>{s.value}</span>
                 </div>
               ))}
             </div>
@@ -631,29 +704,48 @@ function AttendancePageContent() {
 
       {/* Edit Correction Modal */}
       {editRecord && (
-        <div className="modal-overlay" onClick={() => setEditRecord(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <div className="modal-header">
-              <h3>Correct Attendance</h3>
-              <button className="modal-close" onClick={() => setEditRecord(null)}>✕</button>
-            </div>
-            <form onSubmit={handleCorrectSubmit} className="modal-body">
-              <div style={{ marginBottom: '15px', color: '#fff', fontSize: '13px' }}>
-                Correcting attendance for: <strong>{editRecord.userName}</strong> on <strong>{editRecord.date}</strong>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4" onClick={() => setEditRecord(null)}>
+          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-sm p-6 relative shadow-2xl" onClick={e => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-[var(--text-3)] hover:text-[var(--text-1)] cursor-pointer" onClick={() => setEditRecord(null)}>
+              <X size={18} />
+            </button>
+            <h3 className="text-sm font-extrabold text-[var(--text-1)] mb-4 uppercase tracking-wide">Correct Attendance</h3>
+            
+            <form onSubmit={handleCorrectSubmit} className="space-y-4 text-xs">
+              <div className="text-[var(--text-2)]">
+                Correcting attendance for: <strong className="text-[var(--text-1)]">{editRecord.userName}</strong> on <strong className="text-[var(--text-1)]">{editRecord.date}</strong>
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Clock In Time</label>
-                  <input type="text" className="form-input" placeholder="e.g. 08:30" value={editIn} onChange={e => setEditIn(e.target.value)} />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Clock In Time</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 08:30"
+                    value={editIn}
+                    onChange={e => setEditIn(e.target.value)}
+                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] font-mono"
+                  />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Clock Out Time</label>
-                  <input type="text" className="form-input" placeholder="e.g. 17:30" value={editOut} onChange={e => setEditOut(e.target.value)} />
+                <div>
+                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Clock Out Time</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 17:30"
+                    value={editOut}
+                    onChange={e => setEditOut(e.target.value)}
+                    className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] font-mono"
+                  />
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Attendance Status</label>
-                <select className="form-input form-select" value={editStatus} onChange={e => setEditStatus(e.target.value)}>
+
+              <div>
+                <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Attendance Status</label>
+                <select
+                  value={editStatus}
+                  onChange={e => setEditStatus(e.target.value)}
+                  className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                >
                   <option value="present">Present</option>
                   <option value="late">Late</option>
                   <option value="absent">Absent</option>
@@ -661,20 +753,32 @@ function AttendancePageContent() {
                   <option value="on_leave">On Leave</option>
                 </select>
               </div>
-              <div className="form-group">
-                <label className="form-label">Correction Reason *</label>
+
+              <div>
+                <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Correction Reason *</label>
                 <textarea
-                  className="form-input"
-                  style={{ minHeight: '60px', resize: 'vertical' }}
+                  className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] resize-none"
+                  rows={3}
                   value={correctionReason}
                   onChange={e => setCorrectionReason(e.target.value)}
                   placeholder="e.g. Forgot to scan fingerprint at gate"
                   required
                 />
               </div>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                <button type="button" className="btn-secondary" style={{ padding: '8px 16px' }} onClick={() => setEditRecord(null)}>Cancel</button>
-                <button type="submit" className="btn-primary" style={{ padding: '8px 16px' }} disabled={correctAttendance.isPending}>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditRecord(null)}
+                  className="py-2 px-4 bg-[var(--bg-surface-2)] border border-[var(--border)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={correctAttendance.isPending}
+                  className="py-2 px-4 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold rounded-lg transition-colors cursor-pointer"
+                >
                   {correctAttendance.isPending ? 'Saving...' : 'Apply Correction'}
                 </button>
               </div>
@@ -689,9 +793,9 @@ function AttendancePageContent() {
 export default function AttendancePage() {
   return (
     <Suspense fallback={
-      <div className="page-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh', color: '#475569' }}>
-        <div style={{ textAlign: 'center' }}>
-          <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />
+      <div className="page-content flex items-center justify-center min-h-[60vh] text-[var(--text-3)]">
+        <div className="text-center">
+          <span className="spinner sm-spinner mb-2 block mx-auto" />
           Loading Attendance Module...
         </div>
       </div>

@@ -105,6 +105,8 @@ app.register(require('./routes/reports'),     { prefix: '/api/reports' });
 app.register(require('./routes/organization'),{ prefix: '/api/organization' });
 app.register(require('./routes/holidays'),    { prefix: '/api/holidays' });
 app.register(require('./routes/management'),  { prefix: '/api/management' });
+app.register(require('./routes/hr'),          { prefix: '/api/hr' });
+app.register(require('./routes/finance'),     { prefix: '/api/finance' });
 
 
 app.get('/api/health', async (request, reply) => {

@@ -823,7 +823,7 @@ export default function SettingsPage() {
                           Live Hardware Telemetry
                         </span>
                         {dev.telemetry && (dev.telemetry.wifiRssi !== null || dev.telemetry.batteryLevel !== null || dev.telemetry.freeMemory !== null || dev.telemetry.uptimeSeconds !== null) ? (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                             {/* WiFi Signal RSSI */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.4)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={getWifiColor(dev.telemetry.wifiRssi)} strokeWidth="2.5">
@@ -1199,7 +1199,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div className="form-group">
                   <label className="form-label">IP Address *</label>
                   <input
@@ -1223,7 +1223,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div className="form-group">
                   <label className="form-label">Device Type</label>
                   <select
@@ -1426,7 +1426,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div className="form-group">
                   <label className="form-label">Latitude *</label>
                   <input

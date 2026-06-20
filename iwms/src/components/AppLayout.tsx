@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth, getPostLoginRoute } from '@/lib/auth-context';
 import Sidebar from '@/components/Sidebar';
 import TopBar from '@/components/TopBar';
 import { usePathname, useRouter } from 'next/navigation';
@@ -103,7 +103,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       if (!user && !isPublicPage) {
         router.replace('/login');
       } else if (user && (pathname === '/' || pathname === '/get-started' || pathname === '/login' || pathname === '/register')) {
-        router.replace('/dashboard');
+        router.replace(getPostLoginRoute(user));
       }
     }
   }, [user, isLoading, isPublicPage, pathname, router]);

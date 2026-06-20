@@ -4,8 +4,23 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { attendanceApi } from '@/lib/api';
 import { useSocketEvent } from '@/hooks/useSocket';
+import {
+  Fingerprint,
+  Search,
+  Grid,
+  List,
+  Cpu,
+  Globe,
+  Smartphone,
+  QrCode,
+  Activity,
+  AlertTriangle,
+  User,
+  Coffee,
+  CheckCircle,
+  HelpCircle
+} from 'lucide-react';
 
-// -- Types ------------------------------------------------------------------
 interface PresenceUser {
   userId: string;
   name: string;
@@ -36,149 +51,29 @@ interface PresenceData {
   date: string;
 }
 
-// -- Status Config ----------------------------------------------------------
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; ring: string }> = {
-  present:        { label: 'Present',        color: '#10b981', bg: 'rgba(16,185,129,0.12)',   ring: '#10b981' },
-  late:           { label: 'Late',           color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  ring: '#f59e0b' },
-  absent:         { label: 'Absent',         color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   ring: '#ef4444' },
-  on_leave:       { label: 'On Leave',       color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', ring: '#8b5cf6' },
-  not_clocked_in: { label: 'Not Clocked In', color: '#64748b', bg: 'rgba(100,116,139,0.10)', ring: '#64748b' },
+const STATUS_CONFIG: Record<string, { label: string; badgeClass: string; ringClass: string; color: string }> = {
+  present:        { label: 'Present',        badgeClass: 'badge-green', ringClass: 'border-emerald-500', color: 'var(--green)' },
+  late:           { label: 'Late',           badgeClass: 'badge-yellow', ringClass: 'border-amber-500', color: 'var(--yellow)' },
+  absent:         { label: 'Absent',         badgeClass: 'badge-red', ringClass: 'border-red-500', color: 'var(--red)' },
+  on_leave:       { label: 'On Leave',       badgeClass: 'badge-purple', ringClass: 'border-purple-500', color: 'var(--purple)' },
+  not_clocked_in: { label: 'Not Clocked In', badgeClass: 'badge-yellow bg-slate-500/10 text-slate-400 border-slate-500/20', ringClass: 'border-slate-600', color: 'var(--text-3)' },
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.not_clocked_in;
-  return (
-    <span
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 5,
-        padding: '3px 10px', borderRadius: 20,
-        fontSize: 11, fontWeight: 600, letterSpacing: '0.02em',
-        color: cfg.color, background: cfg.bg, whiteSpace: 'nowrap',
-      }}
-    >
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, display: 'inline-block', flexShrink: 0 }} />
-      {cfg.label}
-    </span>
-  );
-}
-
-function AvatarRing({ user }: { user: PresenceUser }) {
-  const cfg = STATUS_CONFIG[user.status] ?? STATUS_CONFIG.not_clocked_in;
-  return (
-    <div
-      style={{
-        width: 52, height: 52, borderRadius: '50%',
-        border: `3px solid ${cfg.ring}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: `${cfg.ring}18`,
-        fontSize: 18, fontWeight: 700, color: cfg.ring,
-        flexShrink: 0, position: 'relative',
-      }}
-    >
-      {user.avatar}
-      {(user.status === 'present' || user.status === 'late') && (
-        <span
-          style={{
-            position: 'absolute', bottom: 1, right: 1,
-            width: 12, height: 12, borderRadius: '50%',
-            background: cfg.ring, border: '2px solid #1a1f2e',
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-function KpiPill({ label, value, color, bg, active, onClick }: {
-  label: string; value: number; color: string; bg: string; active: boolean; onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-        padding: '10px 18px', borderRadius: 12,
-        border: active ? `2px solid ${color}` : '2px solid transparent',
-        background: active ? bg : 'var(--color-bg-elevated, #1a1f2e)',
-        cursor: 'pointer', transition: 'all 0.15s', minWidth: 80,
-      }}
-    >
-      <span style={{ fontSize: 22, fontWeight: 700, color, lineHeight: 1 }}>{value}</span>
-      <span style={{ fontSize: 11, color: active ? color : '#94a3b8', fontWeight: 500 }}>{label}</span>
-    </button>
-  );
-}
-
-function GridCard({ user }: { user: PresenceUser }) {
-  const cfg = STATUS_CONFIG[user.status] ?? STATUS_CONFIG.not_clocked_in;
-  return (
-    <div
-      style={{
-        background: 'var(--color-bg-elevated, #1a1f2e)',
-        border: '1px solid var(--color-border, #2d3748)',
-        borderRadius: 14, padding: '18px 16px',
-        display: 'flex', flexDirection: 'column', gap: 12,
-        transition: 'transform 0.15s, box-shadow 0.15s',
-      }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
-        (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 24px ${cfg.ring}22`;
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-        (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <AvatarRing user={user} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontWeight: 600, fontSize: 14, color: '#f1f5f9', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
-          <p style={{ fontSize: 12, color: '#94a3b8', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.position || user.department}</p>
-        </div>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <StatusBadge status={user.status} />
-        <span style={{ fontSize: 11, color: '#94a3b8' }}>{user.method === 'hardware' ? '?? HW' : user.method === 'web' ? '?? Web' : ''}</span>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        {[{ label: 'Clock In', value: user.clockIn }, { label: 'Clock Out', value: user.clockOut }].map(({ label, value }) => (
-          <div key={label} style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: '6px 10px' }}>
-            <p style={{ fontSize: 10, color: '#64748b', margin: '0 0 2px' }}>{label}</p>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9', margin: 0, fontFamily: 'monospace' }}>{value ?? ''}</p>
-          </div>
-        ))}
-      </div>
-      {user.hoursWorked !== null && (
-        <div style={{ textAlign: 'right' }}>
-          <span style={{ fontSize: 11, color: cfg.color, fontWeight: 600 }}>{user.hoursWorked.toFixed(1)}h worked</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TableRow({ user, index }: { user: PresenceUser; index: number }) {
-  const cfg = STATUS_CONFIG[user.status] ?? STATUS_CONFIG.not_clocked_in;
-  return (
-    <tr
-      style={{ background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', borderBottom: '1px solid #2d3748', transition: 'background 0.1s' }}
-      onMouseEnter={e => (e.currentTarget.style.background = `${cfg.ring}0d`)}
-      onMouseLeave={e => (e.currentTarget.style.background = index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)')}
-    >
-      <td style={{ padding: '12px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: `${cfg.ring}18`, border: `2px solid ${cfg.ring}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: cfg.ring, flexShrink: 0 }}>{user.avatar}</div>
-          <span style={{ fontWeight: 500, fontSize: 13, color: '#f1f5f9' }}>{user.name}</span>
-        </div>
-      </td>
-      <td style={{ padding: '12px 16px', fontSize: 13, color: '#cbd5e1' }}>{user.department}</td>
-      <td style={{ padding: '12px 16px', fontSize: 13, color: '#94a3b8' }}>{user.position || ''}</td>
-      <td style={{ padding: '12px 16px' }}><StatusBadge status={user.status} /></td>
-      <td style={{ padding: '12px 16px', fontSize: 13, fontFamily: 'monospace', color: '#cbd5e1' }}>{user.clockIn ?? ''}</td>
-      <td style={{ padding: '12px 16px', fontSize: 13, fontFamily: 'monospace', color: '#cbd5e1' }}>{user.clockOut ?? ''}</td>
-      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: cfg.color }}>{user.hoursWorked !== null ? `${user.hoursWorked.toFixed(1)}h` : ''}</td>
-    </tr>
-  );
+function renderMethodIcon(method: string | null) {
+  const norm = (method || '').toLowerCase();
+  if (norm === 'rfid' || norm === 'biometric') {
+    return <span title="RFID Card"><Cpu size={12} className="text-[var(--accent)]" /></span>;
+  }
+  if (norm === 'web') {
+    return <span title="Web App"><Globe size={12} className="text-[var(--blue)]" /></span>;
+  }
+  if (norm === 'mobile') {
+    return <span title="Mobile GPS"><Smartphone size={12} className="text-[var(--green)]" /></span>;
+  }
+  if (norm === 'qr') {
+    return <span title="QR Terminal"><QrCode size={12} className="text-[var(--purple)]" /></span>;
+  }
+  return <span title="Biometric"><Fingerprint size={12} className="text-[var(--text-3)]" /></span>;
 }
 
 export default function PresencePage() {
@@ -187,12 +82,6 @@ export default function PresencePage() {
   const [activeStatus, setActiveStatus] = useState<string>('all');
   const [activeDept, setActiveDept] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  const [liveDot, setLiveDot] = useState(true);
-
-  useEffect(() => {
-    const t = setInterval(() => setLiveDot(v => !v), 1200);
-    return () => clearInterval(t);
-  }, []);
 
   const { data, isLoading, isError } = useQuery<PresenceData>({
     queryKey: ['presence'],
@@ -227,93 +116,235 @@ export default function PresencePage() {
   const summary = data?.summary ?? { total: 0, present: 0, late: 0, absent: 0, onLeave: 0, notClockedIn: 0 };
 
   const kpis = [
-    { key: 'all',            label: 'Total',      value: summary.total,        color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
-    { key: 'present',        label: 'Present',    value: summary.present,      color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
-    { key: 'late',           label: 'Late',       value: summary.late,         color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
-    { key: 'absent',         label: 'Absent',     value: summary.absent,       color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
-    { key: 'on_leave',       label: 'On Leave',   value: summary.onLeave,      color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)' },
-    { key: 'not_clocked_in', label: 'Not In Yet', value: summary.notClockedIn, color: '#64748b', bg: 'rgba(100,116,139,0.10)' },
+    { key: 'all',            label: 'Total Headcount',      value: summary.total,        badgeClass: 'badge-blue', color: 'var(--blue)' },
+    { key: 'present',        label: 'Present Today',    value: summary.present,      badgeClass: 'badge-green', color: 'var(--green)' },
+    { key: 'late',           label: 'Late Check-ins',       value: summary.late,         badgeClass: 'badge-yellow', color: 'var(--yellow)' },
+    { key: 'absent',         label: 'Absent',     value: summary.absent,       badgeClass: 'badge-red', color: 'var(--red)' },
+    { key: 'on_leave',       label: 'On Leave',   value: summary.onLeave,      badgeClass: 'badge-purple', color: 'var(--purple)' },
+    { key: 'not_clocked_in', label: 'Not Checked In', value: summary.notClockedIn, badgeClass: 'bg-slate-500/10 text-slate-400 border-slate-500/20', color: 'var(--text-3)' },
   ];
 
   return (
-    <main style={{ padding: '24px 28px', minHeight: '100vh', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="page-content">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+      <div className="page-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#f1f5f9' }}>Team Presence</h1>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 20, background: liveDot ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', transition: 'background 0.6s' }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: liveDot ? '0 0 6px #10b981' : 'none', transition: 'box-shadow 0.6s' }} />
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#10b981', letterSpacing: '0.05em' }}>LIVE</span>
+          <div className="flex items-center gap-3">
+            <h1 className="page-title text-2xl font-bold text-[var(--text-1)]">Team Presence</h1>
+            {/* Pulsing LIVE green connection indicator */}
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold text-[var(--green)] uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              LIVE
             </span>
           </div>
-          <p style={{ margin: 0, fontSize: 13, color: '#94a3b8' }}>Today  {data?.date ?? ''}</p>
+          <p className="page-subtitle text-xs text-[var(--text-3)] mt-1">
+            Real-time visual monitoring of checked-in personnel and on-premise device feeds.
+          </p>
         </div>
-        <div style={{ display: 'flex', background: '#1a1f2e', border: '1px solid #2d3748', borderRadius: 10, overflow: 'hidden' }}>
+
+        {/* View Switcher */}
+        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl">
           {(['grid', 'table'] as const).map(mode => (
-            <button key={mode} onClick={() => setViewMode(mode)} style={{ padding: '7px 16px', background: viewMode === mode ? '#6366f1' : 'transparent', color: viewMode === mode ? '#fff' : '#94a3b8', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}>
-              {mode === 'grid' ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-              )}
-              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors flex items-center gap-1.5 cursor-pointer ${
+                viewMode === mode ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
+              }`}
+            >
+              {mode === 'grid' ? <Grid size={13} /> : <List size={13} />}
+              {mode}
             </button>
           ))}
         </div>
       </div>
 
-      {/* KPI Pills */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
-        {kpis.map(k => (
-          <KpiPill key={k.key} label={k.label} value={k.value} color={k.color} bg={k.bg} active={activeStatus === k.key} onClick={() => setActiveStatus(prev => prev === k.key ? 'all' : k.key)} />
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: 340 }}>
-          <svg style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or department" style={{ width: '100%', padding: '9px 12px 9px 34px', background: '#1a1f2e', border: '1px solid #2d3748', borderRadius: 10, color: '#f1f5f9', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {departments.map(dept => (
-            <button key={dept} onClick={() => setActiveDept(dept)} style={{ padding: '7px 14px', borderRadius: 20, border: activeDept === dept ? '1px solid #6366f1' : '1px solid #2d3748', background: activeDept === dept ? 'rgba(99,102,241,0.15)' : '#1a1f2e', color: activeDept === dept ? '#6366f1' : '#94a3b8', fontSize: 12, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' }}>
-              {dept === 'all' ? 'All Departments' : dept}
+      {/* KPI filter summary pills */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        {kpis.map(k => {
+          const isActive = activeStatus === k.key;
+          return (
+            <button
+              key={k.key}
+              onClick={() => setActiveStatus(prev => prev === k.key ? 'all' : k.key)}
+              className={`card p-3 flex flex-col justify-between text-left cursor-pointer transition-all ${
+                isActive ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'hover:border-[var(--border-strong)]'
+              }`}
+            >
+              <span className="value text-xl font-bold font-mono text-[var(--text-1)]" style={{ color: k.color }}>
+                {k.value}
+              </span>
+              <span className="label text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider mt-1.5">
+                {k.label.split(' ')[0]}
+              </span>
             </button>
-          ))}
-        </div>
-        <span style={{ fontSize: 12, color: '#94a3b8', marginLeft: 'auto' }}>{filtered.length} of {summary.total} employees</span>
+          );
+        })}
       </div>
 
-      {isLoading && <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8', fontSize: 14 }}>Loading presence data</div>}
-      {isError && <div style={{ textAlign: 'center', padding: '60px 0', color: '#ef4444', fontSize: 14 }}>Failed to load presence data. Please try again.</div>}
-      {!isLoading && !isError && filtered.length === 0 && <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8', fontSize: 14 }}>No employees match the current filters.</div>}
+      {/* Search & Department Filters Toolbar */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 items-center w-full md:w-auto">
+          {/* Search */}
+          <div className="relative w-full sm:max-w-xs">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
+              <Search size={16} />
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search team member name..."
+              className="w-full pl-10 pr-4 py-1.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
+            />
+          </div>
 
-      {/* Grid */}
+          {/* Department filter pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
+            {departments.map(dept => (
+              <button
+                key={dept}
+                onClick={() => setActiveDept(dept)}
+                className={`px-3 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer capitalize whitespace-nowrap ${
+                  activeDept === dept ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
+                }`}
+              >
+                {dept === 'all' ? 'All Departments' : dept}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <span className="text-[11px] text-[var(--text-3)] font-semibold font-mono">
+          Showing {filtered.length} of {summary.total} members
+        </span>
+      </div>
+
+      {isLoading && <div className="text-center py-20 text-[var(--text-3)]">Compiling presence status...</div>}
+      {isError && <div className="text-center py-20 text-red-500">Failed to load presence data. Please refresh.</div>}
+      {!isLoading && !isError && filtered.length === 0 && (
+        <div className="text-center py-20 text-[var(--text-3)]">No team members match the active filters.</div>
+      )}
+
+      {/* Grid Mode */}
       {!isLoading && !isError && viewMode === 'grid' && filtered.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
-          {filtered.map((user: PresenceUser) => <GridCard key={user.userId} user={user} />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filtered.map((user: PresenceUser) => {
+            const cfg = STATUS_CONFIG[user.status] ?? STATUS_CONFIG.not_clocked_in;
+            const hasClocked = user.status === 'present' || user.status === 'late';
+
+            return (
+              <div
+                key={user.userId}
+                className="card flex flex-col justify-between space-y-4 hover:-translate-y-0.5 duration-200 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  {/* Status Ring Avatar */}
+                  <div className={`w-12 h-12 rounded-full border-2 ${cfg.ringClass} p-0.5 flex-shrink-0 flex items-center justify-center relative`}>
+                    <div className="w-full h-full rounded-full bg-[var(--bg-surface-2)] flex items-center justify-center font-bold text-[var(--text-1)] overflow-hidden">
+                      {user.avatar || user.name[0]}
+                    </div>
+                    {hasClocked && (
+                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-[var(--green)] border-2 border-[var(--bg-surface)]" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <strong className="block text-xs text-[var(--text-1)] truncate">{user.name}</strong>
+                    <span className="block text-[10px] text-[var(--text-3)] truncate">{user.position}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-xs">
+                  <span className={`badge ${cfg.badgeClass} uppercase font-bold text-[9px]`}>
+                    {cfg.label}
+                  </span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-[var(--text-3)]">
+                    {renderMethodIcon(user.method)}
+                    <span className="capitalize">{user.method || '—'}</span>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  <div className="p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
+                    <span className="block text-[8px] font-bold text-[var(--text-3)] uppercase tracking-wider">Clock In</span>
+                    <span className="block text-xs font-mono font-bold text-[var(--text-1)] mt-0.5">{user.clockIn || '—'}</span>
+                  </div>
+                  <div className="p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
+                    <span className="block text-[8px] font-bold text-[var(--text-3)] uppercase tracking-wider">Clock Out</span>
+                    <span className="block text-xs font-mono font-bold text-[var(--text-1)] mt-0.5">{user.clockOut || '—'}</span>
+                  </div>
+                </div>
+
+                {user.hoursWorked !== null && (
+                  <div className="text-right text-[10px] text-[var(--text-3)] font-semibold font-mono border-t border-[var(--border)] pt-2 mt-2">
+                    Worked: <strong className="text-[var(--text-1)]">{user.hoursWorked.toFixed(1)} hrs</strong>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Table */}
+      {/* Table Mode */}
       {!isLoading && !isError && viewMode === 'table' && filtered.length > 0 && (
-        <div style={{ background: '#1a1f2e', border: '1px solid #2d3748', borderRadius: 14, overflow: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #2d3748' }}>
-                {['Employee', 'Department', 'Position', 'Status', 'Clock In', 'Clock Out', 'Hours'].map(h => (
-                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((user: PresenceUser, i: number) => <TableRow key={user.userId} user={user} index={i} />)}
-            </tbody>
-          </table>
+        <div className="card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
+                  <th className="py-2.5">Member</th>
+                  <th className="py-2.5">Department</th>
+                  <th className="py-2.5">Position</th>
+                  <th className="py-2.5">Status</th>
+                  <th className="py-2.5">Clock In</th>
+                  <th className="py-2.5">Clock Out</th>
+                  <th className="py-2.5">Duration</th>
+                  <th className="py-2.5 text-right">Method</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {filtered.map((user: PresenceUser) => {
+                  const cfg = STATUS_CONFIG[user.status] ?? STATUS_CONFIG.not_clocked_in;
+                  return (
+                    <tr key={user.userId} className="hover:bg-[var(--bg-hover)]/10 transition-colors">
+                      <td className="py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center font-bold text-[var(--text-1)]">
+                            {user.avatar || user.name[0]}
+                          </div>
+                          <span className="font-semibold text-[var(--text-1)]">{user.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 text-[var(--text-2)]">{user.department}</td>
+                      <td className="py-3 text-[var(--text-2)]">{user.position || '—'}</td>
+                      <td className="py-3">
+                        <span className={`badge ${cfg.badgeClass} uppercase font-bold text-[9px]`}>
+                          {cfg.label}
+                        </span>
+                      </td>
+                      <td className="py-3 font-mono text-[var(--text-1)]">{user.clockIn || '—'}</td>
+                      <td className="py-3 font-mono text-[var(--text-1)]">{user.clockOut || '—'}</td>
+                      <td className="py-3 font-mono text-[var(--text-2)] font-semibold">
+                        {user.hoursWorked !== null ? `${user.hoursWorked.toFixed(1)}h` : '—'}
+                      </td>
+                      <td className="py-3 text-right">
+                        <span className="inline-flex items-center gap-1 font-semibold text-[var(--text-3)]">
+                          {renderMethodIcon(user.method)}
+                          <span className="capitalize">{user.method || '—'}</span>
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
-    </main>
+    </div>
   );
-}
+}
