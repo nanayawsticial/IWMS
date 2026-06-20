@@ -146,12 +146,12 @@ export default function PresencePage() {
         </div>
 
         {/* View Switcher */}
-        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl">
+        <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] h-[38px] flex-shrink-0">
           {(['grid', 'table'] as const).map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              className={`px-3 py-1.5 text-sm font-semibold rounded-lg capitalize transition-colors flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 h-full text-sm font-semibold rounded-[8px] capitalize transition-colors flex items-center gap-1.5 cursor-pointer flex-shrink-0 justify-center ${
                 viewMode === mode ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
               }`}
             >
@@ -189,38 +189,25 @@ export default function PresencePage() {
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl mb-6">
         <div className="flex flex-col sm:flex-row gap-3 items-center w-full md:w-auto">
           {/* Search */}
-          <div className="relative w-full sm:max-w-xs">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
-              <Search size={16} />
-            </span>
+          <div className="control-compact w-full sm:w-64">
+            <Search size={16} className="text-[var(--text-3)] flex-shrink-0" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search team member name..."
-              className="w-full pl-10 pr-4 py-1.5 text-sm bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
 
           {/* Department filter pills */}
-          <div className="tabs-scroll w-full sm:w-auto p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
+          <div className="tabs-scroll w-full sm:w-auto p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] flex items-center gap-1 h-[38px] overflow-x-auto hide-scrollbar">
             {departments.map(dept => (
               <button
                 key={dept}
                 onClick={() => setActiveDept(dept)}
-                className="capitalize whitespace-nowrap flex-shrink-0"
-                style={{
-                  background: activeDept === dept ? 'var(--accent)' : 'transparent',
-                  color: activeDept === dept ? 'white' : 'var(--text-2)',
-                  border: '0.5px solid',
-                  borderColor: activeDept === dept ? 'var(--accent)' : 'var(--border)',
-                  padding: '5px 14px',
-                  borderRadius: 9999,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  flexShrink: 0,
-                }}
+                className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-all cursor-pointer capitalize whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
+                  activeDept === dept ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
+                }`}
               >
                 {dept === 'all' ? 'All Departments' : dept}
               </button>

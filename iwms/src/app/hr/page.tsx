@@ -221,12 +221,12 @@ export default function HrDashboardPage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl overflow-x-auto max-w-full flex-shrink-0">
+        <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] overflow-x-auto max-w-full flex-shrink-0 h-[38px] hide-scrollbar">
           {(['dashboard', 'directory', 'leaves', 'headcount'] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setSelectedEmployeeId(null); }}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+              className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
             >
               {tab === 'dashboard' ? 'Dashboard' : tab === 'directory' ? 'Directory' : tab === 'leaves' ? 'Leave Requests' : 'Headcount'}
             </button>
@@ -405,35 +405,32 @@ export default function HrDashboardPage() {
         <div className="space-y-6">
           {/* Filters Bar */}
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full sm:max-w-xs">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
-                <Search size={16} />
-              </span>
+            <div className="control-compact w-full sm:w-64">
+              <Search size={16} className="text-[var(--text-3)] flex-shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search name, position, email..."
-                className="w-full pl-10 pr-4 py-1.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg overflow-x-auto max-w-full flex-shrink-0">
+            <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] h-[38px] overflow-x-auto max-w-full flex-shrink-0 hide-scrollbar">
               <button
                 onClick={() => setStatusFilter('all')}
-                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${statusFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${statusFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
               >
                 All Employees
               </button>
               <button
                 onClick={() => setStatusFilter('active')}
-                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${statusFilter === 'active' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${statusFilter === 'active' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
               >
                 Active
               </button>
               <button
                 onClick={() => setStatusFilter('probation')}
-                className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap flex-shrink-0 ${statusFilter === 'probation' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${statusFilter === 'probation' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
               >
                 On Probation
               </button>

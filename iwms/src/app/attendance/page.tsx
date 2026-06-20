@@ -393,35 +393,22 @@ function AttendancePageContent() {
 
       {/* Filters Toolbar */}
       <div className="flex flex-col gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl mb-6">
-        <div className="overflow-x-auto hide-scrollbar" style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'nowrap' }}>
-            {['today', 'yesterday', 'week', 'month', 'custom'].map((p) => (
-              <button
-                key={p}
-                onClick={() => handlePeriodChange(p)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 9999,
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  border: '0.5px solid',
-                  borderColor: period === p ? 'var(--accent)' : 'var(--border)',
-                  background: period === p ? 'var(--accent)' : 'transparent',
-                  color: period === p ? 'white' : 'var(--text-2)',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  flexShrink: 0,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {p === 'today' ? 'Today'
-                 : p === 'yesterday' ? 'Yesterday'
-                 : p === 'week' ? 'Last 7 Days'
-                 : p === 'month' ? 'Last 30 Days'
-                 : 'Custom Range'}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] text-sm overflow-x-auto max-w-full hide-scrollbar flex-shrink-0 h-[38px]">
+          {['today', 'yesterday', 'week', 'month', 'custom'].map((p) => (
+            <button
+              key={p}
+              onClick={() => handlePeriodChange(p)}
+              className={`px-3.5 h-full font-semibold rounded-[8px] transition-all cursor-pointer whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
+                period === p ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
+              }`}
+            >
+              {p === 'today' ? 'Today'
+               : p === 'yesterday' ? 'Yesterday'
+               : p === 'week' ? 'Last 7 Days'
+               : p === 'month' ? 'Last 30 Days'
+               : 'Custom Range'}
+            </button>
+          ))}
         </div>
 
         {/* Sub-Filters: Date selection & status selection */}
@@ -429,46 +416,49 @@ function AttendancePageContent() {
           <div className="flex flex-wrap gap-4 items-center w-full sm:w-auto">
             {period === 'custom' && (
               <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={e => handleStartDateChange(e.target.value)}
-                  className="py-1 px-2.5 text-sm bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                />
+                <div className="control-compact">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={e => handleStartDateChange(e.target.value)}
+                  />
+                </div>
                 <span className="text-sm text-[var(--text-3)]">to</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={e => handleEndDateChange(e.target.value)}
-                  className="py-1 px-2.5 text-sm bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-                />
+                <div className="control-compact">
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={e => handleEndDateChange(e.target.value)}
+                  />
+                </div>
               </div>
             )}
 
             {['super_admin', 'admin', 'hr_manager', 'manager'].includes(user?.role || '') && (
-              <select
-                value={departmentFilter}
-                onChange={e => handleDepartmentChange(e.target.value)}
-                className="py-1 px-3 text-sm bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-              >
-                <option value="all">All Departments</option>
-                {departments
-                  .filter((d: any) => user?.role !== 'manager' || d.id === user.departmentId)
-                  .map((d: any) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-              </select>
+              <div className="control-compact w-full sm:w-auto">
+                <select
+                  value={departmentFilter}
+                  onChange={e => handleDepartmentChange(e.target.value)}
+                >
+                  <option value="all">All Departments</option>
+                  {departments
+                    .filter((d: any) => user?.role !== 'manager' || d.id === user.departmentId)
+                    .map((d: any) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
             )}
           </div>
 
           {/* Status pills selector */}
-          <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg w-full sm:w-auto overflow-x-auto hide-scrollbar">
+          <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] w-full sm:w-auto overflow-x-auto hide-scrollbar h-[38px]">
             {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
               <button
                 key={s}
-                className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 h-full text-xs font-semibold rounded-[8px] transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
                   statusFilter === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
                 }`}
                 onClick={() => handleStatusChange(s)}

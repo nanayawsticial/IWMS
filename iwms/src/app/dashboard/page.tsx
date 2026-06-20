@@ -534,22 +534,22 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-4 flex-wrap gap-4">
                   <h3 className="section-title">Recruitment Pipeline</h3>
-                  <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
+                  <div className="control-compact flex items-center gap-1 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl" style={{ padding: '3px', height: '38px' }}>
                     <button
                       onClick={() => setApplicantFilter('all')}
-                      className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${applicantFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-3 h-full text-xs font-semibold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
                     >
                       All
                     </button>
                     <button
                       onClick={() => setApplicantFilter('shortlisted')}
-                      className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${applicantFilter === 'shortlisted' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-3 h-full text-xs font-semibold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'shortlisted' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
                     >
                       Shortlisted
                     </button>
                     <button
                       onClick={() => setApplicantFilter('interviewing')}
-                      className={`px-3 py-1 text-[11px] font-medium rounded-md transition-colors ${applicantFilter === 'interviewing' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-3 h-full text-xs font-semibold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'interviewing' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
                     >
                       Interviewing
                     </button>
@@ -617,9 +617,10 @@ export default function DashboardPage() {
                     value={todoInput}
                     onChange={(e) => setTodoInput(e.target.value)}
                     placeholder="Add a quick task..."
-                    className="flex-1 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--radius-md)] px-3 py-1.5 text-xs text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
+                    className="control-compact flex-1"
+                    style={{ background: 'var(--bg-elevated)' }}
                   />
-                  <button type="submit" className="p-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-[var(--radius-md)] transition-colors flex items-center justify-center">
+                  <button type="submit" className="px-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl transition-colors flex items-center justify-center h-[38px] flex-shrink-0">
                     <Plus size={16} />
                   </button>
                 </form>

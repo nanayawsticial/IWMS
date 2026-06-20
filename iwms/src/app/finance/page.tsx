@@ -270,12 +270,12 @@ export default function FinancePage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl flex-shrink-0 overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] flex-shrink-0 overflow-x-auto max-w-full h-[38px] hide-scrollbar">
           {(['dashboard', 'expenses', 'budgets', 'payroll'] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+              className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
             >
               {tab === 'dashboard' ? 'Dashboard' : tab === 'expenses' ? 'Expenses' : tab === 'budgets' ? 'Budgets' : 'Payroll'}
             </button>
@@ -450,48 +450,47 @@ export default function FinancePage() {
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-3 items-center w-full md:w-auto">
               {/* Search */}
-              <div className="relative w-full sm:max-w-xs">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
-                  <Search size={16} />
-                </span>
+              <div className="control-compact w-full sm:w-64">
+                <Search size={16} className="text-[var(--text-3)] flex-shrink-0" />
                 <input
                   type="text"
                   value={expenseSearch}
                   onChange={(e) => setExpenseSearch(e.target.value)}
                   placeholder="Search expense name, owner..."
-                  className="w-full pl-10 pr-4 py-1.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
                 />
               </div>
 
               {/* Status filter */}
-              <select
-                value={expenseStatusFilter}
-                onChange={(e) => setExpenseStatusFilter(e.target.value)}
-                className="w-full sm:w-36 py-1.5 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="paid">Paid</option>
-                <option value="rejected">Rejected</option>
-              </select>
+              <div className="control-compact w-full sm:w-36">
+                <select
+                  value={expenseStatusFilter}
+                  onChange={(e) => setExpenseStatusFilter(e.target.value)}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="paid">Paid</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
 
               {/* Category filter */}
-              <select
-                value={expenseCategoryFilter}
-                onChange={(e) => setExpenseCategoryFilter(e.target.value)}
-                className="w-full sm:w-36 py-1.5 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-              >
-                <option value="all">All Categories</option>
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                ))}
-              </select>
+              <div className="control-compact w-full sm:w-36">
+                <select
+                  value={expenseCategoryFilter}
+                  onChange={(e) => setExpenseCategoryFilter(e.target.value)}
+                >
+                  <option value="all">All Categories</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <button
               onClick={() => setIsExpenseModalOpen(true)}
-              className="w-full md:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
+              className="w-full md:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold h-[38px] px-5 rounded-[10px] text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
             >
               <Plus size={16} /> Submit Expense Claims
             </button>
@@ -603,19 +602,18 @@ export default function FinancePage() {
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-3">
               <label className="text-xs text-[var(--text-2)] font-semibold">Select Budget Period:</label>
-              <div className="relative">
+              <div className="control-compact">
                 <input
                   type="month"
                   value={periodFilter}
                   onChange={(e) => setPeriodFilter(e.target.value)}
-                  className="py-1 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
                 />
               </div>
             </div>
 
             <button
               onClick={() => setIsBudgetModalOpen(true)}
-              className="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
+              className="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold h-[38px] px-5 rounded-[10px] text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
             >
               <Plus size={16} /> Allocate Category Budget
             </button>
@@ -684,18 +682,19 @@ export default function FinancePage() {
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-3">
               <label className="text-xs text-[var(--text-2)] font-semibold">Payroll Month:</label>
-              <input
-                type="month"
-                value={periodFilter}
-                onChange={(e) => setPeriodFilter(e.target.value)}
-                className="py-1 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
-              />
+              <div className="control-compact">
+                <input
+                  type="month"
+                  value={periodFilter}
+                  onChange={(e) => setPeriodFilter(e.target.value)}
+                />
+              </div>
             </div>
 
             <button
               onClick={handleExportCsv}
               disabled={payrollSummary.length === 0}
-              className="w-full sm:w-auto bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold py-2.5 px-5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer border border-[var(--border)] whitespace-nowrap flex-shrink-0"
+              className="w-full sm:w-auto bg-[var(--green-soft)] hover:bg-[var(--green-soft)]/20 text-[var(--green)] font-bold h-[38px] px-5 rounded-[10px] text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer border border-[var(--border)] whitespace-nowrap flex-shrink-0"
             >
               <Download size={16} /> Export Payroll CSV
             </button>

@@ -276,18 +276,15 @@ export default function DepartmentDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Team Presence Grid */}
             <div className="card lg:col-span-2">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-4 text-xs">
                 <h3 className="section-title">Team Presence</h3>
-                <div className="relative w-48">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-[var(--text-3)]">
-                    <Search size={12} />
-                  </span>
+                <div className="control-compact w-48">
+                  <Search size={14} className="text-[var(--text-3)] flex-shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search member..."
-                    className="w-full pl-8 pr-3 py-1 text-[11px] bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
                   />
                 </div>
               </div>

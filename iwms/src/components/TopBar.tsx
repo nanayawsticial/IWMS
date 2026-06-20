@@ -283,16 +283,13 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
 
       {/* Centered Search Bar */}
       <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-        <div className="relative w-full">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
-            <Search size={16} />
-          </span>
+        <div className="control-compact w-full" style={{ background: 'var(--bg-elevated)' }}>
+          <Search size={16} className="text-[var(--text-3)] flex-shrink-0" />
           <input
             type="text"
             placeholder="Search tasks, employees, or attendance..."
-            className="w-full pl-10 pr-12 py-1.5 text-xs bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)] transition-colors"
           />
-          <kbd className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <kbd className="flex items-center flex-shrink-0">
             <span className="px-1.5 py-0.5 text-[9px] font-medium bg-[var(--bg-surface-2)] border border-[var(--border-strong)] rounded text-[var(--text-2)]">
               ⌘K
             </span>

@@ -3635,3 +3635,64 @@ html, body {
   }
 }
 
+/* Unified height and compact form controls */
+.control-compact {
+  height: 38px;
+  font-size: var(--text-sm);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-strong);
+  color: var(--text-1);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+.control-compact:focus-within {
+  border-color: var(--accent);
+}
+.control-compact select {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--text-1) !important;
+  font-size: var(--text-sm) !important;
+  width: 100%;
+  cursor: pointer;
+  height: 100%;
+  padding: 0 !important;
+}
+.control-compact select option {
+  background: var(--bg-surface-2);
+  color: var(--text-1);
+}
+.control-compact input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--text-1) !important;
+  font-size: var(--text-sm) !important;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+}
+.control-compact input::placeholder {
+  color: var(--text-3);
+}
+.control-compact button {
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+/* Prevent mobile button stretch on switcher controls */
+@media (max-width: 640px) {
+  .control-compact button,
+  .pills-container button,
+  .tabs-scroll button,
+  .view-toggle button {
+    min-height: 0 !important;
+  }
+}
+
