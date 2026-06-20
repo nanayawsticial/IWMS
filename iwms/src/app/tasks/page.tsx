@@ -117,12 +117,12 @@ function TaskCardContent({
 
       {/* Top row with project, priority, and three-dot trigger */}
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-[10px] font-semibold text-[var(--text-3)] truncate max-w-[100px] border border-[var(--border)] rounded px-1.5 py-0.5 bg-[var(--bg-surface-2)]">
+        <span className="text-xs font-semibold text-[var(--text-3)] truncate max-w-[100px] border border-[var(--border)] rounded px-1.5 py-0.5 bg-[var(--bg-surface-2)]">
           {task.projectName || 'General'}
         </span>
         <div className="flex items-center gap-1">
           <span
-            className="inline-flex items-center gap-1 text-[9px] font-bold rounded-full px-2 py-0.5"
+            className="inline-flex items-center gap-1 text-xs font-bold rounded-full px-2 py-0.5"
             style={{ color: pConf.color, backgroundColor: pConf.bg }}
           >
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: pConf.color }} />
@@ -140,11 +140,11 @@ function TaskCardContent({
       </div>
 
       {/* Title */}
-      <h4 className="text-xs font-bold text-[var(--text-1)] line-clamp-1 mb-1">{task.title}</h4>
+      <h4 className="text-sm font-semibold text-[var(--text-1)] line-clamp-1 mb-1">{task.title}</h4>
 
       {/* Description */}
       {task.description && (
-        <p className="text-[10px] text-[var(--text-3)] line-clamp-2 leading-relaxed mb-3">
+        <p className="text-xs text-[var(--text-3)] line-clamp-2 leading-relaxed mb-3">
           {task.description}
         </p>
       )}
@@ -153,7 +153,7 @@ function TaskCardContent({
       {task.tags?.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {task.tags.map((tag: string) => (
-            <span key={tag} className="text-[8px] font-bold bg-[var(--bg-surface-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-2)]">
+            <span key={tag} className="text-[10px] font-bold bg-[var(--bg-surface-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-2)]">
               #{tag}
             </span>
           ))}
@@ -161,17 +161,17 @@ function TaskCardContent({
       )}
 
       {/* Metadata metrics */}
-      <div className="grid grid-cols-3 gap-2 py-2 border-y border-[var(--border)] mb-2 bg-[var(--bg-surface-2)]/30 rounded-lg px-2 text-[10px]">
+      <div className="grid grid-cols-3 gap-2 py-2 border-y border-[var(--border)] mb-2 bg-[var(--bg-surface-2)]/30 rounded-lg px-2 text-xs">
         <div>
-          <span className="block text-[8px] text-[var(--text-3)] uppercase tracking-wider">Est. Hours</span>
+          <span className="block text-[10px] text-[var(--text-3)] uppercase tracking-wider">Est. Hours</span>
           <span className="block font-bold text-[var(--text-1)] mt-0.5 font-mono">{task.estimatedHours || '—'}</span>
         </div>
         <div>
-          <span className="block text-[8px] text-[var(--text-3)] uppercase tracking-wider">Logged</span>
+          <span className="block text-[10px] text-[var(--text-3)] uppercase tracking-wider">Logged</span>
           <span className="block font-bold text-[var(--text-1)] mt-0.5 font-mono">{task.loggedHours || 0}h</span>
         </div>
         <div>
-          <span className="block text-[8px] text-[var(--text-3)] uppercase tracking-wider">Due</span>
+          <span className="block text-[10px] text-[var(--text-3)] uppercase tracking-wider">Due</span>
           <span className="block font-bold mt-0.5 font-mono" style={{ color: isOverdue ? 'var(--red)' : daysLeft <= 2 ? 'var(--yellow)' : 'var(--text-1)' }}>
             {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
           </span>
@@ -180,7 +180,7 @@ function TaskCardContent({
 
       {/* Redesigned Progress Bar colored by time consumption */}
       <div className="space-y-1 mt-2.5">
-        <div className="flex justify-between items-center text-[9px] text-[var(--text-3)] font-bold">
+        <div className="flex justify-between items-center text-xs text-[var(--text-3)] font-bold">
           <span>Time Util: {progress}%</span>
         </div>
         <div className="w-full h-1.5 bg-[var(--bg-surface-2)] rounded-full overflow-hidden border border-[var(--border)]">
@@ -194,9 +194,9 @@ function TaskCardContent({
       {/* Footer avatar & counters */}
       <div className="flex justify-between items-center pt-2.5 mt-2.5 border-t border-[var(--border)]">
         <AvatarStack items={avatarItems} />
-        <div className="flex items-center gap-2 text-[9px] text-[var(--text-3)]">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-3)]">
           <span className="inline-flex items-center gap-1 font-semibold" style={{ color: isOverdue ? 'var(--red)' : daysLeft <= 2 ? 'var(--yellow)' : undefined }}>
-            <Clock size={10} />
+            <Clock size={12} />
             {dueLabel}
           </span>
           <span className="inline-flex items-center gap-1 font-semibold">
@@ -598,7 +598,7 @@ function TasksPageContent() {
             <FolderKanban className="text-[var(--accent)]" size={24} />
             Board Workspaces
           </h1>
-          <p className="page-subtitle text-xs text-[var(--text-3)] mt-1">
+          <p className="page-subtitle text-sm text-[var(--text-3)] mt-1">
             Group, organize, and drag backlog tasks across phase statuses in real time.
           </p>
         </div>
@@ -611,7 +611,7 @@ function TasksPageContent() {
               <select
                 value={assigneeId || ''}
                 onChange={e => handleAssigneeChange(e.target.value)}
-                className="py-1.5 px-3 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] w-full"
+                className="py-1.5 px-3 text-sm bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] w-full"
               >
                 <option value="">All Assignees</option>
                 {dropdownUsers.map((u: any) => (
@@ -624,13 +624,13 @@ function TasksPageContent() {
               <div className="hidden md:block" />
             )}
 
-            <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-2.5 py-1 text-xs w-full justify-between">
+            <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl px-2.5 py-1 text-sm w-full justify-between">
               <div className="flex items-center gap-2">
-                <Filter size={12} className="text-[var(--text-3)]" />
+                <Filter size={14} className="text-[var(--text-3)]" />
                 <select
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value as any)}
-                  className="bg-transparent border-none text-[var(--text-1)] outline-none cursor-pointer text-xs w-full"
+                  className="bg-transparent border-none text-[var(--text-1)] outline-none cursor-pointer text-sm w-full"
                 >
                   <option value="dueDate">Sort by Due Date</option>
                   <option value="priority">Sort by Priority</option>
@@ -645,21 +645,21 @@ function TasksPageContent() {
             {/* Search Box */}
             <div className="relative w-full sm:w-48">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--text-3)]">
-                <Search size={14} />
+                <Search size={16} />
               </span>
               <input
                 type="text"
                 placeholder="Search title, owner..."
                 value={searchQ}
                 onChange={e => setSearchQ(e.target.value)}
-                className="w-full pl-9 pr-4 py-1.5 text-xs bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
+                className="w-full pl-9 pr-4 py-1.5 text-sm bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
               />
             </div>
 
             {/* View mode toggle, Priority filter pills, and Add Task */}
             <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
               {/* View mode toggle */}
-              <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs flex-shrink-0">
+              <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-sm flex-shrink-0">
                 <button
                   onClick={() => setViewMode('kanban')}
                   className={`px-3 py-1 font-semibold rounded transition-colors cursor-pointer flex-shrink-0 ${
@@ -679,7 +679,7 @@ function TasksPageContent() {
               </div>
 
               {/* Priority filter pills */}
-              <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-xs overflow-x-auto max-w-full flex-shrink-0 hide-scrollbar flex-1 sm:flex-initial">
+              <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-sm overflow-x-auto max-w-full flex-shrink-0 hide-scrollbar flex-1 sm:flex-initial">
                 {(['all', 'critical', 'high', 'medium', 'low'] as const).map(p => (
                   <button
                     key={p}
@@ -696,7 +696,7 @@ function TasksPageContent() {
               {/* Create trigger */}
               <button
                 onClick={() => setShowModal(true)}
-                className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2 px-3 sm:px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
+                className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2 px-3 sm:px-4 rounded-xl text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
               >
                 <Plus size={14} />
                 <span className="hidden sm:inline">Add Task</span>
@@ -907,12 +907,12 @@ function TasksPageContent() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
           <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-md p-6 relative shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 className="text-sm font-extrabold text-[var(--text-1)] uppercase tracking-wide">Create New Task</h3>
+              <h3 className="text-base font-extrabold text-[var(--text-1)] uppercase tracking-wide">Create New Task</h3>
               <button className="modal-close text-[var(--text-3)] hover:text-white cursor-pointer" onClick={() => setShowModal(false)}>
                 <X size={18} />
               </button>
             </div>
-            <div className="modal-body space-y-4 text-xs mt-4">
+            <div className="modal-body space-y-4 text-sm mt-4">
               <div className="form-group">
                 <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Title *</label>
                 <input className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]" value={newTask.title} onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))} placeholder="Task title..." required />

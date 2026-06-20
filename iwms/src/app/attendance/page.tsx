@@ -100,17 +100,17 @@ function ClockWidget() {
           {clockedIn ? (
             <div className="space-y-1">
               <span className="text-xl font-bold font-mono text-[var(--accent)] block leading-none">{formatElapsed(elapsed)}</span>
-              <span className="text-[10px] text-[var(--text-3)] font-semibold uppercase block tracking-wider">Elapsed Time</span>
+              <span className="text-xs text-[var(--text-3)] font-semibold uppercase block tracking-wider">Elapsed Time</span>
             </div>
           ) : alreadyClockedOut ? (
             <div className="flex flex-col items-center space-y-1">
               <Fingerprint size={28} className="text-[var(--green)]" />
-              <span className="text-[10px] text-[var(--green)] font-bold uppercase tracking-wider">Clocked Out</span>
+              <span className="text-xs text-[var(--green)] font-bold uppercase tracking-wider">Clocked Out</span>
             </div>
           ) : (
             <div className="flex flex-col items-center space-y-1 text-[var(--text-3)]">
               <Fingerprint size={28} />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Inactive</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Inactive</span>
             </div>
           )}
         </div>
@@ -136,7 +136,7 @@ function ClockWidget() {
             {isLoading ? 'Processing...' : clockedIn ? 'Clock Out' : 'Clock In'}
           </button>
         )}
-        <div className="flex justify-between items-center text-[10px] text-[var(--text-3)] border-t border-[var(--border)] pt-2.5">
+        <div className="flex justify-between items-center text-xs text-[var(--text-3)] border-t border-[var(--border)] pt-2.5">
           <span>Reporting Method:</span>
           <span className="font-semibold text-[var(--text-2)] inline-flex items-center gap-1">
             <Globe size={10} /> Web / Geofence
@@ -386,7 +386,7 @@ function AttendancePageContent() {
         ].map(s => (
           <div key={s.label} className="card p-4 flex flex-col justify-between" style={{ borderLeft: `3px solid ${s.color}` }}>
             <span className="value text-2xl font-bold text-[var(--text-1)]">{s.value}</span>
-            <span className="label text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider mt-1">{s.label}</span>
+            <span className="label text-xs font-bold text-[var(--text-3)] uppercase tracking-wider mt-1">{s.label}</span>
           </div>
         ))}
       </div>
@@ -402,7 +402,7 @@ function AttendancePageContent() {
                 style={{
                   padding: '6px 14px',
                   borderRadius: 9999,
-                  fontSize: 12,
+                  fontSize: '13px',
                   fontWeight: 500,
                   border: '0.5px solid',
                   borderColor: period === p ? 'var(--accent)' : 'var(--border)',
@@ -433,14 +433,14 @@ function AttendancePageContent() {
                   type="date"
                   value={startDate}
                   onChange={e => handleStartDateChange(e.target.value)}
-                  className="py-1 px-2.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                  className="py-1 px-2.5 text-sm bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
                 />
-                <span className="text-xs text-[var(--text-3)]">to</span>
+                <span className="text-sm text-[var(--text-3)]">to</span>
                 <input
                   type="date"
                   value={endDate}
                   onChange={e => handleEndDateChange(e.target.value)}
-                  className="py-1 px-2.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                  className="py-1 px-2.5 text-sm bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
                 />
               </div>
             )}
@@ -449,7 +449,7 @@ function AttendancePageContent() {
               <select
                 value={departmentFilter}
                 onChange={e => handleDepartmentChange(e.target.value)}
-                className="py-1 px-3 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
+                className="py-1 px-3 text-sm bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]"
               >
                 <option value="all">All Departments</option>
                 {departments
@@ -468,7 +468,7 @@ function AttendancePageContent() {
             {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
               <button
                 key={s}
-                className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
+                className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 ${
                   statusFilter === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
                 }`}
                 onClick={() => handleStatusChange(s)}
@@ -505,9 +505,9 @@ function AttendancePageContent() {
                   <span>←</span> Swipe to see all columns <span>→</span>
                 </div>
                 <div className="table-scroll">
-                  <table className="w-full text-left border-collapse text-xs">
+                  <table className="w-full text-left border-collapse text-sm">
                     <thead>
-                      <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
+                      <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-xs uppercase font-semibold">
                         <th className="py-2.5 px-3 sticky-left" style={{ minWidth: '140px' }}>Employee</th>
                         <th className="py-2.5" style={{ minWidth: '120px' }}>Department</th>
                         <th className="py-2.5" style={{ minWidth: '72px' }}>Clock In</th>
@@ -555,7 +555,7 @@ function AttendancePageContent() {
                                       </div>
                                       <div>
                                         <p className="font-semibold text-[var(--text-1)]">{r.userName}</p>
-                                        <p className="text-[10px] text-[var(--text-3)]">{r.userEmail}</p>
+                                        <p className="text-xs text-[var(--text-3)]">{r.userEmail}</p>
                                       </div>
                                     </div>
                                   </td>
@@ -563,7 +563,7 @@ function AttendancePageContent() {
                                   <td className="py-3 font-mono text-[var(--text-1)]">
                                     <span>{r.clockIn || '—'}</span>
                                     {r.correctedBy && (
-                                      <span className="text-[10px] text-[var(--text-3)] block line-through">
+                                      <span className="text-xs text-[var(--text-3)] block line-through">
                                         {r.correctedIn || '—'}
                                       </span>
                                     )}
@@ -571,7 +571,7 @@ function AttendancePageContent() {
                                   <td className="py-3 font-mono text-[var(--text-1)]">
                                     <span>{r.clockOut || '—'}</span>
                                     {r.correctedBy && (
-                                      <span className="text-[10px] text-[var(--text-3)] block line-through">
+                                      <span className="text-xs text-[var(--text-3)] block line-through">
                                         {r.correctedOut || '—'}
                                       </span>
                                     )}
@@ -580,7 +580,7 @@ function AttendancePageContent() {
                                   <td className="py-3">{renderMethodBadge(r.method)}</td>
                                   <td className="py-3">
                                     <div className="flex items-center gap-1.5">
-                                      <span className={`badge ${STATUS_STYLES[r.status]?.badgeClass || 'badge-yellow'} uppercase font-bold text-[9px]`}>
+                                      <span className={`badge ${STATUS_STYLES[r.status]?.badgeClass || 'badge-yellow'} uppercase font-bold text-[10px]`}>
                                         {STATUS_STYLES[r.status]?.label || r.status}
                                       </span>
                                       {r.correctedBy && (
@@ -615,7 +615,7 @@ function AttendancePageContent() {
                               </div>
                               <div>
                                 <p className="font-semibold text-[var(--text-1)]">{r.userName}</p>
-                                <p className="text-[10px] text-[var(--text-3)]">{r.userEmail}</p>
+                                <p className="text-xs text-[var(--text-3)]">{r.userEmail}</p>
                               </div>
                             </div>
                           </td>
@@ -623,7 +623,7 @@ function AttendancePageContent() {
                           <td className="py-3 font-mono text-[var(--text-1)]">
                             <span>{r.clockIn || '—'}</span>
                             {r.correctedBy && (
-                              <span className="text-[10px] text-[var(--text-3)] block line-through">
+                              <span className="text-xs text-[var(--text-3)] block line-through">
                                 {r.correctedIn || '—'}
                               </span>
                             )}
@@ -631,7 +631,7 @@ function AttendancePageContent() {
                           <td className="py-3 font-mono text-[var(--text-1)]">
                             <span>{r.clockOut || '—'}</span>
                             {r.correctedBy && (
-                              <span className="text-[10px] text-[var(--text-3)] block line-through">
+                              <span className="text-xs text-[var(--text-3)] block line-through">
                                 {r.correctedOut || '—'}
                               </span>
                             )}
@@ -640,7 +640,7 @@ function AttendancePageContent() {
                           <td className="py-3">{renderMethodBadge(r.method)}</td>
                           <td className="py-3">
                             <div className="flex items-center gap-1.5">
-                              <span className={`badge ${STATUS_STYLES[r.status]?.badgeClass || 'badge-yellow'} uppercase font-bold text-[9px]`}>
+                              <span className={`badge ${STATUS_STYLES[r.status]?.badgeClass || 'badge-yellow'} uppercase font-bold text-[10px]`}>
                                 {STATUS_STYLES[r.status]?.label || r.status}
                               </span>
                               {r.correctedBy && (

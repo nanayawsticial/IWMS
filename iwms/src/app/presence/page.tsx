@@ -132,7 +132,7 @@ export default function PresencePage() {
           <div className="flex items-center gap-3">
             <h1 className="page-title text-2xl font-bold text-[var(--text-1)]">Team Presence</h1>
             {/* Pulsing LIVE green connection indicator */}
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-bold text-[var(--green)] uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-[var(--green)] uppercase tracking-wider">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -140,7 +140,7 @@ export default function PresencePage() {
               LIVE
             </span>
           </div>
-          <p className="page-subtitle text-xs text-[var(--text-3)] mt-1">
+          <p className="page-subtitle text-sm text-[var(--text-3)] mt-1">
             Real-time visual monitoring of checked-in personnel and on-premise device feeds.
           </p>
         </div>
@@ -151,7 +151,7 @@ export default function PresencePage() {
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 text-sm font-semibold rounded-lg capitalize transition-colors flex items-center gap-1.5 cursor-pointer ${
                 viewMode === mode ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
               }`}
             >
@@ -177,7 +177,7 @@ export default function PresencePage() {
               <span className="value text-xl font-bold font-mono text-[var(--text-1)]" style={{ color: k.color }}>
                 {k.value}
               </span>
-              <span className="label text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider mt-1.5">
+              <span className="label text-xs font-bold text-[var(--text-3)] uppercase tracking-wider mt-1.5">
                 {k.label}
               </span>
             </button>
@@ -198,7 +198,7 @@ export default function PresencePage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search team member name..."
-              className="w-full pl-10 pr-4 py-1.5 text-xs bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
+              className="w-full pl-10 pr-4 py-1.5 text-sm bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
 
@@ -216,7 +216,7 @@ export default function PresencePage() {
                   borderColor: activeDept === dept ? 'var(--accent)' : 'var(--border)',
                   padding: '5px 14px',
                   borderRadius: 9999,
-                  fontSize: 12,
+                  fontSize: '13px',
                   cursor: 'pointer',
                   transition: 'all 0.15s',
                   flexShrink: 0,
@@ -228,7 +228,7 @@ export default function PresencePage() {
           </div>
         </div>
 
-        <span className="text-[11px] text-[var(--text-3)] font-semibold font-mono">
+        <span className="text-xs text-[var(--text-3)] font-semibold font-mono">
           Showing {filtered.length} of {summary.total} members
         </span>
       </div>
@@ -267,13 +267,13 @@ export default function PresencePage() {
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <strong className="block text-xs text-[var(--text-1)] truncate">{user.name}</strong>
-                    <span className="block text-[10px] text-[var(--text-3)] truncate">{user.position}</span>
+                    <strong className="block text-sm text-[var(--text-1)] truncate">{user.name}</strong>
+                    <span className="block text-xs text-[var(--text-3)] truncate">{user.position}</span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center text-xs">
-                  <span className={`badge ${cfg.badgeClass} uppercase font-bold text-[9px]`}>
+                  <span className={`badge ${cfg.badgeClass} uppercase font-bold text-[10px]`}>
                     {cfg.label}
                   </span>
                   <span className="inline-flex items-center gap-1 font-semibold text-[var(--text-3)]">
@@ -284,17 +284,17 @@ export default function PresencePage() {
 
                 <div className="grid grid-cols-2 gap-2 text-center">
                   <div className="p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
-                    <span className="block text-[8px] font-bold text-[var(--text-3)] uppercase tracking-wider">Clock In</span>
-                    <span className="block text-xs font-mono font-bold text-[var(--text-1)] mt-0.5">{user.clockIn || '—'}</span>
+                    <span className="block text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider">Clock In</span>
+                    <span className="block text-sm font-mono font-bold text-[var(--text-1)] mt-0.5">{user.clockIn || '—'}</span>
                   </div>
                   <div className="p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg">
-                    <span className="block text-[8px] font-bold text-[var(--text-3)] uppercase tracking-wider">Clock Out</span>
-                    <span className="block text-xs font-mono font-bold text-[var(--text-1)] mt-0.5">{user.clockOut || '—'}</span>
+                    <span className="block text-[10px] font-bold text-[var(--text-3)] uppercase tracking-wider">Clock Out</span>
+                    <span className="block text-sm font-mono font-bold text-[var(--text-1)] mt-0.5">{user.clockOut || '—'}</span>
                   </div>
                 </div>
 
                 {user.hoursWorked !== null && (
-                  <div className="text-right text-[10px] text-[var(--text-3)] font-semibold font-mono border-t border-[var(--border)] pt-2 mt-2">
+                  <div className="text-right text-xs text-[var(--text-3)] font-semibold font-mono border-t border-[var(--border)] pt-2 mt-2">
                     Worked: <strong className="text-[var(--text-1)]">{user.hoursWorked.toFixed(1)} hrs</strong>
                   </div>
                 )}
@@ -308,9 +308,9 @@ export default function PresencePage() {
       {!isLoading && !isError && viewMode === 'table' && filtered.length > 0 && (
         <div className="card">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[10px] uppercase font-semibold">
+                <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-xs uppercase font-semibold">
                   <th className="py-2.5">Member</th>
                   <th className="py-2.5">Department</th>
                   <th className="py-2.5">Position</th>
@@ -337,7 +337,7 @@ export default function PresencePage() {
                       <td className="py-3 text-[var(--text-2)]">{user.department}</td>
                       <td className="py-3 text-[var(--text-2)]">{user.position || '—'}</td>
                       <td className="py-3">
-                        <span className={`badge ${cfg.badgeClass} uppercase font-bold text-[9px]`}>
+                        <span className={`badge ${cfg.badgeClass} uppercase font-bold text-[10px]`}>
                           {cfg.label}
                         </span>
                       </td>

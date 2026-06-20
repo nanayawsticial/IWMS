@@ -313,17 +313,17 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                   {/* Comments Feed */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                     {task.comments?.length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', padding: '10px' }}>No comments yet.</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '10px' }}>No comments yet.</p>
                     ) : (
                       task.comments.map((c: any) => (
                         <div key={c.id} style={{ display: 'flex', gap: '10px', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                          <div className="table-avatar" style={{ width: '28px', height: '28px', fontSize: '11px', flexShrink: 0 }}>{c.userAvatar}</div>
+                          <div className="table-avatar" style={{ width: '28px', height: '28px', fontSize: '13px', flexShrink: 0 }}>{c.userAvatar}</div>
                           <div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline', marginBottom: '3px' }}>
-                              <span style={{ color: '#fff', fontSize: '12px', fontWeight: 600 }}>{c.userName}</span>
-                              <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>{new Date(c.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                              <span style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>{c.userName}</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{new Date(c.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.4', margin: 0 }}>{c.content}</p>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.4', margin: 0 }}>{c.content}</p>
                           </div>
                         </div>
                       ))
@@ -335,12 +335,12 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                     <input
                       type="text"
                       className="form-input"
-                      style={{ fontSize: '12px' }}
+                      style={{ fontSize: '13px' }}
                       placeholder="Write a comment..."
                       value={commentContent}
                       onChange={e => setCommentContent(e.target.value)}
                     />
-                    <button type="submit" className="btn-primary" style={{ padding: '8px 16px', fontSize: '12px', width: 'auto' }} disabled={postComment.isPending}>
+                    <button type="submit" className="btn-primary" style={{ padding: '8px 16px', fontSize: '13px', width: 'auto' }} disabled={postComment.isPending}>
                       Send
                     </button>
                   </form>
@@ -353,18 +353,18 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                   {/* Time logs list */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
                     {task.timeLogs?.length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', padding: '10px' }}>No logged hours yet.</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '10px' }}>No logged hours yet.</p>
                     ) : (
                       task.timeLogs.map((l: any) => (
                         <div key={l.id} style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
                           <div>
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '2px' }}>
-                              <span style={{ color: '#fff', fontSize: '12px', fontWeight: 600 }}>{l.userName}</span>
-                              <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>• {l.date}</span>
+                              <span style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>{l.userName}</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>• {l.date}</span>
                             </div>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '11px', margin: 0 }}>{l.note || 'No description'}</p>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '12px', margin: 0 }}>{l.note || 'No description'}</p>
                           </div>
-                          <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
+                          <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
                             +{l.hours}h
                           </span>
                         </div>
@@ -376,12 +376,12 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                   <form onSubmit={handleTimeLogSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                       <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '10px' }}>Hours worked *</label>
+                        <label className="form-label" style={{ fontSize: '12px' }}>Hours worked *</label>
                         <input
                           type="number"
                           step="0.5"
                           className="form-input"
-                          style={{ fontSize: '12px', padding: '6px 10px' }}
+                          style={{ fontSize: '13px', padding: '6px 10px' }}
                           placeholder="e.g. 3.5"
                           value={hours}
                           onChange={e => setHours(e.target.value)}
@@ -389,11 +389,11 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                         />
                       </div>
                       <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '10px' }}>Date *</label>
+                        <label className="form-label" style={{ fontSize: '12px' }}>Date *</label>
                         <input
                           type="date"
                           className="form-input"
-                          style={{ fontSize: '12px', padding: '6px 10px' }}
+                          style={{ fontSize: '13px', padding: '6px 10px' }}
                           value={logDate}
                           onChange={e => setLogDate(e.target.value)}
                           required
@@ -401,17 +401,17 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                       </div>
                     </div>
                     <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '10px' }}>Work Notes</label>
+                      <label className="form-label" style={{ fontSize: '12px' }}>Work Notes</label>
                       <input
                         type="text"
                         className="form-input"
-                        style={{ fontSize: '12px', padding: '6px 10px' }}
+                        style={{ fontSize: '13px', padding: '6px 10px' }}
                         placeholder="What did you work on?"
                         value={logNote}
                         onChange={e => setLogNote(e.target.value)}
                       />
                     </div>
-                    <button type="submit" className="btn-primary" style={{ padding: '8px', fontSize: '12px' }} disabled={logTime.isPending}>
+                    <button type="submit" className="btn-primary" style={{ padding: '8px', fontSize: '13px' }} disabled={logTime.isPending}>
                       {logTime.isPending ? 'Logging...' : 'Log Hours'}
                     </button>
                   </form>

@@ -45,10 +45,10 @@
   --kpi-pink-bg:    rgba(236,72,153,0.15);
 
   /* Typography scale */
-  --text-xs:   0.72rem;
-  --text-sm:   0.8125rem;
-  --text-base: 0.9375rem;
-  --text-lg:   1.0625rem;
+  --text-xs:   0.8125rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
   --text-xl:   1.25rem;
   --text-2xl:  1.5rem;
   --text-3xl:  2rem;
@@ -521,7 +521,7 @@ thead .sticky-left {
   border-radius: 6px;
   padding: 6px 12px;
   font-weight: 500;
-  font-size: 12px;
+  font-size: var(--text-xs);
   cursor: pointer;
   transition: all 0.2s;
   display: inline-flex;
@@ -680,7 +680,7 @@ thead .sticky-left {
   text-decoration: none;
   border-radius: 10px;
   font-weight: 500;
-  font-size: 13.5px;
+  font-size: var(--text-sm);
   transition: background 0.15s, color 0.15s;
   position: relative;
   white-space: nowrap;
@@ -787,7 +787,7 @@ thead .sticky-left {
 }
 
 .user-role {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -834,7 +834,7 @@ thead .sticky-left {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -963,13 +963,13 @@ thead .sticky-left {
 }
 
 .notif-text {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-primary);
   line-height: 1.4;
 }
 
 .notif-time {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -979,7 +979,7 @@ thead .sticky-left {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--text-xs);
   cursor: pointer;
   text-align: center;
   font-weight: 500;
@@ -1007,7 +1007,7 @@ thead .sticky-left {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--color-indigo);
 }
 
@@ -1023,7 +1023,7 @@ thead .sticky-left {
 }
 
 .topbar-user-dept {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -1762,7 +1762,7 @@ thead .sticky-left {
 
 .data-table th {
   padding: 16px 24px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   font-weight: 600;
   border-bottom: 1px solid var(--border-color);
@@ -1784,7 +1784,7 @@ thead .sticky-left {
 
 .data-table td {
   padding: 16px 24px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-primary);
   vertical-align: middle;
 }
@@ -1804,7 +1804,7 @@ thead .sticky-left {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 
 .table-user-name {
@@ -1813,7 +1813,7 @@ thead .sticky-left {
 }
 
 .table-user-email {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
