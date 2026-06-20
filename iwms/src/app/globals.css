@@ -569,6 +569,9 @@ code, kbd, pre, samp {
   z-index: 10;
   flex-shrink: 0;
   overflow: hidden;
+  position: sticky;
+  top: 0;
+  height: 100vh;
 }
 
 .sidebar-collapsed {
