@@ -36,11 +36,11 @@ export default function KpiCard({
 
   const renderIcon = () => {
     if (!Icon) return null;
-    if (typeof Icon === 'function') {
-      const Component = Icon as React.ComponentType<{ size?: number; className?: string }>;
-      return <Component size={20} />;
+    if (React.isValidElement(Icon)) {
+      return Icon;
     }
-    return Icon;
+    const Component = Icon as React.ComponentType<{ size?: number; className?: string }>;
+    return <Component size={20} />;
   };
 
   return (
