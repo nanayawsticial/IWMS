@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { usePathname, useRouter } from 'next/navigation';
-import { attendanceApi, notificationsApi } from '@/lib/api';
+import { attendanceApi, notificationsApi, usersApi, tasksApi } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { useSocket } from '@/hooks/useSocket';
 import {
@@ -36,6 +36,82 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
   const router = useRouter();
   const pathname = usePathname();
   const [time, setTime] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['search-users'],
+    queryFn: () => usersApi.list(),
+    enabled: !!user,
+  });
+
+  const { data: allTasks = [] } = useQuery({
+    queryKey: ['search-tasks'],
+    queryFn: () => tasksApi.list(),
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const filteredUsers = searchQuery.trim()
+    ? allUsers.filter((u: any) =>
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (u.position && u.position.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (u.department && u.department.toLowerCase().includes(searchQuery.toLowerCase()))
+      ).slice(0, 4)
+    : [];
+
+  const filteredTasks = searchQuery.trim()
+    ? allTasks.filter((t: any) =>
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      ).slice(0, 4)
+    : [];
+
+  const shortcuts = [];
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    if ('tasks'.includes(q) || 'board'.includes(q) || 'kanban'.includes(q)) {
+      shortcuts.push({ title: 'Go to Task Management', path: '/tasks', desc: 'Manage your Kanban boards and project tasks' });
+    }
+    if ('attendance'.includes(q) || 'clock'.includes(q) || 'timesheets'.includes(q)) {
+      shortcuts.push({ title: 'Go to Attendance Logs', path: '/attendance', desc: 'Clock in/out, view daily logs and geofencing' });
+    }
+    if ('presence'.includes(q) || 'live'.includes(q) || 'who'.includes(q)) {
+      shortcuts.push({ title: 'Go to Live Presence', path: '/presence', desc: 'See who is currently checked-in and active' });
+    }
+    if ('leave'.includes(q) || 'holiday'.includes(q) || 'vacation'.includes(q)) {
+      shortcuts.push({ title: 'Go to Leave Requests', path: '/leave', desc: 'Submit and approve employee leaves' });
+    }
+    if ('weekly'.includes(q) || 'report'.includes(q) || 'performance'.includes(q)) {
+      shortcuts.push({ title: 'Go to Weekly Reports', path: '/weekly-reports', desc: 'View, submit, and export DOCX weekly reports' });
+    }
+    if ('settings'.includes(q) || 'profile'.includes(q) || 'device'.includes(q)) {
+      shortcuts.push({ title: 'Go to System Settings', path: '/settings', desc: 'Manage devices, geofencing, and MFA security' });
+    }
+    if ('hr'.includes(q) || 'directory'.includes(q) || 'headcount'.includes(q)) {
+      shortcuts.push({ title: 'Go to HR Dashboard', path: '/hr', desc: 'Onboarding lists, employee headcount and logs' });
+    }
+    if ('finance'.includes(q) || 'expense'.includes(q) || 'budget'.includes(q)) {
+      shortcuts.push({ title: 'Go to Finance Dashboard', path: '/finance', desc: 'Payroll settings, budgets, and expense approvals' });
+    }
+  }
+
+  const handleItemClick = (path: string) => {
+    setSearchQuery('');
+    setSearchFocused(false);
+    router.push(path);
+  };
   const [notifOpen, setNotifOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notifications, setNotifications] = useState<
@@ -282,12 +358,16 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
       </div>
 
       {/* Centered Search Bar */}
-      <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
+      <div className="hidden md:flex items-center flex-1 max-w-md mx-8 relative">
         <div className="control-compact w-full" style={{ background: 'var(--bg-elevated)' }}>
           <Search size={16} className="text-[var(--text-3)] flex-shrink-0" />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search tasks, employees, or attendance..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
           />
           <kbd className="flex items-center flex-shrink-0">
             <span className="px-1.5 py-0.5 text-[9px] font-medium bg-[var(--bg-surface-2)] border border-[var(--border-strong)] rounded text-[var(--text-2)]">
@@ -295,6 +375,60 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
             </span>
           </kbd>
         </div>
+
+        {searchFocused && (
+          <>
+            <div 
+              style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+              onClick={() => setSearchFocused(false)} 
+            />
+            {searchQuery.trim().length > 0 && (filteredUsers.length > 0 || filteredTasks.length > 0 || shortcuts.length > 0) && (
+              <div className="search-results-panel" style={{ zIndex: 1000 }}>
+                {shortcuts.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <span className="search-section-title">Navigation Shortcuts</span>
+                    {shortcuts.map((s, idx) => (
+                      <div key={idx} className="search-item" onClick={() => handleItemClick(s.path)}>
+                        <div>
+                          <div className="search-item-title">{s.title}</div>
+                          <div className="search-item-subtitle">{s.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {filteredUsers.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <span className="search-section-title">Employees</span>
+                    {filteredUsers.map((u: any) => (
+                      <div key={u.id} className="search-item" onClick={() => handleItemClick(`/team/${u.id}`)}>
+                        <div>
+                          <div className="search-item-title">{u.name}</div>
+                          <div className="search-item-subtitle">{u.position || 'Employee'} · {u.department || 'General'}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {filteredTasks.length > 0 && (
+                  <div className="flex flex-col gap-1">
+                    <span className="search-section-title">Tasks</span>
+                    {filteredTasks.map((t: any) => (
+                      <div key={t.id} className="search-item" onClick={() => handleItemClick('/tasks')}>
+                        <div>
+                          <div className="search-item-title">{t.title}</div>
+                          <div className="search-item-subtitle">Priority: {t.priority} · Status: {t.status}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <div className="topbar-right">
