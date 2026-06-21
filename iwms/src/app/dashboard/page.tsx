@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { attendanceApi, tasksApi, managementApi } from '@/lib/api';
+import { attendanceApi, tasksApi, managementApi, leavesApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useSocketEvent } from '@/hooks/useSocket';
 import KpiCard from '@/components/KpiCard';
@@ -98,7 +98,7 @@ export default function DashboardPage() {
     return a.status === applicantFilter;
   });
 
-  const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
+  const isAdmin = ['super_admin', 'admin', 'manager'].includes(user?.role || '');
 
   // 1. Fetch live metrics
   const { data: stats } = useQuery({
@@ -121,6 +121,33 @@ export default function DashboardPage() {
     queryFn: () => managementApi.getDashboard(),
     enabled: !!user && isAdmin,
   });
+
+  const { data: leaves = [] } = useQuery({
+    queryKey: ['leaves'],
+    queryFn: () => leavesApi.list(),
+    enabled: !!user && isAdmin,
+  });
+
+  const updateLeaveStatus = useMutation({
+    mutationFn: ({ id, status, notes }: { id: string; status: 'approved' | 'rejected'; notes: string }) =>
+      leavesApi.approve(id, { status, managerNotes: notes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leaves'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['management-dashboard'] });
+    },
+  });
+
+  const handleApprove = (id: string) => {
+    updateLeaveStatus.mutate({ id, status: 'approved', notes: 'Approved from Dashboard' });
+  };
+
+  const handleReject = (id: string) => {
+    const reason = prompt('Please enter a rejection reason (optional):') || '';
+    updateLeaveStatus.mutate({ id, status: 'rejected', notes: reason });
+  };
+
+  const pendingLeaves = leaves.filter((l: any) => l.status === 'pending' && l.userId !== user?.id);
 
   // Socket updates for KPI stats
   useSocketEvent<{ stats: any }>('stats:update', (data) => {
@@ -530,6 +557,101 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Row: Pending Leave Requests & Action items */}
+          {isAdmin && pendingLeaves.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <div className="card lg:col-span-2 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-4">
+                    <h3 className="section-title">Pending Leave Requests</h3>
+                    <span className="badge badge-orange">{pendingLeaves.length} Action Needed</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[11px] uppercase font-semibold">
+                          <th className="py-2.5">Employee</th>
+                          <th className="py-2.5">Leave Type</th>
+                          <th className="py-2.5">Duration</th>
+                          <th className="py-2.5">Reason</th>
+                          <th className="py-2.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border)]">
+                        {pendingLeaves.map((l: any) => (
+                          <tr key={l.id} className="text-xs hover:bg-[var(--bg-hover)]/30 transition-colors">
+                            <td className="py-3 font-semibold text-[var(--text-1)]">
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-full bg-[var(--accent-soft)] border border-[var(--accent)] flex items-center justify-center font-bold text-xs text-[var(--accent)]">
+                                  {l.userName.split(' ').map((n: string) => n[0]).join('')}
+                                </div>
+                                <div>
+                                  <p>{l.userName}</p>
+                                  <p className="text-[10px] text-[var(--text-3)]">{l.department}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3">
+                              <span className="badge badge-orange" style={{ fontSize: '10px' }}>
+                                {l.type.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="py-3 text-[var(--text-2)]">
+                              {l.startDate} to {l.endDate}
+                            </td>
+                            <td className="py-3 text-[var(--text-3)] italic max-w-[200px] truncate" title={l.reason}>
+                              {l.reason || '—'}
+                            </td>
+                            <td className="py-3 text-right">
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  onClick={() => handleReject(l.id)}
+                                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
+                                  disabled={updateLeaveStatus.isPending}
+                                >
+                                  Reject
+                                </button>
+                                <button
+                                  onClick={() => handleApprove(l.id)}
+                                  className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
+                                  disabled={updateLeaveStatus.isPending}
+                                >
+                                  Approve
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="card flex flex-col justify-between">
+                <div>
+                  <h3 className="section-title mb-3">Leave Guidelines</h3>
+                  <p className="text-xs text-[var(--text-3)] leading-relaxed mb-4">
+                    As an administrator or department manager, verify department capacity before approving requests. Leaves automatically update the employee's attendance logs as <strong>On Leave</strong>.
+                  </p>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between p-2 bg-[var(--bg-surface-2)] rounded border border-[var(--border)]">
+                      <span className="text-[var(--text-2)]">Vacation Allocation</span>
+                      <strong className="text-[var(--text-1)]">15 days / yr</strong>
+                    </div>
+                    <div className="flex justify-between p-2 bg-[var(--bg-surface-2)] rounded border border-[var(--border)]">
+                      <span className="text-[var(--text-2)]">Sick Leave Limit</span>
+                      <strong className="text-[var(--text-1)]">10 days / yr</strong>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-[10px] text-[var(--text-3)] border-t border-[var(--border)] pt-3 mt-4">
+                  Changes sync immediately across the team presence logs.
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Row 4: Applicants, Active Employees, Quick Action Todo List */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
