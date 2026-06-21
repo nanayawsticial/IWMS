@@ -475,6 +475,9 @@ export default function WeeklyReportsPage() {
               <button className="btn-ghost-sm" onClick={() => handleExport(viewingReport.id, viewingReport.user.name, viewingReport.startDate)}>
                 📥 Export Word
               </button>
+              <button className="btn-ghost-sm" onClick={() => window.print()}>
+                🖨️ Export PDF
+              </button>
               <button className="btn-ghost-sm" onClick={() => setViewingReport(null)}>
                 Close
               </button>

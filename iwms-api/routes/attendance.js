@@ -276,7 +276,7 @@ async function attendanceRoutes(fastify) {
   // GET /api/attendance/timesheets/export
   fastify.get('/timesheets/export', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { organizationId } = request.user;
-    const { startDate, endDate, userId, departmentId } = request.query || {};
+    const { startDate, endDate, userId, departmentId, format } = request.query || {};
 
     if (!startDate || !endDate) {
       return reply.code(400).send({ error: 'startDate and endDate are required' });
@@ -314,7 +314,67 @@ async function attendanceRoutes(fastify) {
     };
     const dateRange = getDatesInRange(startDate, endDate);
 
-    // 3. Build timesheet rows
+    // 3. Build timesheet rows based on format
+    if (format === 'excel') {
+      let xlsHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta http-equiv="content-type" content="text/plain; charset=UTF-8"/>
+  <style>
+    table { border-collapse:collapse; }
+    td, th { border:0.5pt solid #cbd5e1; font-family:Arial, sans-serif; font-size:10pt; text-align:center; padding: 6px 10px; }
+    th { background-color:#f1f5f9; font-weight:bold; color:#0f172a; }
+    .text-left { text-align:left; }
+    .title { font-size:14pt; font-weight:bold; height:36px; text-align:left; color:#0f172a; border:none; }
+    .header-info { text-align:left; color:#475569; font-size:9pt; height:24px; border:none; }
+  </style>
+</head>
+<body>
+  <table>
+    <tr><td colspan="${dateRange.length + 5}" class="title">Timesheet Export Report</td></tr>
+    <tr><td colspan="${dateRange.length + 5}" class="header-info">Reporting Period: ${startDate} to ${endDate}</td></tr>
+    <tr><td colspan="${dateRange.length + 5}" class="header-info">Generated on: ${new Date().toLocaleString()}</td></tr>
+    <tr><td colspan="${dateRange.length + 5}" style="border:none; height:12px;"></td></tr>
+    <tr>
+      <th>Employee</th>
+      <th>Department</th>
+      <th>Position</th>
+      ${dateRange.map(d => `<th>${d}</th>`).join('')}
+      <th>Total Hours</th>
+      <th>Overtime Hours</th>
+    </tr>`;
+
+      for (const user of users) {
+        const userRecords = records.filter(r => r.userId === user.id);
+        let totalHours = 0;
+        let overtimeHours = 0;
+
+        let row = `<tr>
+          <td class="text-left">${user.name}</td>
+          <td>${user.department?.name || ''}</td>
+          <td>${user.position || ''}</td>`;
+
+        for (const dStr of dateRange) {
+          const rec = userRecords.find(r => r.date === dStr);
+          const hours = rec ? (rec.hoursWorked || 0) : 0;
+          totalHours += hours;
+          if (hours > 8) {
+            overtimeHours += (hours - 8);
+          }
+          row += `<td>${hours > 0 ? hours.toFixed(1) : '-'}</td>`;
+        }
+
+        row += `<td><b>${totalHours.toFixed(1)}</b></td><td><b>${overtimeHours.toFixed(1)}</b></td></tr>`;
+        xlsHtml += row;
+      }
+
+      xlsHtml += `</table></body></html>`;
+
+      reply.header('Content-Type', 'application/vnd.ms-excel');
+      reply.header('Content-Disposition', `attachment; filename=timesheets_${startDate}_to_${endDate}.xls`);
+      return reply.send(xlsHtml);
+    }
+
+    // Default CSV formatting
     let csv = 'Employee,Department,Position,';
     csv += dateRange.join(',') + ',Total Hours,Overtime Hours\n';
 

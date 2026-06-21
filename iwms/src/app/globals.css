@@ -3959,5 +3959,63 @@ a:not(:disabled):active,
   margin-top: 1px;
 }
 
+/* ── Print Stylesheet for PDF Export ────────────────────────────── */
+@media print {
+  /* Hide unnecessary shell components */
+  .sidebar, .topbar, .sidebar-mobile-overlay, .tab-switcher, .page-header, .page-subtitle, button, .topbar-right, header, aside, .notif-wrapper, .btn-ghost-sm, .welcome-btn-primary {
+    display: none !important;
+  }
+  
+  /* Make page backgrounds clean white and text dark gray for printing */
+  body, html, .app-layout, .app-container, main {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    font-size: 11pt !important;
+    overflow: visible !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Adjust the active detail modal card to take full printing page */
+  .chart-card, .card {
+    background: #ffffff !important;
+    border: none !important;
+    color: #1e293b !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Make links readable in print */
+  a {
+    color: #0f172a !important;
+    text-decoration: underline !important;
+  }
+
+  /* Adjust tables for print */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+  }
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 8px !important;
+    color: #0f172a !important;
+  }
+  th {
+    background: #f1f5f9 !important;
+  }
+
+  /* Add page break margins */
+  h4 {
+    page-break-after: avoid;
+  }
+}
+
+
 
 
