@@ -3699,3 +3699,88 @@ html, body {
   }
 }
 
+/* ── Universal Clickability & Spacing Visual Cues ───────────────── */
+
+button,
+a,
+select,
+input[type="button"],
+input[type="submit"],
+input[type="checkbox"],
+input[type="radio"],
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+/* Premium default transitions for clickable elements */
+button:not(:disabled),
+a:not(:disabled),
+.nav-item,
+.dept-stat-chip,
+.table-action-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Gentle micro-scale click feedback */
+button:not(:disabled):active,
+a:not(:disabled):active,
+.btn-primary:active,
+.btn-ghost:active,
+.btn-primary-sm:active,
+.btn-ghost-sm:active {
+  transform: scale(0.97) !important;
+}
+
+/* Modal close hover state */
+.modal-close:hover {
+  color: var(--text-1) !important;
+}
+
+/* Premium Tab & Pill Switcher Container */
+.tab-switcher {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px !important;
+  background-color: var(--bg-surface-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  height: 38px !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0;
+}
+
+/* Ensure buttons within switchers sit concentricly and style properly */
+.tab-switcher button {
+  height: 100% !important;
+  padding: 0 12px !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-3) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  min-height: 0 !important;
+  transform: none !important; /* Disable scale click feedback inside tab switchers to prevent jitter */
+}
+
+.tab-switcher button:hover {
+  color: var(--text-1) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Active tab style inside switcher */
+.tab-switcher button.active,
+.tab-switcher button[data-active="true"] {
+  background-color: var(--accent) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25) !important;
+}
+
+

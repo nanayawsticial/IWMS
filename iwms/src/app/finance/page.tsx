@@ -270,12 +270,12 @@ export default function FinancePage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] flex-shrink-0 overflow-x-auto max-w-full h-[38px] hide-scrollbar">
+        <div className="tab-switcher overflow-x-auto max-w-full hide-scrollbar">
           {(['dashboard', 'expenses', 'budgets', 'payroll'] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+              className={`capitalize ${activeTab === tab ? 'active' : ''}`}
             >
               {tab === 'dashboard' ? 'Dashboard' : tab === 'expenses' ? 'Expenses' : tab === 'budgets' ? 'Budgets' : 'Payroll'}
             </button>

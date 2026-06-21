@@ -650,36 +650,30 @@ function TasksPageContent() {
             </div>
 
             {/* View mode toggle, Priority filter pills, and Add Task */}
-            <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-row items-center gap-4 w-full sm:w-auto">
               {/* View mode toggle */}
-              <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] text-sm flex-shrink-0 h-[38px]">
+              <div className="tab-switcher">
                 <button
                   onClick={() => setViewMode('kanban')}
-                  className={`px-3 h-full font-semibold rounded-[8px] transition-colors cursor-pointer flex-shrink-0 flex items-center justify-center ${
-                    viewMode === 'kanban' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
-                  }`}
+                  className={viewMode === 'kanban' ? 'active' : ''}
                 >
                   Board
                 </button>
                 <button
                   onClick={() => setViewMode('gantt')}
-                  className={`px-3 h-full font-semibold rounded-[8px] transition-colors cursor-pointer flex-shrink-0 flex items-center justify-center ${
-                    viewMode === 'gantt' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)]'
-                  }`}
+                  className={viewMode === 'gantt' ? 'active' : ''}
                 >
                   Timeline
                 </button>
               </div>
 
               {/* Priority filter pills */}
-              <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] text-sm overflow-x-auto max-w-full flex-shrink-0 hide-scrollbar flex-1 sm:flex-initial h-[38px]">
+              <div className="tab-switcher overflow-x-auto max-w-full hide-scrollbar flex-1 sm:flex-initial">
                 {(['all', 'critical', 'high', 'medium', 'low'] as const).map(p => (
                   <button
                     key={p}
                     onClick={() => setFilter(p)}
-                    className={`px-2.5 h-full font-bold rounded-[8px] transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
-                      filter === p ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
-                    }`}
+                    className={`capitalize ${filter === p ? 'active' : ''}`}
                   >
                     {p}
                   </button>

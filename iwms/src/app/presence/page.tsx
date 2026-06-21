@@ -146,16 +146,14 @@ export default function PresencePage() {
         </div>
 
         {/* View Switcher */}
-        <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] h-[38px] flex-shrink-0">
+        <div className="tab-switcher">
           {(['grid', 'table'] as const).map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              className={`px-3 h-full text-sm font-semibold rounded-[8px] capitalize transition-colors flex items-center gap-1.5 cursor-pointer flex-shrink-0 justify-center ${
-                viewMode === mode ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
-              }`}
+              className={`capitalize ${viewMode === mode ? 'active' : ''}`}
             >
-              {mode === 'grid' ? <Grid size={13} /> : <List size={13} />}
+              {mode === 'grid' ? <Grid size={13} className="mr-1.5" /> : <List size={13} className="mr-1.5" />}
               {mode}
             </button>
           ))}
@@ -200,15 +198,12 @@ export default function PresencePage() {
           </div>
 
           {/* Department filter pills */}
-          <div className="tabs-scroll w-full sm:w-auto p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] flex items-center gap-1 h-[38px] overflow-x-auto hide-scrollbar" style={{ overflowX: 'auto', display: 'flex', gap: 6, scrollbarWidth: 'none' }}>
+          <div className="tab-switcher w-full sm:w-auto overflow-x-auto hide-scrollbar">
             {departments.map(dept => (
               <button
                 key={dept}
                 onClick={() => setActiveDept(dept)}
-                style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
-                className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-all cursor-pointer capitalize whitespace-nowrap flex items-center justify-center ${
-                  activeDept === dept ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
-                }`}
+                className={`capitalize ${activeDept === dept ? 'active' : ''}`}
               >
                 {dept === 'all' ? 'All Departments' : dept}
               </button>

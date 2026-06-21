@@ -221,12 +221,12 @@ export default function HrDashboardPage() {
         </div>
 
         {/* Tab switchers */}
-        <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] overflow-x-auto max-w-full flex-shrink-0 h-[38px] hide-scrollbar">
+        <div className="tab-switcher overflow-x-auto max-w-full hide-scrollbar">
           {(['dashboard', 'directory', 'leaves', 'headcount'] as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setSelectedEmployeeId(null); }}
-              className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${activeTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+              className={`capitalize ${activeTab === tab ? 'active' : ''}`}
             >
               {tab === 'dashboard' ? 'Dashboard' : tab === 'directory' ? 'Directory' : tab === 'leaves' ? 'Leave Requests' : 'Headcount'}
             </button>
@@ -415,22 +415,22 @@ export default function HrDashboardPage() {
               />
             </div>
 
-            <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] h-[38px] overflow-x-auto max-w-full flex-shrink-0 hide-scrollbar">
+            <div className="tab-switcher overflow-x-auto max-w-full hide-scrollbar">
               <button
                 onClick={() => setStatusFilter('all')}
-                className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${statusFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={statusFilter === 'all' ? 'active' : ''}
               >
                 All Employees
               </button>
               <button
                 onClick={() => setStatusFilter('active')}
-                className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${statusFilter === 'active' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={statusFilter === 'active' ? 'active' : ''}
               >
                 Active
               </button>
               <button
                 onClick={() => setStatusFilter('probation')}
-                className={`px-3.5 h-full text-xs font-semibold rounded-[8px] transition-colors whitespace-nowrap flex-shrink-0 flex items-center justify-center ${statusFilter === 'probation' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                className={statusFilter === 'probation' ? 'active' : ''}
               >
                 On Probation
               </button>
@@ -644,12 +644,12 @@ export default function HrDashboardPage() {
             </div>
 
             {/* Inspector Tab switcher */}
-            <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl mb-6">
+            <div className="tab-switcher w-full mb-6">
               {(['overview', 'employment', 'onboarding', 'offboarding'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setInspectorTab(tab)}
-                  className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg capitalize transition-colors ${inspectorTab === tab ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                  className={`flex-1 capitalize ${inspectorTab === tab ? 'active' : ''}`}
                 >
                   {tab}
                 </button>

@@ -393,14 +393,12 @@ function AttendancePageContent() {
 
       {/* Filters Toolbar */}
       <div className="flex flex-col gap-4 p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl mb-6">
-        <div className="flex items-center gap-1 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] text-sm overflow-x-auto max-w-full hide-scrollbar flex-shrink-0 h-[38px]">
+        <div className="tab-switcher overflow-x-auto max-w-full hide-scrollbar">
           {['today', 'yesterday', 'week', 'month', 'custom'].map((p) => (
             <button
               key={p}
               onClick={() => handlePeriodChange(p)}
-              className={`px-3.5 h-full font-semibold rounded-[8px] transition-all cursor-pointer whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
-                period === p ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
-              }`}
+              className={period === p ? 'active' : ''}
             >
               {p === 'today' ? 'Today'
                : p === 'yesterday' ? 'Yesterday'
@@ -454,13 +452,11 @@ function AttendancePageContent() {
           </div>
 
           {/* Status pills selector */}
-          <div className="flex items-center gap-1.5 p-0.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[10px] w-full sm:w-auto overflow-x-auto hide-scrollbar h-[38px]">
+          <div className="tab-switcher w-full sm:w-auto overflow-x-auto hide-scrollbar">
             {['all', 'present', 'late', 'absent', 'on_leave'].map(s => (
               <button
                 key={s}
-                className={`px-3 h-full text-xs font-semibold rounded-[8px] transition-colors cursor-pointer capitalize whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
-                  statusFilter === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'
-                }`}
+                className={`capitalize ${statusFilter === s ? 'active' : ''}`}
                 onClick={() => handleStatusChange(s)}
               >
                 {s === 'all' ? 'All' : STATUS_STYLES[s]?.label || s}
