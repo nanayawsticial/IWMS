@@ -283,9 +283,9 @@ export default function HrDashboardPage() {
               </div>
 
               {/* Charts & Leave Approvals */}
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Department Distribution Chart */}
-                <div className="card xl:col-span-2">
+                <div className="card lg:col-span-2">
                   <h3 className="section-title mb-4">Department Distribution</h3>
                   <div className="w-full h-[220px]">
                     {dashboard?.headcountByDepartment?.length > 0 ? (
@@ -345,9 +345,9 @@ export default function HrDashboardPage() {
               </div>
 
               {/* Lower Section: Pending Approvals & Activity Feed */}
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Pending Leave Requests */}
-                <div className="card xl:col-span-2">
+                <div className="card lg:col-span-2">
                   <h3 className="section-title mb-4">Leave Requests review</h3>
                   <div className="space-y-3">
                     {leaveRequests.slice(0, 4).map((l: any) => (
@@ -501,9 +501,9 @@ export default function HrDashboardPage() {
       )}
 
       {activeTab === 'leaves' && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Leave Calendar */}
-          <div className="card xl:col-span-2">
+          <div className="card lg:col-span-2">
             <h3 className="section-title mb-4">Approved Leaves Calendar</h3>
             <div className="grid grid-cols-7 gap-2 text-center text-[10px] font-bold text-[var(--text-3)] mb-2">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
@@ -573,9 +573,9 @@ export default function HrDashboardPage() {
           {headcountLoading ? (
             <div className="text-center py-10 text-[var(--text-3)]">Loading Headcount Trends...</div>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Month-over-month trend line chart */}
-              <div className="card xl:col-span-2">
+              <div className="card lg:col-span-2">
                 <h3 className="section-title mb-4">Headcount MoM Trend</h3>
                 <div className="w-full h-[240px]">
                   <ResponsiveContainer width="100%" height="100%">

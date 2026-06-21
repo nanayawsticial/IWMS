@@ -328,9 +328,9 @@ export default function FinancePage() {
               </div>
 
               {/* Charts & Budgets Progress */}
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* 6-Month Spending Trend AreaChart */}
-                <div className="card xl:col-span-2">
+                <div className="card lg:col-span-2">
                   <h3 className="section-title mb-4">6-Month Spending Trend</h3>
                   <div className="w-full h-[240px]">
                     {dashboard?.monthlySpendingTrend?.length > 0 ? (
@@ -623,7 +623,7 @@ export default function FinancePage() {
           {budgetsLoading ? (
             <div className="text-center py-10 text-[var(--text-3)]">Loading budgets...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {budgets.map((b: any) => {
                 const pct = b.amount > 0 ? Math.round((b.spent / b.amount) * 100) : 0;
                 const barColor = pct > 90 ? 'bg-red-500' : pct > 75 ? 'bg-amber-500' : 'bg-[var(--accent)]';
