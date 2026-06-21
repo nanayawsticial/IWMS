@@ -747,7 +747,7 @@ function TasksPageContent() {
           </div>
 
           <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-            <div className="kanban-board" style={{ minWidth: '1200px' }}>
+            <div className="kanban-board">
               {COLUMNS.map(col => {
               const colTasks = filteredAndSortedTasks.filter((t: any) => t.status === col.id);
               return (

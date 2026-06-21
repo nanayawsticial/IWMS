@@ -582,7 +582,8 @@ thead .sticky-left {
 /* Layout App Shell */
 .app-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background-color: var(--bg-primary);
 }
 
@@ -1381,11 +1382,12 @@ thead .sticky-left {
 
 /* Kanban Board */
 .kanban-board {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(220px, 1fr));
+  display: flex;
   gap: 20px;
-  overflow-x: auto;
   align-items: start;
+  width: max-content;
+  min-width: 100%;
+  padding-bottom: 8px;
 }
 
 .kanban-column {
@@ -1397,6 +1399,8 @@ thead .sticky-left {
   flex-direction: column;
   gap: 16px;
   min-height: 500px;
+  width: 280px;
+  flex-shrink: 0;
 }
 
 .kanban-column-drop-active {
@@ -2879,10 +2883,9 @@ thead .sticky-left {
 
   /* Tables horizontal scrolling */
   .table-card {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     width: 100%;
     padding: 12px !important;
+    overflow: hidden;
   }
 
   .data-table {

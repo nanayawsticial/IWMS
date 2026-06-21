@@ -532,7 +532,7 @@ export default function SettingsPage() {
                   <form onSubmit={handleUpdateOrgName} className="settings-row" style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '20px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label className="form-label" style={{ margin: 0 }}>Company / Organization Name</label>
-                      <div style={{ display: 'flex', gap: '12px' }}>
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <input
                           type="text"
                           value={orgNameInput}
@@ -542,7 +542,7 @@ export default function SettingsPage() {
                           style={{ flex: 1, margin: 0 }}
                           required
                         />
-                        <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px', margin: 0 }} disabled={savingOrg || loadingOrg}>
+                        <button type="submit" className="btn-primary w-full sm:w-auto sm:px-5" style={{ margin: 0 }} disabled={savingOrg || loadingOrg}>
                           {savingOrg ? 'Saving...' : 'Save Name'}
                         </button>
                       </div>
@@ -553,7 +553,7 @@ export default function SettingsPage() {
                     <div className="settings-info">
                       <h4>Employee Invite Code</h4>
                       <p>Share this code with employees so they can register and automatically join your organization.</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
+                      <div className="flex flex-wrap items-center gap-3 mt-3">
                         <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '10px 16px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)', fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '1px', color: '#8b5cf6', fontWeight: 'bold' }}>
                           {loadingOrg ? 'Loading...' : (orgDetails?.joinCode || '—')}
                         </div>
@@ -566,7 +566,7 @@ export default function SettingsPage() {
                             }
                           }}
                           className="demo-btn"
-                          style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
                           disabled={loadingOrg || !orgDetails?.joinCode}
                         >
                           Copy Code
@@ -581,7 +581,7 @@ export default function SettingsPage() {
                             }
                           }}
                           className="demo-btn"
-                          style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          style={{ margin: 0, padding: '10px 16px', height: '100%', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
                           disabled={loadingOrg || !orgDetails?.joinCode}
                         >
                           Copy Link
@@ -590,7 +590,7 @@ export default function SettingsPage() {
                           type="button"
                           onClick={handleRegenerateJoinCode}
                           className="demo-btn"
-                          style={{ margin: 0, padding: '10px 16px', height: '100%', color: '#f43f5e', borderColor: 'rgba(244, 63, 94, 0.2)', background: 'rgba(244, 63, 94, 0.05)' }}
+                          style={{ margin: 0, padding: '10px 16px', height: '100%', color: '#f43f5e', borderColor: 'rgba(244, 63, 94, 0.2)', background: 'rgba(244, 63, 94, 0.05)', flexShrink: 0 }}
                           disabled={loadingOrg}
                         >
                           Regenerate

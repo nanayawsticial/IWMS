@@ -134,19 +134,23 @@ export default function DepartmentDashboardPage() {
 
   // Calculate metrics per member
   const memberMetrics = useMemo(() => {
-    return deptUsers.map((u: any) => {
-      const uTasks = deptTasks.filter((t: any) => t.assigneeId === u.id);
+    const usersArr = Array.isArray(deptUsers) ? deptUsers : [];
+    return usersArr.map((u: any) => {
+      const tasksArr = Array.isArray(deptTasks) ? deptTasks : [];
+      const uTasks = tasksArr.filter((t: any) => t.assigneeId === u.id);
       const total = uTasks.length;
       const completed = uTasks.filter((t: any) => t.status === 'done').length;
       const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
       // attendance computation from logs
-      const uLogs = attendanceLogs.filter((l: any) => l.userId === u.id);
+      const logsArr = Array.isArray(attendanceLogs) ? attendanceLogs : [];
+      const uLogs = logsArr.filter((l: any) => l.userId === u.id);
       const presentDays = uLogs.filter((l: any) => ['present', 'late'].includes(l.status)).length;
       const loggedDays = uLogs.length;
       const attendanceRate = loggedDays > 0 ? Math.round((presentDays / loggedDays) * 100) : 100;
 
-      const presenceRecord = deptPresence.find((p: any) => p.userId === u.id);
+      const presenceArr = Array.isArray(deptPresence) ? deptPresence : [];
+      const presenceRecord = presenceArr.find((p: any) => p.userId === u.id);
       const clockIn = presenceRecord?.clockIn || '—';
       const status = presenceRecord?.status || 'offline';
 

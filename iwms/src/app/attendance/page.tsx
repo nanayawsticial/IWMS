@@ -495,7 +495,7 @@ function AttendancePageContent() {
                   <span>←</span> Swipe to see all columns <span>→</span>
                 </div>
                 <div className="table-scroll">
-                  <table className="w-full text-left border-collapse text-sm">
+                  <table className="w-full text-left border-collapse text-sm" style={{ minWidth: 640 }}>
                     <thead>
                       <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-xs uppercase font-semibold">
                         <th className="py-2.5 px-3 sticky-left" style={{ minWidth: '140px' }}>Employee</th>

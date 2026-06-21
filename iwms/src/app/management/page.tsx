@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BarChart, Bar, Cell, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -72,6 +72,11 @@ export default function ManagementDashboardPage() {
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<'tasksCompleted' | 'attendanceRate' | 'hoursWorked'>('tasksCompleted');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Authorize managers/admins
   const isAuthorized = user && ['super_admin', 'admin', 'manager'].includes(user.role);
@@ -314,7 +319,7 @@ export default function ManagementDashboardPage() {
             <span className="section-title">Department Performance Comparison</span>
           </div>
           <div style={{ width: '100%', height: 280 }}>
-            {departmentData.length > 0 ? (
+            {mounted && departmentData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={departmentData} barGap={4}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -326,6 +331,8 @@ export default function ManagementDashboardPage() {
                   <Bar dataKey="taskCompletionRate" name="Task Completion" fill="#3b82f6" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
+            ) : !mounted ? (
+              <div className="empty-state">Loading charts...</div>
             ) : (
               <div className="empty-state">No department data available</div>
             )}
@@ -335,7 +342,9 @@ export default function ManagementDashboardPage() {
         {/* Right: Task Status Donut Chart */}
         <div className="card flex flex-col justify-between">
           <h3 className="section-title mb-4">Task Status Distribution</h3>
-          {dashboardData.tasks.total === 0 ? (
+          {!mounted ? (
+            <div className="empty-state">Loading charts...</div>
+          ) : dashboardData.tasks.total === 0 || donutChartData.length === 0 ? (
             <div className="empty-state">No tasks created yet</div>
           ) : (
             <div className="relative w-full h-[240px] flex items-center justify-center">
