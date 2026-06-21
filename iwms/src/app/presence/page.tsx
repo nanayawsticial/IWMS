@@ -219,7 +219,7 @@ export default function PresencePage() {
       {isLoading && (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 220px))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '1rem',
         }}>
           {Array.from({ length: 8 }).map((_, idx) => (
@@ -254,7 +254,7 @@ export default function PresencePage() {
       {!isLoading && !isError && viewMode === 'grid' && filtered.length > 0 && (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 220px))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '1rem',
           alignContent: 'start',
         }}>
