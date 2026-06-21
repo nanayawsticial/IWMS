@@ -2867,7 +2867,7 @@ thead .sticky-left {
   display: none;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1279px) {
   /* Burger menu toggle visible */
   .mobile-menu-toggle {
     display: inline-flex !important;
@@ -2904,6 +2904,35 @@ thead .sticky-left {
     z-index: 999;
   }
 
+  .app-container {
+    width: 100%;
+  }
+
+  /* Sidebar: on mobile always show full width (ignore collapse state) */
+  .sidebar.sidebar-collapsed {
+    width: var(--sidebar-width);
+  }
+
+  .sidebar.sidebar-collapsed .nav-label,
+  .sidebar.sidebar-collapsed .logo-text,
+  .sidebar.sidebar-collapsed .user-info {
+    opacity: 1;
+    width: auto;
+    pointer-events: auto;
+  }
+
+  .sidebar.sidebar-collapsed .sidebar-footer {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  /* Hide collapse button on mobile */
+  .collapse-btn {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
   /* Adjust core layouts */
   .topbar {
     padding: 0 16px;
@@ -2912,10 +2941,6 @@ thead .sticky-left {
   .page-content {
     padding: 16px;
     gap: 20px;
-  }
-
-  .app-container {
-    width: 100%;
   }
 
   /* Flex containers stack vertically */
@@ -3002,29 +3027,6 @@ thead .sticky-left {
   .settings-profile-card {
     flex-wrap: wrap;
     gap: 16px;
-  }
-
-  /* Sidebar: on mobile always show full width (ignore collapse state) */
-  .sidebar.sidebar-collapsed {
-    width: var(--sidebar-width);
-  }
-
-  .sidebar.sidebar-collapsed .nav-label,
-  .sidebar.sidebar-collapsed .logo-text,
-  .sidebar.sidebar-collapsed .user-info {
-    opacity: 1;
-    width: auto;
-    pointer-events: auto;
-  }
-
-  .sidebar.sidebar-collapsed .sidebar-footer {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  /* Hide collapse button on mobile */
-  .collapse-btn {
-    display: none;
   }
 }
 
@@ -3484,7 +3486,7 @@ thead .sticky-left {
   margin-bottom: 1.5rem;
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1023px) {
   .kpi-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kpi-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
