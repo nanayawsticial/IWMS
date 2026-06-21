@@ -719,7 +719,39 @@ function TasksPageContent() {
       )}
 
       {isLoading ? (
-        <div className="text-center py-20 text-[var(--text-3)]">Compiling boards...</div>
+        <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
+          <div className="kanban-board">
+            {['Backlog', 'Todo', 'In Progress', 'Done'].map((col, idx) => (
+              <div key={idx} className="kanban-column">
+                <div className="kanban-col-header">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full skeleton" />
+                    <div className="h-4 w-20 skeleton rounded" />
+                  </div>
+                  <div className="w-5 h-5 rounded skeleton" />
+                </div>
+                <div className="kanban-cards">
+                  {Array.from({ length: 2 }).map((_, cIdx) => (
+                    <div key={cIdx} className="card p-4 space-y-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl">
+                      <div className="flex justify-between items-center">
+                        <div className="h-3 w-16 skeleton rounded-full" />
+                        <div className="h-3.5 w-3.5 rounded-full skeleton" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-4 w-full skeleton rounded" />
+                        <div className="h-4 w-2/3 skeleton rounded" />
+                      </div>
+                      <div className="flex justify-between items-center pt-3 border-t border-[var(--border)]">
+                        <div className="w-6 h-6 rounded-full skeleton" />
+                        <div className="h-3 w-12 skeleton rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       ) : viewMode === 'gantt' ? (
         <GanttChart tasks={filteredAndSortedTasks} onTaskClick={(id) => setActiveTaskId(id)} />
       ) : (

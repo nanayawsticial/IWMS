@@ -216,7 +216,35 @@ export default function PresencePage() {
         </span>
       </div>
 
-      {isLoading && <div className="text-center py-20 text-[var(--text-3)]">Compiling presence status...</div>}
+      {isLoading && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 220px))',
+          gap: '1rem',
+        }}>
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <div key={idx} className="card flex flex-col justify-between space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full skeleton flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 skeleton rounded" />
+                  <div className="h-3 w-1/2 skeleton rounded" />
+                </div>
+              </div>
+              <div className="space-y-2 pt-2 border-t border-[var(--border)]">
+                <div className="flex justify-between items-center">
+                  <div className="h-3 w-1/3 skeleton rounded" />
+                  <div className="h-4 w-1/4 skeleton rounded-full" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="h-3 w-1/4 skeleton rounded" />
+                  <div className="h-3 w-12 skeleton rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {isError && <div className="text-center py-20 text-red-500">Failed to load presence data. Please refresh.</div>}
       {!isLoading && !isError && filtered.length === 0 && (
         <div className="text-center py-20 text-[var(--text-3)]">No team members match the active filters.</div>

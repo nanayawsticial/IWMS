@@ -14,6 +14,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('iwms_theme') as 'dark' | 'light') || 'dark';
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.add('light-theme');
+    } else {
+      root.classList.remove('light-theme');
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    const handleThemeChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail === 'light' || detail === 'dark') {
+        setTheme(detail);
+      }
+    };
+    window.addEventListener('theme-toggle', handleThemeChange);
+    return () => window.removeEventListener('theme-toggle', handleThemeChange);
+  }, []);
 
   useEffect(() => {
     setMobileSidebarOpen(false);
@@ -152,7 +178,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <div className="app-container flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar onMenuClick={() => setMobileSidebarOpen(true)} />
-        <main className="main-content flex-1 overflow-y-auto p-6">{children}</main>
+        <main key={pathname} className="main-content page-animate-fade flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>
   );

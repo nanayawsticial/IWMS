@@ -53,13 +53,17 @@ const TOOLTIP_STYLE = {
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={TOOLTIP_STYLE}>
-      <p style={{ fontWeight: 600, marginBottom: 6, color: 'var(--text-2)' }}>{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.name} style={{ color: p.color || 'var(--text-1)' }}>
-          {p.name}: <strong>{p.value}</strong>
-        </p>
-      ))}
+    <div style={{ ...TOOLTIP_STYLE, boxShadow: 'var(--glass-shadow)' }}>
+      {label && <p style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--text-1)' }}>{label}</p>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {payload.map((p: any) => (
+          <p key={p.name || p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-2)', margin: 0 }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: p.color || p.stroke || p.fill || 'var(--accent)', display: 'inline-block' }} />
+            <span>{p.name}:</span>
+            <strong style={{ color: 'var(--text-1)', marginLeft: 'auto' }}>{p.value}</strong>
+          </p>
+        ))}
+      </div>
     </div>
   );
 }
@@ -732,9 +736,9 @@ export default function DashboardPage() {
                         <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#8892a4' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: '#8892a4' }} axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'var(--text-3)' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: 'var(--text-3)' }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
                     <Area type="monotone" dataKey="present" name="Present" stroke="#10b981" strokeWidth={2} fill="url(#presentGrad)" />
                     <Area type="monotone" dataKey="late" name="Late" stroke="#f59e0b" strokeWidth={2} fill="url(#lateGrad)" />
@@ -771,7 +775,7 @@ export default function DashboardPage() {
                         { name: 'Todo', value: tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'todo').length, color: 'var(--blue)' },
                       ].filter(d => d.value > 0).map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

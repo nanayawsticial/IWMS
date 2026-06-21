@@ -14,7 +14,9 @@ import {
   LogOut,
   Menu,
   Copy,
-  Check
+  Check,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -39,6 +41,27 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const activeTheme = (localStorage.getItem('iwms_theme') as 'dark' | 'light') || 'dark';
+      setTheme(activeTheme);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('iwms_theme', nextTheme);
+    window.dispatchEvent(new CustomEvent('theme-toggle', { detail: nextTheme }));
+  };
+
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [searchQuery]);
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['search-users'],
@@ -78,7 +101,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
       ).slice(0, 4)
     : [];
 
-  const shortcuts = [];
+  const shortcuts: Array<{ title: string; path: string; desc: string }> = [];
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase();
     if ('tasks'.includes(q) || 'board'.includes(q) || 'kanban'.includes(q)) {
@@ -111,6 +134,30 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
     setSearchQuery('');
     setSearchFocused(false);
     router.push(path);
+  };
+
+  const resultsList = [
+    ...shortcuts.map((s: any) => ({ type: 'shortcut', path: s.path, title: s.title })),
+    ...filteredUsers.map((u: any) => ({ type: 'user', path: `/team/${u.id}`, title: u.name })),
+    ...filteredTasks.map((t: any) => ({ type: 'task', path: '/tasks', title: t.title }))
+  ];
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex(prev => (resultsList.length > 0 ? (prev + 1) % resultsList.length : -1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex(prev => (resultsList.length > 0 ? (prev - 1 + resultsList.length) % resultsList.length : -1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && activeIndex < resultsList.length) {
+        handleItemClick(resultsList[activeIndex].path);
+      }
+    } else if (e.key === 'Escape') {
+      setSearchFocused(false);
+      searchInputRef.current?.blur();
+    }
   };
   const [notifOpen, setNotifOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -368,6 +415,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
+            onKeyDown={handleKeyDown}
           />
           <kbd className="flex items-center flex-shrink-0">
             <span className="px-1.5 py-0.5 text-[9px] font-medium bg-[var(--bg-surface-2)] border border-[var(--border-strong)] rounded text-[var(--text-2)]">
@@ -387,42 +435,69 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
                 {shortcuts.length > 0 && (
                   <div className="flex flex-col gap-1">
                     <span className="search-section-title">Navigation Shortcuts</span>
-                    {shortcuts.map((s, idx) => (
-                      <div key={idx} className="search-item" onClick={() => handleItemClick(s.path)}>
-                        <div>
-                          <div className="search-item-title">{s.title}</div>
-                          <div className="search-item-subtitle">{s.desc}</div>
+                    {shortcuts.map((s, idx: number) => {
+                      const absIdx = idx;
+                      const isActive = absIdx === activeIndex;
+                      return (
+                        <div 
+                          key={idx} 
+                          className={`search-item ${isActive ? 'active-search-item' : ''}`}
+                          style={isActive ? { background: 'var(--bg-hover)' } : undefined}
+                          onClick={() => handleItemClick(s.path)}
+                        >
+                          <div>
+                            <div className="search-item-title">{s.title}</div>
+                            <div className="search-item-subtitle">{s.desc}</div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
                 {filteredUsers.length > 0 && (
                   <div className="flex flex-col gap-1">
                     <span className="search-section-title">Employees</span>
-                    {filteredUsers.map((u: any) => (
-                      <div key={u.id} className="search-item" onClick={() => handleItemClick(`/team/${u.id}`)}>
-                        <div>
-                          <div className="search-item-title">{u.name}</div>
-                          <div className="search-item-subtitle">{u.position || 'Employee'} · {u.department || 'General'}</div>
+                    {filteredUsers.map((u: any, idx: number) => {
+                      const absIdx = shortcuts.length + idx;
+                      const isActive = absIdx === activeIndex;
+                      return (
+                        <div 
+                          key={u.id} 
+                          className={`search-item ${isActive ? 'active-search-item' : ''}`}
+                          style={isActive ? { background: 'var(--bg-hover)' } : undefined}
+                          onClick={() => handleItemClick(`/team/${u.id}`)}
+                        >
+                          <div>
+                            <div className="search-item-title">{u.name}</div>
+                            <div className="search-item-subtitle">{u.position || 'Employee'} · {u.department || 'General'}</div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
                 {filteredTasks.length > 0 && (
                   <div className="flex flex-col gap-1">
                     <span className="search-section-title">Tasks</span>
-                    {filteredTasks.map((t: any) => (
-                      <div key={t.id} className="search-item" onClick={() => handleItemClick('/tasks')}>
-                        <div>
-                          <div className="search-item-title">{t.title}</div>
-                          <div className="search-item-subtitle">Priority: {t.priority} · Status: {t.status}</div>
+                    {filteredTasks.map((t: any, idx: number) => {
+                      const absIdx = shortcuts.length + filteredUsers.length + idx;
+                      const isActive = absIdx === activeIndex;
+                      return (
+                        <div 
+                          key={t.id} 
+                          className={`search-item ${isActive ? 'active-search-item' : ''}`}
+                          style={isActive ? { background: 'var(--bg-hover)' } : undefined}
+                          onClick={() => handleItemClick('/tasks')}
+                        >
+                          <div>
+                            <div className="search-item-title">{t.title}</div>
+                            <div className="search-item-subtitle">Priority: {t.priority} · Status: {t.status}</div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -437,6 +512,35 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
           <ClockIcon size={14} />
           {time}
         </div>
+
+        {/* Theme Toggle */}
+        <button 
+          onClick={toggleTheme}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-2)',
+            cursor: 'pointer',
+            padding: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '50%',
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--bg-hover)';
+            e.currentTarget.style.color = 'var(--text-1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'none';
+            e.currentTarget.style.color = 'var(--text-2)';
+          }}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          aria-label="Toggle Theme"
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
 
         {/* Notifications */}
         <div className="notif-wrapper">
