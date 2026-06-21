@@ -718,7 +718,7 @@ function AttendancePageContent() {
             <h3 className="text-sm font-extrabold text-[var(--text-1)] mb-4 uppercase tracking-wide">Correct Attendance</h3>
             
             <form onSubmit={handleCorrectSubmit} className="space-y-4 text-xs">
-              <div className="text-[var(--text-2)]">
+              <div className="text-[var(--text-2)] whitespace-normal break-words leading-relaxed">
                 Correcting attendance for: <strong className="text-[var(--text-1)]">{editRecord.userName}</strong> on <strong className="text-[var(--text-1)]">{editRecord.date}</strong>
               </div>
               
