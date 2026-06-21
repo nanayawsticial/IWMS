@@ -604,9 +604,9 @@ function TasksPageContent() {
         </div>
 
         {/* Filters Toolbar */}
-        <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full xl:w-auto">
+        <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-4 w-full xl:w-auto">
           {/* Row 1 for mobile: Assignee & Sort */}
-          <div className={`${isManagement && dropdownUsers.length > 0 ? 'grid grid-cols-2' : 'flex'} gap-2 w-full md:w-auto`}>
+          <div className={`${isManagement && dropdownUsers.length > 0 ? 'grid grid-cols-2' : 'flex'} gap-3 w-full md:w-auto`}>
             {isManagement && dropdownUsers.length > 0 && (
               <div className="control-compact w-full">
                 <select
@@ -637,7 +637,7 @@ function TasksPageContent() {
           </div>
 
           {/* Row 2 for mobile: Search & Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
             {/* Search Box */}
             <div className="control-compact w-full sm:w-48">
               <Search size={16} className="text-[var(--text-3)] flex-shrink-0" />
