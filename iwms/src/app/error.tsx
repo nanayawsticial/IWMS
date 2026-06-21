@@ -14,63 +14,67 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="login-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-      <div className="login-bg">
-        <div className="login-orb orb-1" />
-        <div className="login-orb orb-2" />
-        <div className="login-orb orb-3" />
-        <div className="grid-overlay" />
+    <div className="new-auth-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      {/* Brand logo at top */}
+      <div className="new-auth-brand-logo" style={{ marginBottom: '32px' }}>
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#bd6b39" />
+          <path d="M8 16L14 22L24 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>IWMS</span>
       </div>
 
-      <div className="login-container">
-        <div className="login-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-          <div className="logo-mark">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
+      {/* Error Card */}
+      <div className="error-page-card">
+        <img 
+          src="/error_500.png" 
+          alt="500 Error - Server Error" 
+          className="error-page-illustration"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+        
+        <h1 className="error-page-title">Oops, something went wrong</h1>
+        
+        <p className="error-page-subtitle">
+          Server Error 500. We apologise and are fixing the problem. Please try again at a later stage.
+        </p>
+
+        {error?.message && (
+          <div className="new-auth-error" style={{ wordBreak: 'break-word', textAlign: 'left', marginBottom: '24px' }}>
+            <span><strong>Details:</strong> {error.message}</span>
           </div>
-          <h1 className="login-title" style={{ fontSize: '24px', marginBottom: '8px' }}>Something went wrong!</h1>
-          <p className="login-subtitle" style={{ fontSize: '0.9rem', marginBottom: '24px', maxWidth: '320px', lineHeight: '1.5', wordBreak: 'break-word' }}>
-            {error?.message || 'An unexpected runtime error occurred while rendering this page.'}
-          </p>
-          <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-            <button
-              onClick={() => reset()}
-              className="btn-primary"
-              style={{ 
-                flex: 1, 
-                padding: '12px', 
-                borderRadius: '8px', 
-                fontWeight: '600', 
-                cursor: 'pointer',
-                border: 'none',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
-              }}
-            >
-              Try Again
-            </button>
-            <a
-              href="/dashboard"
-              className="demo-btn"
-              style={{ 
-                flex: 1, 
-                padding: '12px', 
-                borderRadius: '8px', 
-                textAlign: 'center', 
-                textDecoration: 'none', 
-                color: '#fff', 
-                background: 'rgba(255,255,255,0.08)', 
-                border: '1px solid rgba(255,255,255,0.15)',
-                fontWeight: '600',
-                fontSize: '0.85rem'
-              }}
-            >
-              Dashboard
-            </a>
-          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+          <button
+            onClick={() => reset()}
+            className="btn-terracotta"
+            style={{ flex: 1, backgroundColor: 'transparent', border: '1px solid var(--color-terracotta)', color: 'var(--color-terracotta)' }}
+          >
+            Try Again
+          </button>
+          <a 
+            href="/dashboard" 
+            className="btn-terracotta"
+            style={{ textDecoration: 'none', flex: 1 }}
+          >
+            Back to Dashboard
+          </a>
         </div>
+      </div>
+
+      {/* Bottom links and copyright */}
+      <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--color-slate-muted)', marginTop: '40px', justifyContent: 'center' }}>
+        <a href="#" className="new-auth-link" onClick={(e) => e.preventDefault()} style={{ color: 'inherit' }}>Terms & Condition</a>
+        <span>&middot;</span>
+        <a href="#" className="new-auth-link" onClick={(e) => e.preventDefault()} style={{ color: 'inherit' }}>Privacy</a>
+        <span>&middot;</span>
+        <a href="#" className="new-auth-link" onClick={(e) => e.preventDefault()} style={{ color: 'inherit' }}>Help</a>
+      </div>
+      <div className="new-auth-footer" style={{ marginTop: '12px' }}>
+        <p>Copyright &copy; {new Date().getFullYear()} - SmartHR</p>
       </div>
     </div>
   );

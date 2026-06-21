@@ -5,44 +5,52 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="login-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-      <div className="login-bg">
-        <div className="login-orb orb-1" />
-        <div className="login-orb orb-2" />
-        <div className="login-orb orb-3" />
-        <div className="grid-overlay" />
+    <div className="new-auth-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      {/* Brand logo at top */}
+      <div className="new-auth-brand-logo" style={{ marginBottom: '32px' }}>
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#bd6b39" />
+          <path d="M8 16L14 22L24 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>IWMS</span>
       </div>
 
-      <div className="login-container">
-        <div className="login-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-          <div className="logo-mark">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-          </div>
-          <h1 className="login-title" style={{ fontSize: '32px', marginBottom: '8px' }}>404 - Not Found</h1>
-          <p className="login-subtitle" style={{ fontSize: '0.95rem', marginBottom: '24px', maxWidth: '320px', lineHeight: '1.5' }}>
-            The page you are looking for doesn't exist or you don't have permission to access it.
-          </p>
-          <Link 
-            href="/dashboard" 
-            className="btn-primary"
-            style={{ 
-              width: '100%', 
-              display: 'block', 
-              textAlign: 'center', 
-              textDecoration: 'none', 
-              padding: '12px', 
-              borderRadius: '8px', 
-              fontWeight: '600',
-              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
-            }}
-          >
-            Return to Dashboard
-          </Link>
-        </div>
+      {/* Error Card */}
+      <div className="error-page-card">
+        <img 
+          src="/error_404.png" 
+          alt="404 Error - Page Not Found" 
+          className="error-page-illustration"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+        
+        <h1 className="error-page-title">Oops, something went wrong</h1>
+        
+        <p className="error-page-subtitle">
+          Error 404 Page not found. Sorry the page you looking for doesn't exist or has been moved
+        </p>
+
+        <Link 
+          href="/dashboard" 
+          className="btn-terracotta"
+          style={{ textDecoration: 'none', width: 'auto', minWidth: '180px' }}
+        >
+          &larr; Back to Dashboard
+        </Link>
+      </div>
+
+      {/* Bottom links and copyright */}
+      <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--color-slate-muted)', marginTop: '40px', justifyContent: 'center' }}>
+        <a href="#" className="new-auth-link" onClick={(e) => e.preventDefault()} style={{ color: 'inherit' }}>Terms & Condition</a>
+        <span>&middot;</span>
+        <a href="#" className="new-auth-link" onClick={(e) => e.preventDefault()} style={{ color: 'inherit' }}>Privacy</a>
+        <span>&middot;</span>
+        <a href="#" className="new-auth-link" onClick={(e) => e.preventDefault()} style={{ color: 'inherit' }}>Help</a>
+      </div>
+      <div className="new-auth-footer" style={{ marginTop: '12px' }}>
+        <p>Copyright &copy; {new Date().getFullYear()} - SmartHR</p>
       </div>
     </div>
   );
