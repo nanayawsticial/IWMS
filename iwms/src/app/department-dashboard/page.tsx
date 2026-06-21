@@ -277,9 +277,9 @@ export default function DepartmentDashboardPage() {
           </div>
 
           {/* Row 2: Team Presence & Kanban Task counts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Team Presence Grid */}
-            <div className="card lg:col-span-2">
+            <div className="card xl:col-span-2">
               <div className="flex justify-between items-center mb-4 text-xs">
                 <h3 className="section-title">Team Presence</h3>
                 <div className="control-compact w-48">
@@ -383,9 +383,9 @@ export default function DepartmentDashboardPage() {
           </div>
 
           {/* Row 3: Scoped member metrics table & 4-week attendance trend */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Member Metrics Table */}
-            <div className="card lg:col-span-2">
+            <div className="card xl:col-span-2">
               <h3 className="section-title mb-4">Member Performance & Attendance Records</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">

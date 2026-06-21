@@ -1099,10 +1099,20 @@ thead .sticky-left {
 }
 
 .page-content {
-  padding: 32px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 32px;
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+@media (max-width: 1400px) {
+  .page-content {
+    padding: 20px 24px;
+    gap: 24px;
+  }
 }
 
 .page-header {

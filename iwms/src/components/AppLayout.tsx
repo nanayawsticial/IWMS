@@ -178,7 +178,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <div className="app-container flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar onMenuClick={() => setMobileSidebarOpen(true)} />
-        <main key={pathname} className="main-content page-animate-fade flex-1 overflow-y-auto p-6">{children}</main>
+        <main key={pathname} className="main-content page-animate-fade flex-1 overflow-y-auto p-0">{children}</main>
       </div>
     </div>
   );

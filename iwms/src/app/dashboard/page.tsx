@@ -384,7 +384,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Row 3 (3-Column Layout) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Column 1: Employee Status Panel */}
             <div className="card flex flex-col justify-between">
               <div>
@@ -560,8 +560,8 @@ export default function DashboardPage() {
 
           {/* Row: Pending Leave Requests & Action items */}
           {isAdmin && pendingLeaves.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              <div className="card lg:col-span-2 flex flex-col justify-between">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+              <div className="card xl:col-span-2 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-4">
                     <h3 className="section-title">Pending Leave Requests</h3>
@@ -654,9 +654,9 @@ export default function DashboardPage() {
           )}
 
           {/* Row 4: Applicants, Active Employees, Quick Action Todo List */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Column 1 & 2: Applicants and Active Directory */}
-            <div className="card lg:col-span-2 flex flex-col justify-between">
+            <div className="card xl:col-span-2 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-4 flex-wrap gap-4">
                   <h3 className="section-title">Recruitment Pipeline</h3>
