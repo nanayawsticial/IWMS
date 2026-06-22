@@ -505,11 +505,20 @@ export default function DashboardPage() {
             <div className="card flex flex-col justify-between">
               <div>
                 <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)] mb-4">Department Sizes</h3>
-                <div style={{ width: '100%', height: 160 }}>
+                <div style={{ width: '100%', height: 220 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: 15, right: 10, top: 0, bottom: 0 }}>
+                    <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: 5, right: 10, top: 5, bottom: 5 }}>
                       <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" stroke="var(--text-3)" fontSize={11} width={125} tickLine={false} axisLine={false} />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        stroke="var(--text-3)"
+                        fontSize={10}
+                        width={140}
+                        tickLine={false}
+                        axisLine={false}
+                        interval={0}
+                      />
                       <Bar dataKey="headcount" fill="var(--accent)" radius={[0, 4, 4, 0]} barSize={8}>
                         {managementData?.departments?.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={entry.color || 'var(--accent)'} />
