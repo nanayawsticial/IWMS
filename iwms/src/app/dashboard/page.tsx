@@ -86,12 +86,7 @@ export default function DashboardPage() {
   // Applicants filter state
   const [applicantFilter, setApplicantFilter] = useState<'all' | 'shortlisted' | 'interviewing'>('all');
 
-  const applicantsData = [
-    { id: 1, name: 'Godfred Lawson', position: 'UI Designer', status: 'interviewing', date: '2026-06-18' },
-    { id: 2, name: 'Abena Osei', position: 'Frontend Eng', status: 'shortlisted', date: '2026-06-19' },
-    { id: 3, name: 'Kwesi Mensah', position: 'DevOps Lead', status: 'applied', date: '2026-06-15' },
-    { id: 4, name: 'Eshun Kofi', position: 'HR Assistant', status: 'applied', date: '2026-06-16' },
-  ];
+  const applicantsData: any[] = [];
 
   const filteredApplicants = applicantsData.filter(a => {
     if (applicantFilter === 'all') return true;
@@ -702,20 +697,28 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
-                      {filteredApplicants.map((a) => (
-                        <tr key={a.id} className="text-sm hover:bg-[var(--bg-hover)]/30 transition-colors">
-                          <td className="py-4 font-semibold text-[var(--text-1)]">{a.name}</td>
-                          <td className="py-4 text-[var(--text-2)]">{a.position}</td>
-                          <td className="py-4">
-                            <span className={`badge ${
-                              a.status === 'interviewing' ? 'badge-orange' : a.status === 'shortlisted' ? 'badge-blue' : 'badge-yellow'
-                            }`} style={{ fontSize: '10px', padding: '4px 8px' }}>
-                              {a.status}
-                            </span>
+                      {filteredApplicants.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="py-8 text-center text-[var(--text-3)] text-sm">
+                            No candidates in the recruitment pipeline.
                           </td>
-                          <td className="py-4 text-right text-xs text-[var(--text-3)] font-mono">{a.date}</td>
                         </tr>
-                      ))}
+                      ) : (
+                        filteredApplicants.map((a) => (
+                          <tr key={a.id} className="text-sm hover:bg-[var(--bg-hover)]/30 transition-colors">
+                            <td className="py-4 font-semibold text-[var(--text-1)]">{a.name}</td>
+                            <td className="py-4 text-[var(--text-2)]">{a.position}</td>
+                            <td className="py-4">
+                              <span className={`badge ${
+                                a.status === 'interviewing' ? 'badge-orange' : a.status === 'shortlisted' ? 'badge-blue' : 'badge-yellow'
+                              }`} style={{ fontSize: '10px', padding: '4px 8px' }}>
+                                {a.status}
+                              </span>
+                            </td>
+                            <td className="py-4 text-right text-xs text-[var(--text-3)] font-mono">{a.date}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
