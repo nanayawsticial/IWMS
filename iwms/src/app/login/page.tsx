@@ -100,7 +100,7 @@ export default function LoginPage() {
             <h2>Empowering people through seamless HR management.</h2>
             <div className="new-auth-image-container">
               <img 
-                src="/login_hero.png" 
+                src="/login_hero.jpg" 
                 alt="Colleagues collaborating" 
                 onError={(e) => {
                   // Fallback if image fails to load
