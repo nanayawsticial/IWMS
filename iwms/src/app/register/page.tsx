@@ -93,7 +93,7 @@ function RegisterPageContent() {
             {/* Header logo */}
             <div className="new-auth-brand-logo">
               <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="8" fill="#bd6b39" />
+                <rect width="32" height="32" rx="8" fill="var(--color-terracotta)" />
                 <path d="M8 16L14 22L24 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span>IWMS</span>
@@ -103,7 +103,7 @@ function RegisterPageContent() {
             <p className="new-auth-subtitle">Please enter your details to sign up</p>
 
             {/* Mode Toggle */}
-            <div style={{ display: 'flex', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', backgroundColor: 'var(--bg-page)', padding: '4px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '20px' }}>
               <button
                 type="button"
                 onClick={() => { setMode('signup'); setError(''); }}
@@ -116,7 +116,7 @@ function RegisterPageContent() {
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  backgroundColor: mode === 'signup' ? '#ffffff' : 'transparent',
+                  backgroundColor: mode === 'signup' ? 'var(--bg-surface)' : 'transparent',
                   color: mode === 'signup' ? 'var(--color-navy-text)' : 'var(--color-slate-muted)',
                   boxShadow: mode === 'signup' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
                 }}
@@ -135,7 +135,7 @@ function RegisterPageContent() {
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  backgroundColor: mode === 'join' ? '#ffffff' : 'transparent',
+                  backgroundColor: mode === 'join' ? 'var(--bg-surface)' : 'transparent',
                   color: mode === 'join' ? 'var(--color-navy-text)' : 'var(--color-slate-muted)',
                   boxShadow: mode === 'join' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
                 }}

@@ -86,27 +86,43 @@
   --glass-blur: blur(12px);
   --glass-border: var(--border);
   --glass-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
+
+  /* Terracotta and Cream Theme Redesign for Auth/Error Pages (Dark Mode defaults) */
+  --color-terracotta:       #ff6b35; /* Orange in dark mode */
+  --color-terracotta-hover: #e85a24;
+  --color-warm-bg:          #0d1117; /* Dark background */
+  --color-navy-text:        #f0f2f8; /* Light text */
+  --color-cream-light:      #161b27; /* Dark surface */
+  --color-slate-muted:      #8892a4; /* Muted text */
+  --color-auth-side-bg:     linear-gradient(135deg, #161b27 0%, #0d1117 100%);
+  --color-auth-register-bg: #1e2536;
+  --color-auth-input-bg:    var(--bg-surface-2);
+  --color-auth-input-border: var(--border-strong);
+  --color-auth-social-bg:   var(--bg-surface);
+  --color-auth-social-border: var(--border-strong);
 }
 
 .light-theme {
   /* Backgrounds */
-  --bg-page:        #f6f8fa;
+  --bg-page:        #faf8f6; /* Warm cream */
   --bg-surface:     #ffffff;
-  --bg-surface-2:   #f1f5f9;
-  --bg-elevated:    #e2e8f0;
-  --bg-hover:       #cbd5e1;
+  --bg-surface-2:   #fdfcfb; /* Very soft warm cream */
+  --bg-elevated:    #faf6f0; /* Slightly darker warm beige/cream */
+  --bg-hover:       #f5eedf;
 
   /* Borders */
-  --border:         rgba(0,0,0,0.06);
-  --border-strong:  rgba(0,0,0,0.12);
+  --border:         rgba(189, 107, 57, 0.12);
+  --border-strong:  rgba(189, 107, 57, 0.24);
 
   /* Text */
-  --text-1:         #0f172a;
-  --text-2:         #475569;
+  --text-1:         #202a44; /* Navy text */
+  --text-2:         #64748b; /* Slate muted */
   --text-3:         #94a3b8;
 
-  /* Accent overrides */
-  --accent-soft:    rgba(255,107,53,0.06);
+  /* Accent overrides to match terracotta in light mode */
+  --accent:         #bd6b39;
+  --accent-hover:   #a3582d;
+  --accent-soft:    rgba(189, 107, 57, 0.08);
 
   /* Status overrides */
   --green-soft:     rgba(34,197,94,0.08);
@@ -118,7 +134,21 @@
 
   --glass-bg:       rgba(255,255,255,0.7);
   --glass-border:   var(--border);
-  --glass-shadow:   0 8px 32px 0 rgba(0,0,0,0.06);
+  --glass-shadow:   0 8px 32px 0 rgba(189, 107, 57, 0.06);
+
+  /* Terracotta and Cream Theme for Auth/Error Pages (Light Mode) */
+  --color-terracotta:       #bd6b39;
+  --color-terracotta-hover: #a3582d;
+  --color-warm-bg:          #faf8f6;
+  --color-navy-text:        #202a44;
+  --color-cream-light:      #fdfcfb;
+  --color-slate-muted:      #64748b;
+  --color-auth-side-bg:     linear-gradient(135deg, #c36d39 0%, #9e4c1d 100%);
+  --color-auth-register-bg: #faf6f0;
+  --color-auth-input-bg:    #ffffff;
+  --color-auth-input-border: #e2e8f0;
+  --color-auth-social-bg:   #ffffff;
+  --color-auth-social-border: #e2e8f0;
 }
 
 /* Page Transitions */
@@ -4017,14 +4047,6 @@ a:not(:disabled):active,
 }
 
 /* Warm Terracotta and Cream Theme Redesign for Auth/Error Pages */
-:root {
-  --color-terracotta: #bd6b39;
-  --color-terracotta-hover: #a3582d;
-  --color-warm-bg: #faf8f6;
-  --color-navy-text: #202a44;
-  --color-cream-light: #fdfcfb;
-  --color-slate-muted: #64748b;
-}
 
 .new-auth-page {
   background-color: var(--color-warm-bg);
@@ -4049,7 +4071,7 @@ a:not(:disabled):active,
 }
 
 .new-auth-side {
-  background: linear-gradient(135deg, #c36d39 0%, #9e4c1d 100%);
+  background: var(--color-auth-side-bg);
   padding: 60px;
   display: flex;
   flex-direction: column;
@@ -4061,7 +4083,7 @@ a:not(:disabled):active,
 }
 
 .new-auth-side.register-side {
-  background: #faf6f0;
+  background: var(--color-auth-register-bg);
   color: var(--color-navy-text);
 }
 
@@ -4204,8 +4226,8 @@ a:not(:disabled):active,
   width: 100%;
   padding: 11px 14px 11px 42px;
   font-size: 14px;
-  background-color: #fff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--color-auth-input-bg);
+  border: 1px solid var(--color-auth-input-border);
   border-radius: 8px;
   color: var(--color-navy-text);
   transition: all 0.2s;
@@ -4321,7 +4343,7 @@ a:not(:disabled):active,
 .new-auth-divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-auth-input-border);
 }
 
 .new-auth-divider:not(:empty)::before {
@@ -4344,18 +4366,18 @@ a:not(:disabled):active,
   align-items: center;
   justify-content: center;
   padding: 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-auth-social-border);
   border-radius: 8px;
-  background-color: #fff;
+  background-color: var(--color-auth-social-bg);
   cursor: pointer;
   transition: all 0.2s;
-  color: #64748b;
+  color: var(--text-2);
 }
 
 .btn-social-outline:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  color: #334155;
+  background-color: var(--bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text-1);
 }
 
 .btn-social-outline.facebook {
@@ -4363,7 +4385,7 @@ a:not(:disabled):active,
 }
 
 .btn-social-outline.apple {
-  color: #000;
+  color: var(--text-1);
 }
 
 .new-auth-footer {
@@ -4388,10 +4410,10 @@ a:not(:disabled):active,
   border-radius: 50%;
   overflow: hidden;
   margin-bottom: 16px;
-  border: 3px solid #fff;
+  border: 3px solid var(--bg-surface);
   box-shadow: 0 4px 12px rgba(189, 107, 57, 0.15);
   position: relative;
-  background-color: #f1f5f9;
+  background-color: var(--bg-surface-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4411,9 +4433,9 @@ a:not(:disabled):active,
 }
 
 .new-auth-error {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #ef4444;
+  background-color: var(--red-soft);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--red);
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 13px;
@@ -4425,9 +4447,9 @@ a:not(:disabled):active,
 }
 
 .new-auth-success {
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #16a34a;
+  background-color: var(--green-soft);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: var(--green);
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 13px;
@@ -4440,9 +4462,9 @@ a:not(:disabled):active,
 
 /* Clean Error Pages styling */
 .error-page-card {
-  background-color: #fff;
-  border: 1px solid rgba(189, 107, 57, 0.12);
-  box-shadow: 0 10px 30px rgba(189, 107, 57, 0.05);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--glass-shadow);
   border-radius: 20px;
   padding: 40px;
   max-width: 460px;
