@@ -166,7 +166,7 @@ export default function ManagementDashboardPage() {
     return Object.keys(dist).map(status => ({
       name: TASK_STATUS_LABELS[status as keyof typeof TASK_STATUS_LABELS] || status,
       value: dist[status],
-      color: TASK_STATUS_COLORS[status as keyof typeof TASK_STATUS_COLORS] || '#64748b'
+      color: TASK_STATUS_COLORS[status as keyof typeof TASK_STATUS_COLORS] || 'var(--text-2)'
     })).filter(item => item.value > 0);
   }, [dashboardData?.tasks?.statusDistribution]);
 
@@ -275,7 +275,7 @@ export default function ManagementDashboardPage() {
           iconColor="var(--green)"
           subValue={`${dashboardData.attendance.present + dashboardData.attendance.late} present`}
           subLabel="today"
-          subColor="#22c55e"
+          subColor="var(--green)"
           linkLabel="View logs"
           onLinkClick={() => router.push('/attendance')}
         />
@@ -307,7 +307,7 @@ export default function ManagementDashboardPage() {
           iconColor="var(--red)"
           subValue="Urgent"
           subLabel="past due dates"
-          subColor="#ef4444"
+          subColor="var(--red)"
         />
       </div>
 
@@ -323,12 +323,12 @@ export default function ManagementDashboardPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={departmentData} barGap={4}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#8892a4' }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11, fill: '#8892a4' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: '#1e2536', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 12 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-2)' }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11, fill: 'var(--text-2)' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ background: 'var(--bg-surface-2)', border: '0.5px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
-                  <Bar dataKey="attendanceRate" name="Attendance" fill="#22c55e" radius={[4,4,0,0]} />
-                  <Bar dataKey="taskCompletionRate" name="Task Completion" fill="#3b82f6" radius={[4,4,0,0]} />
+                  <Bar dataKey="attendanceRate" name="Attendance" fill="var(--green)" radius={[4,4,0,0]} />
+                  <Bar dataKey="taskCompletionRate" name="Task Completion" fill="var(--blue)" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : !mounted ? (

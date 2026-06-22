@@ -6,9 +6,9 @@ import { overtimeApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 
 const STATUS_BADGES: Record<string, { bg: string; text: string; label: string }> = {
-  pending:  { bg: 'rgba(245, 158, 11, 0.15)', text: '#f59e0b', label: 'Pending' },
-  approved: { bg: 'rgba(16, 185, 129, 0.15)', text: '#10b981', label: 'Approved' },
-  rejected: { bg: 'rgba(239, 68, 68, 0.15)', text: '#ef4444', label: 'Rejected' },
+  pending:  { bg: 'var(--yellow-soft)', text: 'var(--yellow)', label: 'Pending' },
+  approved: { bg: 'var(--green-soft)', text: 'var(--green)', label: 'Approved' },
+  rejected: { bg: 'var(--red-soft)', text: 'var(--red)', label: 'Rejected' },
 };
 
 export default function OvertimePage() {
@@ -112,7 +112,7 @@ export default function OvertimePage() {
       </div>
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#475569' }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)' }}>
           <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />
           Loading Overtime Requests...
         </div>
@@ -120,20 +120,20 @@ export default function OvertimePage() {
         <>
           {/* Summary Cards */}
           <div className="kpi-grid-4" style={{ marginBottom: '24px' }}>
-            <div className="att-stat-card" style={{ '--stat-color': '#6366f1' } as React.CSSProperties}>
-              <span className="att-stat-value" style={{ color: '#6366f1' }}>{totalOtHoursMonth.toFixed(1)}h</span>
+            <div className="att-stat-card" style={{ '--stat-color': 'var(--blue)' } as React.CSSProperties}>
+              <span className="att-stat-value" style={{ color: 'var(--blue)' }}>{totalOtHoursMonth.toFixed(1)}h</span>
               <span className="att-stat-label">OT Hours This Month</span>
             </div>
-            <div className="att-stat-card" style={{ '--stat-color': '#f59e0b' } as React.CSSProperties}>
-              <span className="att-stat-value" style={{ color: '#f59e0b' }}>{pendingCount}</span>
+            <div className="att-stat-card" style={{ '--stat-color': 'var(--yellow)' } as React.CSSProperties}>
+              <span className="att-stat-value" style={{ color: 'var(--yellow)' }}>{pendingCount}</span>
               <span className="att-stat-label">Pending Approvals</span>
             </div>
-            <div className="att-stat-card" style={{ '--stat-color': '#10b981' } as React.CSSProperties}>
-              <span className="att-stat-value" style={{ color: '#10b981' }}>{approvedCount}</span>
+            <div className="att-stat-card" style={{ '--stat-color': 'var(--green)' } as React.CSSProperties}>
+              <span className="att-stat-value" style={{ color: 'var(--green)' }}>{approvedCount}</span>
               <span className="att-stat-label">Approved Requests</span>
             </div>
-            <div className="att-stat-card" style={{ '--stat-color': '#ef4444' } as React.CSSProperties}>
-              <span className="att-stat-value" style={{ color: '#ef4444' }}>{rejectedCount}</span>
+            <div className="att-stat-card" style={{ '--stat-color': 'var(--red)' } as React.CSSProperties}>
+              <span className="att-stat-value" style={{ color: 'var(--red)' }}>{rejectedCount}</span>
               <span className="att-stat-label">Rejected Requests</span>
             </div>
           </div>
@@ -162,25 +162,25 @@ export default function OvertimePage() {
                     <tr key={r.id} className="table-row">
                       <td>
                         <div className="table-user-cell">
-                          <div className="table-avatar" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
+                          <div className="table-avatar" style={{ background: 'var(--blue-soft)', color: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
                             {r.userAvatar}
                           </div>
                           <div>
                             <p className="table-user-name">{r.userName}</p>
-                            <p className="table-user-email" style={{ fontSize: '11px', color: '#64748b' }}>
+                            <p className="table-user-email" style={{ fontSize: '11px', color: 'var(--text-3)' }}>
                               {r.department || 'Unassigned'}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td>
-                        <span className="time-cell" style={{ color: '#e2e8f0' }}>
+                        <span className="time-cell" style={{ color: 'var(--text-1)' }}>
                           {new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'center', color: '#cbd5e1' }}>{r.regularHours.toFixed(1)}h</td>
-                      <td style={{ textAlign: 'center', color: '#f59e0b', fontWeight: 600 }}>{r.overtimeHours.toFixed(1)}h</td>
-                      <td style={{ color: '#94a3b8', fontSize: '13px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.reason}>
+                      <td style={{ textAlign: 'center', color: 'var(--text-1)' }}>{r.regularHours.toFixed(1)}h</td>
+                      <td style={{ textAlign: 'center', color: 'var(--yellow)', fontWeight: 600 }}>{r.overtimeHours.toFixed(1)}h</td>
+                      <td style={{ color: 'var(--text-3)', fontSize: '13px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.reason}>
                         {r.reason || '—'}
                       </td>
                       <td>
@@ -188,7 +188,7 @@ export default function OvertimePage() {
                           {STATUS_BADGES[r.status]?.label || r.status}
                         </span>
                         {r.reviewedBy && (
-                          <span style={{ display: 'block', fontSize: '10px', color: '#64748b', marginTop: '2px' }} title={`Reviewed by: ${r.reviewedBy}`}>
+                          <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-3)', marginTop: '2px' }} title={`Reviewed by: ${r.reviewedBy}`}>
                             By: {r.reviewedBy.split('@')[0]}
                           </span>
                         )}
@@ -200,20 +200,20 @@ export default function OvertimePage() {
                               <button
                                 className="table-action-btn"
                                 onClick={() => handleOpenReview(r, 'approved')}
-                                style={{ color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' }}
+                                style={{ color: 'var(--green)', border: '1px solid rgba(34, 197, 94, 0.3)', background: 'var(--green-soft)' }}
                               >
                                 Approve
                               </button>
                               <button
                                 className="table-action-btn"
                                 onClick={() => handleOpenReview(r, 'rejected')}
-                                style={{ color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}
+                                style={{ color: 'var(--red)', border: '1px solid rgba(239, 68, 68, 0.3)', background: 'var(--red-soft)' }}
                               >
                                 Reject
                               </button>
                             </div>
                           ) : (
-                            <span style={{ fontSize: '12px', color: '#475569' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>
                               {r.reviewNotes ? `Notes: ${r.reviewNotes}` : 'Reviewed'}
                             </span>
                           )}
@@ -252,23 +252,23 @@ export default function OvertimePage() {
         >
           <div
             style={{
-              background: '#0f172a',
-              border: '1px solid #334155',
+              background: 'var(--bg-surface-2)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '12px',
               padding: '24px',
               width: '100%',
               maxWidth: '420px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5)',
+              boxShadow: 'var(--glass-shadow)',
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '12px', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', color: '#f8fafc', fontWeight: 600 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-1)', fontWeight: 600 }}>
                 {actionType === 'approved' ? 'Approve Overtime Request' : 'Reject Overtime Request'}
               </h3>
               <button
                 onClick={() => { setReviewingRequest(null); setActionType(null); }}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer', padding: '4px' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-2)', fontSize: '20px', cursor: 'pointer', padding: '4px' }}
               >
                 ×
               </button>
@@ -276,14 +276,14 @@ export default function OvertimePage() {
 
             <form onSubmit={handleReviewSubmit}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                <p style={{ color: '#cbd5e1', fontSize: '14px', margin: 0 }}>
+                <p style={{ color: 'var(--text-2)', fontSize: '14px', margin: 0 }}>
                   Confirm review for <strong>{reviewingRequest.userName}</strong>'s request of{' '}
-                  <strong style={{ color: '#f59e0b' }}>{reviewingRequest.overtimeHours.toFixed(1)}h</strong> on{' '}
+                  <strong style={{ color: 'var(--yellow)' }}>{reviewingRequest.overtimeHours.toFixed(1)}h</strong> on{' '}
                   <strong>{new Date(reviewingRequest.date).toLocaleDateString()}</strong>.
                 </p>
 
                 <div style={{ marginTop: '8px' }}>
-                  <label htmlFor="notes" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                  <label htmlFor="notes" style={{ fontSize: '12px', color: 'var(--text-3)', display: 'block', marginBottom: '6px' }}>
                     Review Notes / Remarks (Optional)
                   </label>
                   <textarea
@@ -293,10 +293,10 @@ export default function OvertimePage() {
                     placeholder="e.g. Approved for weekend maintenance shift work."
                     style={{
                       width: '100%',
-                      background: '#0f172a',
-                      border: '1px solid #334155',
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border)',
                       borderRadius: '6px',
-                      color: '#f8fafc',
+                      color: 'var(--text-1)',
                       padding: '10px',
                       fontSize: '13px',
                       height: '80px',
@@ -311,7 +311,7 @@ export default function OvertimePage() {
                   type="button"
                   onClick={() => { setReviewingRequest(null); setActionType(null); }}
                   className="btn-ghost-sm"
-                  style={{ padding: '8px 16px', background: '#334155', color: '#f8fafc', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                  style={{ padding: '8px 16px', background: 'var(--bg-hover)', color: 'var(--text-1)', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>
@@ -352,21 +352,21 @@ export default function OvertimePage() {
         >
           <div
             style={{
-              background: '#0f172a',
-              border: '1px solid #334155',
+              background: 'var(--bg-surface-2)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '12px',
               padding: '24px',
               width: '100%',
               maxWidth: '420px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5)',
+              boxShadow: 'var(--glass-shadow)',
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '12px', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', color: '#f8fafc', fontWeight: 600 }}>Log Overtime</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-1)', fontWeight: 600 }}>Log Overtime</h3>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer', padding: '4px' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-2)', fontSize: '20px', cursor: 'pointer', padding: '4px' }}
               >
                 ×
               </button>
@@ -375,7 +375,7 @@ export default function OvertimePage() {
             <form onSubmit={handleLogSubmit}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                 <div>
-                  <label htmlFor="logDate" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                  <label htmlFor="logDate" style={{ fontSize: '12px', color: 'var(--text-3)', display: 'block', marginBottom: '6px' }}>
                     Date *
                   </label>
                   <input
@@ -386,10 +386,10 @@ export default function OvertimePage() {
                     onChange={e => setLogDate(e.target.value)}
                     style={{
                       width: '100%',
-                      background: '#0f172a',
-                      border: '1px solid #334155',
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border)',
                       borderRadius: '6px',
-                      color: '#f8fafc',
+                      color: 'var(--text-1)',
                       padding: '10px',
                       fontSize: '13px',
                     }}
@@ -398,7 +398,7 @@ export default function OvertimePage() {
 
                 <div style={{ display: 'flex', gap: '16px' }}>
                   <div style={{ flex: 1 }}>
-                    <label htmlFor="regHours" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                    <label htmlFor="regHours" style={{ fontSize: '12px', color: 'var(--text-3)', display: 'block', marginBottom: '6px' }}>
                       Regular Hours *
                     </label>
                     <input
@@ -410,17 +410,17 @@ export default function OvertimePage() {
                       onChange={e => setLogRegularHours(Number(e.target.value))}
                       style={{
                         width: '100%',
-                        background: '#0f172a',
-                        border: '1px solid #334155',
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border)',
                         borderRadius: '6px',
-                        color: '#f8fafc',
+                        color: 'var(--text-1)',
                         padding: '10px',
                         fontSize: '13px',
                       }}
                     />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label htmlFor="otHours" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                    <label htmlFor="otHours" style={{ fontSize: '12px', color: 'var(--text-3)', display: 'block', marginBottom: '6px' }}>
                       Overtime Hours *
                     </label>
                     <input
@@ -432,10 +432,10 @@ export default function OvertimePage() {
                       onChange={e => setLogOvertimeHours(Number(e.target.value))}
                       style={{
                         width: '100%',
-                        background: '#0f172a',
-                        border: '1px solid #334155',
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border)',
                         borderRadius: '6px',
-                        color: '#f8fafc',
+                        color: 'var(--text-1)',
                         padding: '10px',
                         fontSize: '13px',
                       }}
@@ -444,7 +444,7 @@ export default function OvertimePage() {
                 </div>
 
                 <div>
-                  <label htmlFor="logReason" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+                  <label htmlFor="logReason" style={{ fontSize: '12px', color: 'var(--text-3)', display: 'block', marginBottom: '6px' }}>
                     Reason / Description
                   </label>
                   <textarea
@@ -454,10 +454,10 @@ export default function OvertimePage() {
                     placeholder="e.g. Worked extra hours to complete sprint tasks."
                     style={{
                       width: '100%',
-                      background: '#0f172a',
-                      border: '1px solid #334155',
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border)',
                       borderRadius: '6px',
-                      color: '#f8fafc',
+                      color: 'var(--text-1)',
                       padding: '10px',
                       fontSize: '13px',
                       height: '80px',
@@ -472,7 +472,7 @@ export default function OvertimePage() {
                   type="button"
                   onClick={() => setShowModal(false)}
                   className="btn-ghost-sm"
-                  style={{ padding: '8px 16px', background: '#334155', color: '#f8fafc', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                  style={{ padding: '8px 16px', background: 'var(--bg-hover)', color: 'var(--text-1)', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                 >
                   Cancel
                 </button>

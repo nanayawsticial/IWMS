@@ -103,7 +103,7 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
           width: '450px',
           maxWidth: '90vw',
           height: '100vh',
-          background: 'rgba(15, 23, 42, 0.85)',
+          background: 'var(--bg-surface)',
           borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
           boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
           zIndex: 1000,
@@ -122,7 +122,7 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
         {/* Header */}
         <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ color: '#fff', fontSize: '16px', fontWeight: 600, margin: 0 }}>Task Details</h3>
+            <h3 style={{ color: 'var(--text-1)', fontSize: '16px', fontWeight: 600, margin: 0 }}>Task Details</h3>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>ID: {taskId}</span>
           </div>
           <button
@@ -148,13 +148,13 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
               Loading details...
             </div>
           ) : error || !task ? (
-            <div style={{ color: '#ef4444', textAlign: 'center', padding: '20px' }}>
+            <div style={{ color: 'var(--red)', textAlign: 'center', padding: '20px' }}>
               Error loading task details.
             </div>
           ) : (
             <div>
               {/* Task Title & Details */}
-              <h2 style={{ color: '#fff', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>{task.title}</h2>
+              <h2 style={{ color: 'var(--text-1)', fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>{task.title}</h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.5', marginBottom: '20px', whiteSpace: 'pre-line' }}>
                 {task.description || 'No description provided.'}
               </p>
@@ -162,7 +162,7 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
               <div style={{ marginBottom: '20px', padding: '14px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.14)', borderRadius: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Move Task</span>
-                  {updateStatus.isPending && <span style={{ fontSize: '11px', color: '#818cf8' }}>Updating...</span>}
+                  {updateStatus.isPending && <span style={{ fontSize: '11px', color: 'var(--indigo)' }}>Updating...</span>}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '6px' }}>
                   {STATUS_OPTIONS.map(status => {
@@ -188,7 +188,7 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                           borderRadius: '8px',
                           border: `1px solid ${active ? status.color : blockedForAssignee ? 'rgba(100,116,139,0.2)' : 'rgba(255,255,255,0.08)'}`,
                           background: active ? `${status.color}24` : blockedForAssignee ? 'rgba(100,116,139,0.05)' : 'rgba(15,23,42,0.65)',
-                          color: active ? status.color : blockedForAssignee ? '#334155' : 'var(--text-secondary)',
+                          color: active ? status.color : blockedForAssignee ? 'var(--text-3)' : 'var(--text-secondary)',
                           cursor: active || updateStatus.isPending ? 'default' : blockedForAssignee ? 'not-allowed' : 'pointer',
                           fontSize: '10px',
                           fontWeight: 700,
@@ -205,8 +205,8 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                 </div>
                 {/* Helper note for assignees */}
                 {user && user.id === task.assigneeId && user.id !== task.reviewerId && user.id !== task.creatorId && (
-                  <p style={{ fontSize: '10px', color: '#475569', marginTop: '8px', lineHeight: 1.4 }}>
-                    💡 Move to <strong style={{ color: '#f59e0b' }}>In Review</strong> when done.{task.reviewerName ? ` ${task.reviewerName}` : ' Your reviewer'} will verify and mark it Done.
+                  <p style={{ fontSize: '10px', color: 'var(--text-2)', marginTop: '8px', lineHeight: 1.4 }}>
+                    💡 Move to <strong style={{ color: 'var(--yellow)' }}>In Review</strong> when done.{task.reviewerName ? ` ${task.reviewerName}` : ' Your reviewer'} will verify and mark it Done.
                   </p>
                 )}
               </div>
@@ -216,15 +216,15 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                 <div style={{ marginBottom: '20px', padding: '16px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '16px' }}>🔍</span>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#10b981' }}>Task Awaiting Your Review</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--green)' }}>Task Awaiting Your Review</span>
                   </div>
                   <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
-                    <strong style={{ color: '#e2e8f0' }}>{task.assigneeName}</strong> completed this task and is waiting for your review and approval.
+                    <strong style={{ color: 'var(--text-1)' }}>{task.assigneeName}</strong> completed this task and is waiting for your review and approval.
                   </p>
                   <button
                     type="button"
                     className="btn-primary"
-                    style={{ background: '#10b981', color: '#fff', padding: '10px', fontSize: '12px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer', border: 'none', width: '100%', marginTop: '4px' }}
+                    style={{ background: 'var(--green)', color: '#fff', padding: '10px', fontSize: '12px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer', border: 'none', width: '100%', marginTop: '4px' }}
                     onClick={() => updateStatus.mutate('done')}
                     disabled={updateStatus.isPending}
                   >
@@ -238,7 +238,7 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                 <div style={{ marginBottom: '20px', padding: '14px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '14px' }}>⏳</span>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#f59e0b' }}>Awaiting Reviewer Approval</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--yellow)' }}>Awaiting Reviewer Approval</span>
                   </div>
                   <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
                     {task.reviewerName || 'Your reviewer'} has been notified and will verify your work. You'll be notified when it's approved.
@@ -250,31 +250,31 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px', padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Status</span>
-                  <span className="role-badge" style={{ marginTop: '4px', display: 'inline-block', background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
+                  <span className="role-badge" style={{ marginTop: '4px', display: 'inline-block', background: 'var(--indigo-soft)', color: 'var(--indigo)' }}>
                     {task.status.replace('_', ' ').toUpperCase()}
                   </span>
                 </div>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Priority</span>
-                  <span className="role-badge" style={{ marginTop: '4px', display: 'inline-block', background: task.priority === 'critical' ? '#ef444420' : '#f9731620', color: task.priority === 'critical' ? '#ef4444' : '#f97316' }}>
+                  <span className="role-badge" style={{ marginTop: '4px', display: 'inline-block', background: task.priority === 'critical' ? 'var(--red-soft)' : 'var(--orange-soft)', color: task.priority === 'critical' ? 'var(--red)' : 'var(--orange)' }}>
                     {task.priority.toUpperCase()}
                   </span>
                 </div>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Assignee</span>
-                  <span style={{ color: '#fff', fontSize: '13px', fontWeight: 500 }}>{task.assigneeName}</span>
+                  <span style={{ color: 'var(--text-1)', fontSize: '13px', fontWeight: 500 }}>{task.assigneeName}</span>
                 </div>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Due Date</span>
-                  <span style={{ color: '#fff', fontSize: '13px' }}>{task.dueDate}</span>
+                  <span style={{ color: 'var(--text-1)', fontSize: '13px' }}>{task.dueDate}</span>
                 </div>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Assigner / Creator</span>
-                  <span style={{ color: '#fff', fontSize: '13px', fontWeight: 500 }}>{task.creatorName || 'System'}</span>
+                  <span style={{ color: 'var(--text-1)', fontSize: '13px', fontWeight: 500 }}>{task.creatorName || 'System'}</span>
                 </div>
                 <div>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Designated Reviewer</span>
-                  <span style={{ color: '#fff', fontSize: '13px', fontWeight: 500 }}>{task.reviewerName || task.creatorName || 'System'}</span>
+                  <span style={{ color: 'var(--text-1)', fontSize: '13px', fontWeight: 500 }}>{task.reviewerName || task.creatorName || 'System'}</span>
                 </div>
               </div>
 
@@ -285,7 +285,7 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                   <span>{task.loggedHours}h / {task.estimatedHours}h ({Math.min(100, Math.round((task.loggedHours / task.estimatedHours) * 100)) || 0}%)</span>
                 </div>
                 <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', background: 'linear-gradient(90deg, #6366f1, #8b5cf6)', width: `${Math.min(100, (task.loggedHours / task.estimatedHours) * 100)}%` }} />
+                  <div style={{ height: '100%', background: 'linear-gradient(90deg, var(--indigo), var(--purple))', width: `${Math.min(100, (task.loggedHours / task.estimatedHours) * 100)}%` }} />
                 </div>
               </div>
 
@@ -320,7 +320,7 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                           <div className="table-avatar" style={{ width: '28px', height: '28px', fontSize: '13px', flexShrink: 0 }}>{c.userAvatar}</div>
                           <div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline', marginBottom: '3px' }}>
-                              <span style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>{c.userName}</span>
+                              <span style={{ color: 'var(--text-1)', fontSize: '13px', fontWeight: 600 }}>{c.userName}</span>
                               <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{new Date(c.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.4', margin: 0 }}>{c.content}</p>
@@ -359,12 +359,12 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                         <div key={l.id} style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
                           <div>
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '2px' }}>
-                              <span style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>{l.userName}</span>
+                              <span style={{ color: 'var(--text-1)', fontSize: '13px', fontWeight: 600 }}>{l.userName}</span>
                               <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>• {l.date}</span>
                             </div>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '12px', margin: 0 }}>{l.note || 'No description'}</p>
                           </div>
-                          <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
+                          <span style={{ background: 'var(--green-soft)', color: 'var(--green)', padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
                             +{l.hours}h
                           </span>
                         </div>

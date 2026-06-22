@@ -309,7 +309,7 @@ export default function WeeklyReportsPage() {
                       </span>
                     </td>
                     <td>{new Date(r.updatedAt).toLocaleDateString()}</td>
-                    <td style={{ color: r.reviewNotes ? '#e2e8f0' : '#475569', fontSize: '13px' }}>
+                    <td style={{ color: r.reviewNotes ? 'var(--text-1)' : 'var(--text-3)', fontSize: '13px' }}>
                       {r.reviewNotes || '—'}
                     </td>
                     <td style={{ textAlign: 'right' }}>
@@ -355,37 +355,37 @@ export default function WeeklyReportsPage() {
               <div>
                 <label className="input-label">Department</label>
                 <select className="input-select" value={filterDept} onChange={e => setFilterDept(e.target.value)}>
-                  <option value="" style={{ background: '#0f172a', color: '#f8fafc' }}>All Departments</option>
+                  <option value="">All Departments</option>
                   {departments.map((d: any) => (
-                    <option key={d.id} value={d.id} style={{ background: '#0f172a', color: '#f8fafc' }}>{d.name}</option>
+                    <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="input-label">Employee</label>
                 <select className="input-select" value={filterEmp} onChange={e => setFilterEmp(e.target.value)}>
-                  <option value="" style={{ background: '#0f172a', color: '#f8fafc' }}>All Employees</option>
+                  <option value="">All Employees</option>
                   {employees.map((emp: any) => (
-                    <option key={emp.id} value={emp.id} style={{ background: '#0f172a', color: '#f8fafc' }}>{emp.name}</option>
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="input-label">Week</label>
                 <select className="input-select" value={filterWeek} onChange={e => setFilterWeek(e.target.value)}>
-                  <option value="" style={{ background: '#0f172a', color: '#f8fafc' }}>All Weeks</option>
+                  <option value="">All Weeks</option>
                   {weeks.map(w => (
-                    <option key={w.startDate} value={w.startDate} style={{ background: '#0f172a', color: '#f8fafc' }}>{w.label}</option>
+                    <option key={w.startDate} value={w.startDate}>{w.label}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="input-label">Status</label>
                 <select className="input-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-                  <option value="" style={{ background: '#0f172a', color: '#f8fafc' }}>All Submitted</option>
-                  <option value="submitted" style={{ background: '#0f172a', color: '#f8fafc' }}>Pending Review</option>
-                  <option value="approved" style={{ background: '#0f172a', color: '#f8fafc' }}>Approved</option>
-                  <option value="needs_revision" style={{ background: '#0f172a', color: '#f8fafc' }}>Needs Revision</option>
+                  <option value="">All Submitted</option>
+                  <option value="submitted">Pending Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="needs_revision">Needs Revision</option>
                 </select>
               </div>
             </div>
@@ -456,12 +456,12 @@ export default function WeeklyReportsPage() {
 
       {/* VIEWING / REVIEW REPORT MODAL DETAIL VIEW */}
       {viewingReport && (
-        <div className="chart-card" style={{ padding: '24px', border: '1px solid #334155' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '20px' }}>
+        <div className="chart-card" style={{ padding: '24px', border: '1px solid var(--border-strong)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '20px' }}>
             <div>
-              <span className="live-badge" style={{ background: '#1e293b', color: '#94a3b8', marginBottom: '8px' }}>Weekly Activity Report</span>
+              <span className="live-badge" style={{ background: 'var(--bg-surface-2)', color: 'var(--text-3)', marginBottom: '8px' }}>Weekly Activity Report</span>
               <h2 style={{ fontSize: '24px', fontWeight: 700 }}>{viewingReport.user.name}</h2>
-              <p style={{ color: '#64748b', marginTop: '4px' }}>
+              <p style={{ color: 'var(--text-2)', marginTop: '4px' }}>
                 Department: <strong>{viewingReport.user.department?.name || 'General'}</strong> | Reporting Period: <strong>{viewingReport.startDate} to {viewingReport.endDate}</strong>
               </p>
             </div>
@@ -486,16 +486,16 @@ export default function WeeklyReportsPage() {
 
           {/* Section 1: Activities */}
           <div style={{ marginBottom: '24px' }}>
-            <h4 style={{ color: '#6366f1', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '6px', marginBottom: '12px' }}>
+            <h4 style={{ color: 'var(--blue)', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>
               1. Weekly Activities Overview
             </h4>
             {viewingReport.activities?.length === 0 ? (
-              <p style={{ color: '#475569', fontSize: '14px' }}>No activities logged.</p>
+              <p style={{ color: 'var(--text-3)', fontSize: '14px' }}>No activities logged.</p>
             ) : (
               <div className="table-responsive">
-                <table className="table" style={{ background: '#090d16', fontSize: '13px' }}>
+                <table className="table" style={{ background: 'var(--bg-surface)', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ background: '#101726' }}>
+                    <tr style={{ background: 'var(--bg-surface-2)' }}>
                       <th>Activity/Task Name</th>
                       <th>Type</th>
                       <th>Status</th>
@@ -513,7 +513,7 @@ export default function WeeklyReportsPage() {
                         <td>{a.impact || '—'}</td>
                         <td>{a.hoursSpent}</td>
                         <td>
-                          {a.links ? <a href={a.links} target="_blank" rel="noreferrer" style={{ color: '#6366f1' }}>Link</a> : '—'}
+                          {a.links ? <a href={a.links} target="_blank" rel="noreferrer" style={{ color: 'var(--blue)' }}>Link</a> : '—'}
                         </td>
                       </tr>
                     ))}
@@ -525,16 +525,16 @@ export default function WeeklyReportsPage() {
 
           {/* Section 2: Challenges */}
           <div style={{ marginBottom: '24px' }}>
-            <h4 style={{ color: '#f59e0b', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '6px', marginBottom: '12px' }}>
+            <h4 style={{ color: 'var(--yellow)', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>
               2. Challenges &amp; Roadblocks
             </h4>
             {viewingReport.roadblocks?.length === 0 ? (
-              <p style={{ color: '#475569', fontSize: '14px' }}>No roadblocks reported.</p>
+              <p style={{ color: 'var(--text-3)', fontSize: '14px' }}>No roadblocks reported.</p>
             ) : (
               <div className="table-responsive">
-                <table className="table" style={{ background: '#090d16', fontSize: '13px' }}>
+                <table className="table" style={{ background: 'var(--bg-surface)', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ background: '#101726' }}>
+                    <tr style={{ background: 'var(--bg-surface-2)' }}>
                       <th>Challenge Description</th>
                       <th>Impact</th>
                       <th>Mitigation Strategy</th>
@@ -562,16 +562,16 @@ export default function WeeklyReportsPage() {
 
           {/* Section 3: Plans */}
           <div style={{ marginBottom: '24px' }}>
-            <h4 style={{ color: '#10b981', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '6px', marginBottom: '12px' }}>
+            <h4 style={{ color: 'var(--green)', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>
               3. Upcoming Plans (Next Reporting Period)
             </h4>
             {viewingReport.plans?.length === 0 ? (
-              <p style={{ color: '#475569', fontSize: '14px' }}>No upcoming plans logged.</p>
+              <p style={{ color: 'var(--text-3)', fontSize: '14px' }}>No upcoming plans logged.</p>
             ) : (
               <div className="table-responsive">
-                <table className="table" style={{ background: '#090d16', fontSize: '13px' }}>
+                <table className="table" style={{ background: 'var(--bg-surface)', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ background: '#101726' }}>
+                    <tr style={{ background: 'var(--bg-surface-2)' }}>
                       <th>Planned Activity/Task</th>
                       <th>Assignment</th>
                       <th>Scope</th>
@@ -599,16 +599,16 @@ export default function WeeklyReportsPage() {
 
           {/* Section 4: Support Items */}
           <div style={{ marginBottom: '24px' }}>
-            <h4 style={{ color: '#3b82f6', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '6px', marginBottom: '12px' }}>
+            <h4 style={{ color: 'var(--blue)', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>
               4. Support &amp; Action Items
             </h4>
             {viewingReport.supportItems?.length === 0 ? (
-              <p style={{ color: '#475569', fontSize: '14px' }}>No support items requested.</p>
+              <p style={{ color: 'var(--text-3)', fontSize: '14px' }}>No support items requested.</p>
             ) : (
               <div className="table-responsive">
-                <table className="table" style={{ background: '#090d16', fontSize: '13px' }}>
+                <table className="table" style={{ background: 'var(--bg-surface)', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ background: '#101726' }}>
+                    <tr style={{ background: 'var(--bg-surface-2)' }}>
                       <th>Item Description</th>
                       <th>Support Type</th>
                       <th>Requested From</th>
@@ -634,16 +634,16 @@ export default function WeeklyReportsPage() {
 
           {/* Section 5: Insights */}
           <div style={{ marginBottom: '24px' }}>
-            <h4 style={{ color: '#a855f7', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '6px', marginBottom: '12px' }}>
+            <h4 style={{ color: 'var(--purple)', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>
               5. Learned Insights &amp; Suggestions
             </h4>
             {viewingReport.insights?.length === 0 ? (
-              <p style={{ color: '#475569', fontSize: '14px' }}>No insights logged.</p>
+              <p style={{ color: 'var(--text-3)', fontSize: '14px' }}>No insights logged.</p>
             ) : (
               <div className="table-responsive">
-                <table className="table" style={{ background: '#090d16', fontSize: '13px' }}>
+                <table className="table" style={{ background: 'var(--bg-surface)', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ background: '#101726' }}>
+                    <tr style={{ background: 'var(--bg-surface-2)' }}>
                       <th>Insight/Suggestion</th>
                       <th>Category</th>
                       <th>Potential Impact</th>
@@ -665,25 +665,25 @@ export default function WeeklyReportsPage() {
 
           {/* Section 6: Additional Notes */}
           <div style={{ marginBottom: '24px' }}>
-            <h4 style={{ color: '#94a3b8', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '6px', marginBottom: '12px' }}>
+            <h4 style={{ color: 'var(--text-3)', fontWeight: 600, fontSize: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>
               6. Additional Notes/Comments
             </h4>
-            <p style={{ background: '#090d16', padding: '12px', borderRadius: '8px', fontSize: '14px', whiteSpace: 'pre-wrap' }}>
+            <p style={{ background: 'var(--bg-surface-2)', padding: '12px', borderRadius: '8px', fontSize: '14px', whiteSpace: 'pre-wrap', border: '1px solid var(--border)' }}>
               {viewingReport.additionalNotes || 'No additional notes.'}
             </p>
           </div>
 
           {/* HOD Feedback Box */}
           {viewingReport.reviewNotes && (
-            <div style={{ background: '#1e293b', border: '1px solid #334155', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
-              <h5 style={{ fontWeight: 600, color: '#f59e0b', marginBottom: '6px' }}>HOD / Management Review Notes:</h5>
+            <div style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-strong)', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
+              <h5 style={{ fontWeight: 600, color: 'var(--yellow)', marginBottom: '6px' }}>HOD / Management Review Notes:</h5>
               <p style={{ fontSize: '14px' }}>{viewingReport.reviewNotes}</p>
             </div>
           )}
 
           {/* Manager Action Form */}
           {user && ['super_admin', 'admin', 'manager', 'hr_manager', 'team_lead'].includes(user.role) && viewingReport.userId !== user.id && (
-            <div style={{ borderTop: '1px solid #1e293b', paddingTop: '20px', marginTop: '20px' }}>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginTop: '20px' }}>
               <h4 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '10px' }}>Submit Review &amp; Evaluation</h4>
               <textarea 
                 className="input-textarea"
@@ -696,7 +696,7 @@ export default function WeeklyReportsPage() {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button 
                   className="btn-primary-sm" 
-                  style={{ background: '#10b981' }}
+                  style={{ background: 'var(--green)' }}
                   onClick={() => handleReview('approved')}
                   disabled={submittingReview}
                 >
@@ -704,7 +704,7 @@ export default function WeeklyReportsPage() {
                 </button>
                 <button 
                   className="btn-ghost-sm" 
-                  style={{ color: '#ef4444', border: '1px solid #ef444420' }}
+                  style={{ color: 'var(--red)', border: '1px solid var(--red-soft)' }}
                   onClick={() => handleReview('needs_revision')}
                   disabled={submittingReview}
                 >
@@ -719,12 +719,12 @@ export default function WeeklyReportsPage() {
       {/* REPORT FORM WORKSPACE EDITOR */}
       {editingReport && (
         <div className="chart-card" style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '20px' }}>
             <div>
               <h2 style={{ fontSize: '20px', fontWeight: 700 }}>
                 {editingReport.id ? 'Edit Weekly Report' : 'Draft New Weekly Report'}
               </h2>
-              <p style={{ color: '#64748b', fontSize: '13px', marginTop: '4px' }}>
+              <p style={{ color: 'var(--text-3)', fontSize: '13px', marginTop: '4px' }}>
                 Prepare your weekly activities, roadblocks, plans, and insights.
               </p>
             </div>
@@ -752,7 +752,7 @@ export default function WeeklyReportsPage() {
           {/* Table 1: Activities */}
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#6366f1' }}>1. Weekly Activities Overview</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--blue)' }}>1. Weekly Activities Overview</h3>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button className="btn-ghost-sm" onClick={handleAutoPopulate} style={{ fontSize: '12px' }}>
                   🔄 Auto-populate from Tasks
@@ -802,14 +802,14 @@ export default function WeeklyReportsPage() {
                         <input className="input-field" style={{ padding: '6px' }} value={act.links} onChange={e => updateActivity(idx, 'links', e.target.value)} placeholder="URL link" />
                       </td>
                       <td>
-                        <button style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} onClick={() => removeActivity(idx)}>❌</button>
+                        <button style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer' }} onClick={() => removeActivity(idx)}>❌</button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               {activities.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '16px', color: '#475569', fontSize: '13px' }}>
+                <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-3)', fontSize: '13px' }}>
                   No activities. Click "Auto-populate from Tasks" or add rows manually.
                 </div>
               )}
@@ -819,7 +819,7 @@ export default function WeeklyReportsPage() {
           {/* Table 2: Challenges */}
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#f59e0b' }}>2. Challenges &amp; Roadblocks</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--yellow)' }}>2. Challenges &amp; Roadblocks</h3>
               <button className="btn-primary-sm" onClick={addRoadblock} style={{ fontSize: '12px' }}>+ Add Row</button>
             </div>
             <div className="table-responsive">
@@ -844,19 +844,19 @@ export default function WeeklyReportsPage() {
                       <td><input className="input-field" style={{ padding: '6px' }} value={rb.supportRequired} onChange={e => updateRoadblock(idx, 'supportRequired', e.target.value)} placeholder="Guidance/Resources" /></td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={rb.responsibleParty} onChange={e => updateRoadblock(idx, 'responsibleParty', e.target.value)} placeholder="Responsible HOD" /></td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={rb.deadline} onChange={e => updateRoadblock(idx, 'deadline', e.target.value)} placeholder="YYYY-MM-DD" /></td>
-                      <td><button style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} onClick={() => removeRoadblock(idx)}>❌</button></td>
+                      <td><button style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer' }} onClick={() => removeRoadblock(idx)}>❌</button></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {roadblocks.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: '#475569', fontSize: '13px' }}>No roadblock entries.</div>}
+              {roadblocks.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: '13px' }}>No roadblock entries.</div>}
             </div>
           </div>
 
           {/* Table 3: Plans */}
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#10b981' }}>3. Upcoming Plans (Next Reporting Period)</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--green)' }}>3. Upcoming Plans (Next Reporting Period)</h3>
               <button className="btn-primary-sm" onClick={addPlan} style={{ fontSize: '12px' }}>+ Add Row</button>
             </div>
             <div className="table-responsive">
@@ -891,19 +891,19 @@ export default function WeeklyReportsPage() {
                       <td><input className="input-field" style={{ padding: '6px' }} value={pl.deliverables} onChange={e => updatePlan(idx, 'deliverables', e.target.value)} placeholder="Deliverables" /></td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={pl.targetDate} onChange={e => updatePlan(idx, 'targetDate', e.target.value)} placeholder="YYYY-MM-DD" /></td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={pl.dependencies} onChange={e => updatePlan(idx, 'dependencies', e.target.value)} placeholder="Dependencies" /></td>
-                      <td><button style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} onClick={() => removePlan(idx)}>❌</button></td>
+                      <td><button style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer' }} onClick={() => removePlan(idx)}>❌</button></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {plans.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: '#475569', fontSize: '13px' }}>No upcoming plans entries.</div>}
+              {plans.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: '13px' }}>No upcoming plans entries.</div>}
             </div>
           </div>
 
           {/* Table 4: Support Items */}
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#3b82f6' }}>4. Support &amp; Action Items Needed</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--blue)' }}>4. Support &amp; Action Items Needed</h3>
               <button className="btn-primary-sm" onClick={addSupportItem} style={{ fontSize: '12px' }}>+ Add Row</button>
             </div>
             <div className="table-responsive">
@@ -932,19 +932,19 @@ export default function WeeklyReportsPage() {
                         </select>
                       </td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={s.dueDate} onChange={e => updateSupportItem(idx, 'dueDate', e.target.value)} placeholder="YYYY-MM-DD" /></td>
-                      <td><button style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} onClick={() => removeSupportItem(idx)}>❌</button></td>
+                      <td><button style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer' }} onClick={() => removeSupportItem(idx)}>❌</button></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {supportItems.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: '#475569', fontSize: '13px' }}>No support requests entries.</div>}
+              {supportItems.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: '13px' }}>No support requests entries.</div>}
             </div>
           </div>
 
           {/* Table 5: Insights */}
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#a855f7' }}>5. Learned Insights &amp; Suggestions</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--purple)' }}>5. Learned Insights &amp; Suggestions</h3>
               <button className="btn-primary-sm" onClick={addInsight} style={{ fontSize: '12px' }}>+ Add Row</button>
             </div>
             <div className="table-responsive">
@@ -970,18 +970,18 @@ export default function WeeklyReportsPage() {
                         </select>
                       </td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={ins.impact} onChange={e => updateInsight(idx, 'impact', e.target.value)} placeholder="Improvement result" /></td>
-                      <td><button style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} onClick={() => removeInsight(idx)}>❌</button></td>
+                      <td><button style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer' }} onClick={() => removeInsight(idx)}>❌</button></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {insights.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: '#475569', fontSize: '13px' }}>No insights entries.</div>}
+              {insights.length === 0 && <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-3)', fontSize: '13px' }}>No insights entries.</div>}
             </div>
           </div>
 
           {/* Additional Notes Textarea */}
           <div style={{ marginBottom: '30px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#94a3b8', marginBottom: '10px' }}>6. Additional Notes/Comments</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-2)', marginBottom: '10px' }}>6. Additional Notes/Comments</h3>
             <textarea 
               className="input-textarea"
               placeholder="Any other comments or summary text..."
@@ -992,9 +992,9 @@ export default function WeeklyReportsPage() {
           </div>
 
           {/* Form Actions */}
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '20px' }}>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
             <button className="btn-ghost-sm" onClick={() => setEditingReport(null)}>Cancel</button>
-            <button className="btn-ghost-sm" style={{ border: '1px solid #6366f160', color: '#6366f1' }} onClick={() => saveReport(false)}>Save Draft</button>
+            <button className="btn-ghost-sm" style={{ border: '1px solid var(--blue-soft)', color: 'var(--blue)' }} onClick={() => saveReport(false)}>Save Draft</button>
             <button className="btn-primary-sm" onClick={() => saveReport(true)}>Submit Weekly Report</button>
           </div>
         </div>

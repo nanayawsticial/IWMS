@@ -200,11 +200,11 @@ export default function HolidaysPage() {
         </div>
         <div className="flex items-center gap-4">
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, opacity: 0.7 }}>
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'linear-gradient(to right, #7c3aed, #4f46e5)', display: 'inline-block' }} />
+            <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'linear-gradient(to right, var(--purple), var(--blue))', display: 'inline-block' }} />
             Public Holiday
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, opacity: 0.7 }}>
-            <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid #94a3b8', display: 'inline-block' }} />
+            <span style={{ width: 10, height: 10, borderRadius: '50%', border: '1.5px solid var(--text-3)', display: 'inline-block' }} />
             Work Day
           </span>
         </div>

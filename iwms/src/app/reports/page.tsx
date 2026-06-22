@@ -29,15 +29,15 @@ const WEEKLY_SHAPE = [
 ];
 
 const TT_STYLE = {
-  background: '#1e293b', border: '1px solid #334155',
-  borderRadius: '8px', color: '#e2e8f0', padding: '10px 14px', fontSize: '13px',
+  background: 'var(--bg-surface-2)', border: '1px solid var(--border)',
+  borderRadius: '8px', color: 'var(--text-1)', padding: '10px 14px', fontSize: '13px',
 };
 
 function CT({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div style={TT_STYLE}>
-      <p style={{ fontWeight: 600, marginBottom: 6, color: '#94a3b8' }}>{label}</p>
+      <p style={{ fontWeight: 600, marginBottom: 6, color: 'var(--text-2)' }}>{label}</p>
       {payload.map((p: any) => (
         <p key={p.name} style={{ color: p.color }}>{p.name}: <strong>{p.value}</strong></p>
       ))}
@@ -47,9 +47,9 @@ function CT({ active, payload, label }: any) {
 
 function SkeletonCard() {
   return (
-    <div className="kpi-card" style={{ '--kpi-color': '#334155' } as React.CSSProperties}>
-      <div style={{ height: 40, background: '#1e293b', borderRadius: 8, marginBottom: 12, animation: 'pulse 1.5s infinite' }} />
-      <div style={{ height: 24, width: '60%', background: '#1e293b', borderRadius: 6, animation: 'pulse 1.5s infinite' }} />
+    <div className="kpi-card" style={{ '--kpi-color': 'var(--border)' } as React.CSSProperties}>
+      <div style={{ height: 40, background: 'var(--bg-surface-2)', borderRadius: 8, marginBottom: 12, animation: 'pulse 1.5s infinite' }} />
+      <div style={{ height: 24, width: '60%', background: 'var(--bg-surface-2)', borderRadius: 6, animation: 'pulse 1.5s infinite' }} />
     </div>
   );
 }
@@ -85,11 +85,11 @@ export default function ReportsPage() {
   const taskCompletionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   const taskStatusCounts = [
-    { name: 'Done',        value: tasks.filter((t: any) => t.status === 'done').length,        color: '#10b981' },
-    { name: 'In Progress', value: tasks.filter((t: any) => t.status === 'in_progress').length, color: '#6366f1' },
-    { name: 'Review',      value: tasks.filter((t: any) => t.status === 'review').length,      color: '#f59e0b' },
-    { name: 'Todo',        value: tasks.filter((t: any) => t.status === 'todo').length,        color: '#64748b' },
-    { name: 'Backlog',     value: tasks.filter((t: any) => t.status === 'backlog').length,     color: '#334155' },
+    { name: 'Done',        value: tasks.filter((t: any) => t.status === 'done').length,        color: 'var(--green)' },
+    { name: 'In Progress', value: tasks.filter((t: any) => t.status === 'in_progress').length, color: 'var(--blue)' },
+    { name: 'Review',      value: tasks.filter((t: any) => t.status === 'review').length,      color: 'var(--yellow)' },
+    { name: 'Todo',        value: tasks.filter((t: any) => t.status === 'todo').length,        color: 'var(--text-3)' },
+    { name: 'Backlog',     value: tasks.filter((t: any) => t.status === 'backlog').length,     color: 'var(--text-2)' },
   ];
 
   // Dept performance derived from users + tasks
@@ -112,28 +112,28 @@ export default function ReportsPage() {
       label: 'Active Employees',
       value: isLoading ? '—' : activeEmployees,
       sub: `${users.filter((u: any) => u.status === 'inactive').length} inactive`,
-      color: '#6366f1',
+      color: 'var(--blue)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
     },
     {
       label: 'Attendance Rate Today',
       value: isLoading ? '—' : `${todayStats?.attendanceRate ?? 0}%`,
       sub: `${todayStats?.presentWithLate ?? 0} of ${todayStats?.totalEmployees ?? 0} present`,
-      color: '#10b981',
+      color: 'var(--green)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
     },
     {
       label: 'Task Completion Rate',
       value: isLoading ? '—' : `${taskCompletionRate}%`,
       sub: `${doneTasks} done of ${totalTasks} total`,
-      color: '#f59e0b',
+      color: 'var(--yellow)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>,
     },
     {
       label: 'In Progress Tasks',
       value: isLoading ? '—' : inProgressTasks,
       sub: `${tasks.filter((t: any) => t.status === 'review').length} in review`,
-      color: '#ef4444',
+      color: 'var(--red)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
     },
   ];
@@ -229,18 +229,18 @@ export default function ReportsPage() {
         <div className="chart-card chart-wide">
           <div className="chart-header">
             <h3 className="chart-title">Weekly Attendance Breakdown</h3>
-            <span style={{ fontSize: '12px', color: '#475569' }}>This week</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>This week</span>
           </div>
           <div style={{ width: '100%', height: 260 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={WEEKLY_SHAPE} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="day" stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
-                <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="day" stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 12 }} />
+                <YAxis stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 12 }} />
                 <Tooltip content={<CT />} />
-                <Bar dataKey="present" name="Present" fill="#22c55e" stackId="a" />
-                <Bar dataKey="late"    name="Late"    fill="#f59e0b" stackId="a" />
-                <Bar dataKey="absent"  name="Absent"  fill="#ef4444" stackId="a" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="present" name="Present" fill="var(--green)" stackId="a" />
+                <Bar dataKey="late"    name="Late"    fill="var(--yellow)" stackId="a" />
+                <Bar dataKey="absent"  name="Absent"  fill="var(--red)" stackId="a" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -280,18 +280,18 @@ export default function ReportsPage() {
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={deptData} margin={{ top: 5, right: 10, left: -20, bottom: 55 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="dept"
-                tick={{ fontSize: 10, fill: '#8892a4', angle: -35, textAnchor: 'end' }}
+                tick={{ fontSize: 10, fill: 'var(--text-2)', angle: -35, textAnchor: 'end' }}
                 height={55}
                 axisLine={false}
                 tickLine={false}
               />
-              <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
+              <YAxis stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 12 }} />
               <Tooltip content={<CT />} />
-              <Bar dataKey="attendance" name="Attendance %" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="tasks"      name="Task Rate %" fill="#10b981"  radius={[4, 4, 0, 0]} />
+              <Bar dataKey="attendance" name="Attendance %" fill="var(--blue)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="tasks"      name="Task Rate %" fill="var(--green)"  radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -301,17 +301,17 @@ export default function ReportsPage() {
           <div className="chart-header"><h3 className="chart-title">Leave Trends (6 Months)</h3></div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={LEAVE_DATA} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="month" stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
-              <YAxis stroke="#475569" tick={{ fill: '#64748b', fontSize: 12 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="month" stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 12 }} />
+              <YAxis stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 12 }} />
               <Tooltip content={<CT />} />
               <Legend
                 wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
-                formatter={(value) => <span style={{ color: '#8892a4' }}>{value}</span>}
+                formatter={(value) => <span style={{ color: 'var(--text-2)' }}>{value}</span>}
               />
-              <Line type="monotone" dataKey="sick"     name="Sick"     stroke="#ef4444" strokeWidth={2} dot={{ fill: '#ef4444', r: 3 }} />
-              <Line type="monotone" dataKey="vacation" name="Vacation" stroke="#6366f1" strokeWidth={2} dot={{ fill: '#6366f1', r: 3 }} />
-              <Line type="monotone" dataKey="personal" name="Personal" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 3 }} />
+              <Line type="monotone" dataKey="sick"     name="Sick"     stroke="var(--red)" strokeWidth={2} dot={{ fill: 'var(--red)', r: 3 }} />
+              <Line type="monotone" dataKey="vacation" name="Vacation" stroke="var(--blue)" strokeWidth={2} dot={{ fill: 'var(--blue)', r: 3 }} />
+              <Line type="monotone" dataKey="personal" name="Personal" stroke="var(--yellow)" strokeWidth={2} dot={{ fill: 'var(--yellow)', r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -321,10 +321,10 @@ export default function ReportsPage() {
           <div className="chart-header"><h3 className="chart-title">Automated Reports</h3></div>
           <div className="report-schedule">
             {[
-              { name: 'Weekly Attendance Summary', freq: 'Every Monday 8:00 AM',          status: 'active',   color: '#10b981' },
-              { name: 'Task Completion Report',    freq: 'Every Friday 5:00 PM',           status: 'active',   color: '#10b981' },
-              { name: 'Monthly HR Report',         freq: '1st of each month',              status: 'active',   color: '#10b981' },
-              { name: 'Overtime Alert',            freq: 'Daily if threshold exceeded',    status: 'watching', color: '#f59e0b' },
+              { name: 'Weekly Attendance Summary', freq: 'Every Monday 8:00 AM',          status: 'active',   color: 'var(--green)' },
+              { name: 'Task Completion Report',    freq: 'Every Friday 5:00 PM',           status: 'active',   color: 'var(--green)' },
+              { name: 'Monthly HR Report',         freq: '1st of each month',              status: 'active',   color: 'var(--green)' },
+              { name: 'Overtime Alert',            freq: 'Daily if threshold exceeded',    status: 'watching', color: 'var(--yellow)' },
             ].map((r, i) => (
               <div key={i} className="report-schedule-item">
                 <div className="report-schedule-info">
@@ -337,16 +337,16 @@ export default function ReportsPage() {
           </div>
 
           {/* Live Today snapshot */}
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #1e293b' }}>
-            <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Today&rsquo;s Snapshot</p>
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-3)', marginBottom: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Today&rsquo;s Snapshot</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {[
-                { label: 'Present',   value: todayStats?.present ?? 0,   color: '#10b981' },
-                { label: 'Late',      value: todayStats?.late ?? 0,      color: '#f59e0b' },
-                { label: 'Absent',    value: todayStats?.absent ?? 0,    color: '#ef4444' },
-                { label: 'On Leave',  value: todayStats?.onLeave ?? 0,   color: '#8b5cf6' },
+                { label: 'Present',   value: todayStats?.present ?? 0,   color: 'var(--green)' },
+                { label: 'Late',      value: todayStats?.late ?? 0,      color: 'var(--yellow)' },
+                { label: 'Absent',    value: todayStats?.absent ?? 0,    color: 'var(--red)' },
+                { label: 'On Leave',  value: todayStats?.onLeave ?? 0,   color: 'var(--purple)' },
               ].map(s => (
-                <div key={s.label} style={{ background: '#0f172a', borderRadius: '8px', padding: '10px 12px' }}>
+                <div key={s.label} style={{ background: 'var(--bg-surface-2)', borderRadius: '8px', padding: '10px 12px' }}>
                   <p className="kpi-value" style={{ fontSize: '1.5rem', color: s.color, margin: 0 }}>{s.value}</p>
                   <p className="kpi-label" style={{ margin: 0, marginTop: 2 }}>{s.label}</p>
                 </div>

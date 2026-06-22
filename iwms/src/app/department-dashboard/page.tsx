@@ -258,7 +258,7 @@ export default function DepartmentDashboardPage() {
               iconColor="var(--green)"
               subValue={`${kpis.activePercent}%`}
               subLabel="attendance rate"
-              subColor={kpis.activePercent > 85 ? '#22c55e' : '#ef4444'}
+              subColor={kpis.activePercent > 85 ? 'var(--green)' : 'var(--red)'}
             />
             <KpiCard
               label="Tasks in Backlog"

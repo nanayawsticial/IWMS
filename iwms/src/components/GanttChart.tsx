@@ -44,9 +44,9 @@ export default function GanttChart({ tasks, onTaskClick }: { tasks: Task[]; onTa
         <div style={{ display: 'grid', gridTemplateColumns: '250px repeat(10, 1fr)', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px', marginBottom: '10px' }}>
           <div style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600 }}>Task / Project</div>
           {days.map((day, idx) => (
-            <div key={idx} style={{ textAlign: 'center', color: idx === 0 ? '#818cf8' : 'var(--text-secondary)', fontSize: '11px', fontWeight: 600 }}>
+            <div key={idx} style={{ textAlign: 'center', color: idx === 0 ? 'var(--indigo)' : 'var(--text-secondary)', fontSize: '11px', fontWeight: 600 }}>
               <div>{day.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-              <div style={{ fontSize: '12px', color: '#fff', marginTop: '2px' }}>{day.getDate()}</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-1)', marginTop: '2px' }}>{day.getDate()}</div>
             </div>
           ))}
         </div>
@@ -113,7 +113,7 @@ export default function GanttChart({ tasks, onTaskClick }: { tasks: Task[]; onTa
                         width: `${(duration / 10) * 100}%`,
                         height: '14px',
                         top: '5px',
-                        background: PRIORITY_COLORS[task.priority] || '#6366f1',
+                        background: PRIORITY_COLORS[task.priority] || 'var(--indigo)',
                         borderRadius: '7px',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                         transition: 'opacity 0.2s',

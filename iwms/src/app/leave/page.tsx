@@ -110,9 +110,9 @@ export default function LeavePage() {
         marginBottom: '1.5rem',
       }}>
         {[
-          { label: 'Vacation Leave', key: 'vacation' as const, color: '#6366f1' },
-          { label: 'Sick Leave', key: 'sick' as const, color: '#ef4444' },
-          { label: 'Personal Leave', key: 'personal' as const, color: '#f59e0b' }
+          { label: 'Vacation Leave', key: 'vacation' as const, color: 'var(--blue)' },
+          { label: 'Sick Leave', key: 'sick' as const, color: 'var(--red)' },
+          { label: 'Personal Leave', key: 'personal' as const, color: 'var(--yellow)' }
         ].map(item => (
           <div key={item.key} className="kpi-card" style={{ borderLeft: `4px solid ${item.color}` }}>
             <div className="kpi-title">{item.label}</div>
@@ -136,7 +136,7 @@ export default function LeavePage() {
       {/* Pending approvals section for managers */}
       {isManagement && pendingApprovals.length > 0 && (
         <div style={{ marginBottom: '30px' }}>
-          <h3 className="section-title" style={{ marginBottom: '12px', fontSize: '16px', color: '#fff' }}>Pending Leave Approvals</h3>
+          <h3 className="section-title" style={{ marginBottom: '12px', fontSize: '16px', color: 'var(--text-1)' }}>Pending Leave Approvals</h3>
           <div className="table-card">
             <table className="data-table">
               <thead>
@@ -162,8 +162,8 @@ export default function LeavePage() {
                     </td>
                     <td>
                       <span className="role-badge" style={{
-                        background: l.type === 'vacation' ? '#6366f120' : l.type === 'sick' ? '#ef444420' : '#f59e0b20',
-                        color: l.type === 'vacation' ? '#6366f1' : l.type === 'sick' ? '#ef4444' : '#f59e0b'
+                        background: l.type === 'vacation' ? 'var(--blue-soft)' : l.type === 'sick' ? 'var(--red-soft)' : 'var(--yellow-soft)',
+                        color: l.type === 'vacation' ? 'var(--blue)' : l.type === 'sick' ? 'var(--red)' : 'var(--yellow)'
                       }}>
                         {l.type.toUpperCase()}
                       </span>
@@ -191,7 +191,7 @@ export default function LeavePage() {
 
       {/* History table */}
       <div>
-        <h3 className="section-title" style={{ marginBottom: '12px', fontSize: '16px', color: '#fff' }}>Leave History</h3>
+        <h3 className="section-title" style={{ marginBottom: '12px', fontSize: '16px', color: 'var(--text-1)' }}>Leave History</h3>
         <div className="table-card">
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
@@ -219,8 +219,8 @@ export default function LeavePage() {
                   <tr key={l.id} className="table-row">
                     <td>
                       <span className="role-badge" style={{
-                        background: l.type === 'vacation' ? '#6366f120' : l.type === 'sick' ? '#ef444420' : '#f59e0b20',
-                        color: l.type === 'vacation' ? '#6366f1' : l.type === 'sick' ? '#ef4444' : '#f59e0b'
+                        background: l.type === 'vacation' ? 'var(--blue-soft)' : l.type === 'sick' ? 'var(--red-soft)' : 'var(--yellow-soft)',
+                        color: l.type === 'vacation' ? 'var(--blue)' : l.type === 'sick' ? 'var(--red)' : 'var(--yellow)'
                       }}>
                         {l.type.toUpperCase()}
                       </span>
@@ -311,11 +311,11 @@ export default function LeavePage() {
               <button className="modal-close" onClick={() => setShowApprovalModal(null)}>✕</button>
             </div>
             <div className="modal-body">
-              <div style={{ marginBottom: '15px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <p style={{ color: '#fff', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>{showApprovalModal.userName}</p>
+              <div style={{ marginBottom: '15px', padding: '12px', background: 'var(--bg-surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <p style={{ color: 'var(--text-1)', fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>{showApprovalModal.userName}</p>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Department: {showApprovalModal.department}</p>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '8px' }}>
-                  <strong>Type:</strong> <span style={{ color: '#6366f1' }}>{showApprovalModal.type.toUpperCase()}</span>
+                  <strong>Type:</strong> <span style={{ color: 'var(--blue)' }}>{showApprovalModal.type.toUpperCase()}</span>
                 </p>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
                   <strong>Duration:</strong> {showApprovalModal.startDate} to {showApprovalModal.endDate} ({getDaysCount(showApprovalModal.startDate, showApprovalModal.endDate)} days)
@@ -341,7 +341,7 @@ export default function LeavePage() {
                 <button
                   type="button"
                   className="btn-primary"
-                  style={{ padding: '8px 16px', background: '#ef4444' }}
+                  style={{ padding: '8px 16px', background: 'var(--red)' }}
                   onClick={() => handleApproveReject('rejected')}
                   disabled={updateLeaveStatus.isPending}
                 >
@@ -350,7 +350,7 @@ export default function LeavePage() {
                 <button
                   type="button"
                   className="btn-primary"
-                  style={{ padding: '8px 16px', background: '#10b981' }}
+                  style={{ padding: '8px 16px', background: 'var(--green)' }}
                   onClick={() => handleApproveReject('approved')}
                   disabled={updateLeaveStatus.isPending}
                 >

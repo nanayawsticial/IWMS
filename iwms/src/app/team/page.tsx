@@ -11,30 +11,30 @@ const ROLE_LABELS: Record<string, string> = {
   manager: 'Manager', team_lead: 'Team Lead', employee: 'Employee',
 };
 const ROLE_COLORS: Record<string, string> = {
-  super_admin: '#ef4444', admin: '#6366f1', hr_manager: '#f59e0b',
-  manager: '#8b5cf6', team_lead: '#06b6d4', employee: '#10b981',
+  super_admin: 'var(--red)', admin: 'var(--indigo)', hr_manager: 'var(--yellow)',
+  manager: 'var(--purple)', team_lead: 'var(--teal)', employee: 'var(--green)',
 };
 const DEPT_COLORS: Record<string, string> = {
-  Engineering: '#6366f1', Product: '#8b5cf6', Design: '#ec4899',
-  HR: '#f59e0b', Marketing: '#10b981', Finance: '#06b6d4',
+  Engineering: 'var(--indigo)', Product: 'var(--purple)', Design: 'var(--pink)',
+  HR: 'var(--yellow)', Marketing: 'var(--green)', Finance: 'var(--teal)',
 };
 
 function getAvatarColor(name: string): { bg: string; color: string } {
   const initial = name.trim().toUpperCase()[0] || 'A'
   const code = initial.charCodeAt(0)
   const colors = [
-    { bg: 'rgba(59,130,246,0.15)',  color: '#3b82f6' },  // A-D
-    { bg: 'rgba(139,92,246,0.15)', color: '#8b5cf6' },  // E-H
-    { bg: 'rgba(20,184,166,0.15)', color: '#14b8a6' },  // I-L
-    { bg: 'rgba(249,115,22,0.15)', color: '#f97316' },  // M-P
-    { bg: 'rgba(34,197,94,0.15)',  color: '#22c55e' },  // Q-T
-    { bg: 'rgba(236,72,153,0.15)', color: '#ec4899' },  // U-Z
+    { bg: 'var(--blue-soft)',  color: 'var(--blue)' },  // A-D
+    { bg: 'var(--purple-soft)', color: 'var(--purple)' },  // E-H
+    { bg: 'var(--teal-soft)', color: 'var(--teal)' },  // I-L
+    { bg: 'var(--orange-soft)', color: 'var(--orange)' },  // M-P
+    { bg: 'var(--green-soft)',  color: 'var(--green)' },  // Q-T
+    { bg: 'var(--pink-soft)', color: 'var(--pink)' },  // U-Z
   ]
   return colors[Math.floor((code - 65) / 4.33)] || colors[0]
 }
 
 function UserCard({ user }: { user: any }) {
-  const deptColor = DEPT_COLORS[user.department] || '#6366f1';
+  const deptColor = DEPT_COLORS[user.department] || 'var(--indigo)';
   const avatarColors = getAvatarColor(user.name);
   return (
     <div
@@ -176,7 +176,7 @@ export default function TeamPage() {
       </div>
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#475569' }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-2)' }}>
           <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />Loading team...
         </div>
       ) : view === 'grid' ? (
@@ -268,7 +268,7 @@ export default function TeamPage() {
               </button>
             </div>
             {createUser.isError && (
-              <p style={{ color: '#ef4444', fontSize: '13px', padding: '0 24px 16px' }}>
+              <p style={{ color: 'var(--red)', fontSize: '13px', padding: '0 24px 16px' }}>
                 {(createUser.error as any)?.response?.data?.error || 'Failed to add employee'}
               </p>
             )}

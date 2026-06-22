@@ -278,7 +278,7 @@ export default function HrDashboardPage() {
                   iconColor="var(--red)"
                   subValue="Next 30 days"
                   subLabel="actions needed"
-                  subColor="#ef4444"
+                  subColor="var(--red)"
                 />
               </div>
 

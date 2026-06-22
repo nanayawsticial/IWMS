@@ -307,7 +307,7 @@ export default function FinancePage() {
                   iconColor="var(--accent)"
                   subValue={`${dashboard?.totalBudget > 0 ? Math.round((dashboard.totalSpent / dashboard.totalBudget) * 100) : 0}%`}
                   subLabel="budget utilization"
-                  subColor={(dashboard?.totalSpent ?? 0) <= (dashboard?.totalBudget ?? 0) ? '#22c55e' : '#ef4444'}
+                  subColor={(dashboard?.totalSpent ?? 0) <= (dashboard?.totalBudget ?? 0) ? 'var(--green)' : 'var(--red)'}
                 />
                 <KpiCard
                   label="Remaining Balance"

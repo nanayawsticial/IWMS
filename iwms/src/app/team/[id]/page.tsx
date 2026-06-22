@@ -197,7 +197,7 @@ export default function EmployeeProfilePage() {
   if (!employee) {
     return (
       <div className="page-content" style={{ textAlign: 'center', padding: '60px' }}>
-        <h2 style={{ color: '#ef4444' }}>Employee Not Found</h2>
+        <h2 style={{ color: 'var(--red)' }}>Employee Not Found</h2>
         <button className="btn-secondary" style={{ marginTop: '20px' }} onClick={() => router.push('/team')}>
           Back to Directory
         </button>
@@ -231,15 +231,15 @@ export default function EmployeeProfilePage() {
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', alignItems: 'start' }}>
         {/* Left Side: Profile Card */}
         <div className="glass-card" style={{ padding: '24px', textAlign: 'center' }}>
-          <div className="user-avatar" style={{ width: '80px', height: '80px', fontSize: '32px', margin: '0 auto 16px', background: 'rgba(99, 102, 241, 0.1)', border: '2px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', fontWeight: 700 }}>
+          <div className="user-avatar" style={{ width: '80px', height: '80px', fontSize: '32px', margin: '0 auto 16px', background: 'var(--indigo-soft)', border: '2px solid rgba(99, 102, 241, 0.3)', color: 'var(--indigo)', fontWeight: 700 }}>
             {employee.avatar}
           </div>
-          <h2 style={{ color: '#fff', fontSize: '18px', fontWeight: 700, margin: '0 0 4px 0' }}>{employee.name}</h2>
+          <h2 style={{ color: 'var(--text-1)', fontSize: '18px', fontWeight: 700, margin: '0 0 4px 0' }}>{employee.name}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 16px 0' }}>{employee.position}</p>
           
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '20px' }}>
-            <span className="dept-badge" style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8' }}>{employee.department}</span>
-            <span className="role-badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>{ROLE_LABELS[employee.role]}</span>
+            <span className="dept-badge" style={{ background: 'var(--indigo-soft)', color: 'var(--indigo)' }}>{employee.department}</span>
+            <span className="role-badge" style={{ background: 'var(--green-soft)', color: 'var(--green)' }}>{ROLE_LABELS[employee.role]}</span>
           </div>
 
           {user && ['super_admin', 'admin', 'hr_manager'].includes(user.role) && (
@@ -255,19 +255,19 @@ export default function EmployeeProfilePage() {
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Email Address</span>
-              <a href={`mailto:${employee.email}`} style={{ color: '#fff', fontSize: '13px', textDecoration: 'none' }}>{employee.email}</a>
+              <a href={`mailto:${employee.email}`} style={{ color: 'var(--text-1)', fontSize: '13px', textDecoration: 'none' }}>{employee.email}</a>
             </div>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Phone Number</span>
-              <span style={{ color: '#fff', fontSize: '13px' }}>{employee.phone || '—'}</span>
+              <span style={{ color: 'var(--text-1)', fontSize: '13px' }}>{employee.phone || '—'}</span>
             </div>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Employee Code (RFID UID)</span>
-              <span style={{ color: '#fff', fontSize: '13px' }}>{employee.employeeCode || '—'}</span>
+              <span style={{ color: 'var(--text-1)', fontSize: '13px' }}>{employee.employeeCode || '—'}</span>
             </div>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Joined Date</span>
-              <span style={{ color: '#fff', fontSize: '13px' }}>{employee.joinDate}</span>
+              <span style={{ color: 'var(--text-1)', fontSize: '13px' }}>{employee.joinDate}</span>
             </div>
             <div>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Account Status</span>
@@ -282,21 +282,21 @@ export default function EmployeeProfilePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Quick Metrics */}
           <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-            <div className="kpi-card" style={{ borderLeft: '4px solid #10b981' }}>
+            <div className="kpi-card" style={{ borderLeft: '4px solid var(--green)' }}>
               <div className="kpi-title">Attendance Rate</div>
               <div className="kpi-value-row">
                 <span className="kpi-value">{attendance.length > 0 ? Math.round((presentDays / attendance.length) * 100) : 100}%</span>
                 <span className="kpi-trend trend-positive">{presentDays} present</span>
               </div>
             </div>
-            <div className="kpi-card" style={{ borderLeft: '4px solid #6366f1' }}>
+            <div className="kpi-card" style={{ borderLeft: '4px solid var(--indigo)' }}>
               <div className="kpi-title">Completed Tasks</div>
               <div className="kpi-value-row">
                 <span className="kpi-value">{completedTasks}</span>
                 <span className="kpi-trend trend-neutral">{pendingTasks} pending</span>
               </div>
             </div>
-            <div className="kpi-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+            <div className="kpi-card" style={{ borderLeft: '4px solid var(--yellow)' }}>
               <div className="kpi-title">Approved Leaves</div>
               <div className="kpi-value-row">
                 <span className="kpi-value">{employeeLeaves.filter((l: any) => l.status === 'approved').length}</span>
@@ -307,27 +307,27 @@ export default function EmployeeProfilePage() {
 
           {/* Shift Schedule (This Week) */}
           <div className="table-card" style={{ padding: '20px' }}>
-            <h3 style={{ color: '#fff', fontSize: '15px', fontWeight: 600, margin: '0 0 12px 0' }}>Shift Schedule (This Week)</h3>
+            <h3 style={{ color: 'var(--text-1)', fontSize: '15px', fontWeight: 600, margin: '0 0 12px 0' }}>Shift Schedule (This Week)</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
               {weekDates.map(dateStr => {
                 const shiftForDay = shifts.find((s: any) => s.date === dateStr);
                 const dayName = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' });
                 const isManager = user && ['super_admin', 'admin', 'manager', 'hr_manager'].includes(user.role);
                 
-                let typeColor = '#64748b';
+                let typeColor = 'var(--text-2)';
                 let typeBg = 'rgba(100, 116, 139, 0.1)';
                 if (shiftForDay) {
-                  if (shiftForDay.type === 'day') { typeColor = '#10b981'; typeBg = 'rgba(16, 185, 129, 0.1)'; }
-                  else if (shiftForDay.type === 'night') { typeColor = '#8b5cf6'; typeBg = 'rgba(139, 92, 246, 0.1)'; }
-                  else if (shiftForDay.type === 'remote') { typeColor = '#06b6d4'; typeBg = 'rgba(6, 182, 212, 0.1)'; }
-                  else if (shiftForDay.type === 'off') { typeColor = '#f59e0b'; typeBg = 'rgba(245, 158, 11, 0.1)'; }
+                  if (shiftForDay.type === 'day') { typeColor = 'var(--green)'; typeBg = 'var(--green-soft)'; }
+                  else if (shiftForDay.type === 'night') { typeColor = 'var(--purple)'; typeBg = 'var(--purple-soft)'; }
+                  else if (shiftForDay.type === 'remote') { typeColor = 'var(--teal)'; typeBg = 'var(--teal-soft)'; }
+                  else if (shiftForDay.type === 'off') { typeColor = 'var(--yellow)'; typeBg = 'var(--yellow-soft)'; }
                 }
 
                 return (
-                  <div key={dateStr} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '12px 8px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '120px', justifyContent: 'space-between' }}>
+                  <div key={dateStr} style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 8px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '120px', justifyContent: 'space-between' }}>
                     <div>
                       <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{dayName}</p>
-                      <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#fff', fontWeight: 500 }}>{dateStr.slice(5)}</p>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: 'var(--text-1)', fontWeight: 500 }}>{dateStr.slice(5)}</p>
                     </div>
 
                     <div style={{ padding: '6px 4px', borderRadius: '6px', background: typeBg, color: typeColor, fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>
@@ -358,7 +358,7 @@ export default function EmployeeProfilePage() {
 
           {/* Recent Attendance Logs */}
           <div className="table-card" style={{ padding: '20px' }}>
-            <h3 style={{ color: '#fff', fontSize: '15px', fontWeight: 600, margin: '0 0 12px 0' }}>Recent Attendance Logs</h3>
+            <h3 style={{ color: 'var(--text-1)', fontSize: '15px', fontWeight: 600, margin: '0 0 12px 0' }}>Recent Attendance Logs</h3>
             {attendance.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No attendance records logged.</p>
             ) : (
@@ -397,7 +397,7 @@ export default function EmployeeProfilePage() {
 
           {/* Assigned Tasks List */}
           <div className="table-card" style={{ padding: '20px' }}>
-            <h3 style={{ color: '#fff', fontSize: '15px', fontWeight: 600, margin: '0 0 12px 0' }}>Assigned Tasks</h3>
+            <h3 style={{ color: 'var(--text-1)', fontSize: '15px', fontWeight: 600, margin: '0 0 12px 0' }}>Assigned Tasks</h3>
             {tasks.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No tasks currently assigned.</p>
             ) : (
@@ -424,8 +424,8 @@ export default function EmployeeProfilePage() {
                         </td>
                         <td>
                           <span className="role-badge" style={{
-                            background: task.priority === 'critical' ? '#ef444420' : task.priority === 'high' ? '#f9731620' : '#f59e0b20',
-                            color: task.priority === 'critical' ? '#ef4444' : task.priority === 'high' ? '#f97316' : '#f59e0b'
+                            background: task.priority === 'critical' ? 'var(--red-soft)' : task.priority === 'high' ? 'var(--orange-soft)' : 'var(--yellow-soft)',
+                            color: task.priority === 'critical' ? 'var(--red)' : task.priority === 'high' ? 'var(--orange)' : 'var(--yellow)'
                           }}>
                             {task.priority}
                           </span>
@@ -439,7 +439,7 @@ export default function EmployeeProfilePage() {
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{ width: '60px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', background: '#6366f1', width: `${progress}%` }} />
+                              <div style={{ height: '100%', background: 'var(--indigo)', width: `${progress}%` }} />
                             </div>
                             <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{progress}%</span>
                           </div>
@@ -463,7 +463,7 @@ export default function EmployeeProfilePage() {
               <button className="modal-close" onClick={() => setShowShiftModal(false)}>✕</button>
             </div>
             <form onSubmit={handleSaveShift} className="modal-body">
-              <div style={{ marginBottom: '15px', color: '#fff', fontSize: '13px' }}>
+              <div style={{ marginBottom: '15px', color: 'var(--text-1)', fontSize: '13px' }}>
                 Scheduling for: <strong>{employee.name}</strong> on <strong>{shiftDate}</strong>
               </div>
 
@@ -502,12 +502,12 @@ export default function EmployeeProfilePage() {
               </div>
 
               {shiftError && (
-                <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', textAlign: 'center', background: '#ef444415', padding: '8px', borderRadius: '6px', border: '1px solid #ef444430' }}>
+                <div style={{ color: 'var(--red)', fontSize: '13px', marginBottom: '16px', textAlign: 'center', background: 'var(--red-soft)', padding: '8px', borderRadius: '6px', border: '1px solid var(--red-soft)' }}>
                   {shiftError}
                 </div>
               )}
 
-              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
                 <button type="button" className="btn-ghost-sm" onClick={() => setShowShiftModal(false)} disabled={assignShift.isPending}>
                   Cancel
                 </button>
@@ -629,12 +629,12 @@ export default function EmployeeProfilePage() {
               </div>
 
               {editError && (
-                <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', textAlign: 'center', background: '#ef444415', padding: '8px', borderRadius: '6px', border: '1px solid #ef444430' }}>
+                <div style={{ color: 'var(--red)', fontSize: '13px', marginBottom: '16px', textAlign: 'center', background: 'var(--red-soft)', padding: '8px', borderRadius: '6px', border: '1px solid var(--red-soft)' }}>
                   {editError}
                 </div>
               )}
 
-              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
                 <button type="button" className="btn-ghost-sm" onClick={() => setShowEditProfileModal(false)} disabled={updateProfile.isPending}>
                   Cancel
                 </button>

@@ -31,18 +31,18 @@ type Status = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
 type Priority = 'critical' | 'high' | 'medium' | 'low';
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
-  { id: 'backlog',     label: 'Backlog',     color: '#475569' },
-  { id: 'todo',        label: 'To Do',       color: '#64748b' },
-  { id: 'in_progress', label: 'In Progress', color: '#6366f1' },
-  { id: 'review',      label: 'In Review',   color: '#f59e0b' },
-  { id: 'done',        label: 'Done',        color: '#10b981' },
+  { id: 'backlog',     label: 'Backlog',     color: 'var(--text-3)' },
+  { id: 'todo',        label: 'To Do',       color: 'var(--text-2)' },
+  { id: 'in_progress', label: 'In Progress', color: 'var(--blue)' },
+  { id: 'review',      label: 'In Review',   color: 'var(--yellow)' },
+  { id: 'done',        label: 'Done',        color: 'var(--green)' },
 ];
 
 const PRIORITY_CONFIG: Record<Priority, { color: string; bg: string; label: string }> = {
-  critical: { color: '#ef4444', bg: '#ef444415', label: 'Critical' },
-  high:     { color: '#f97316', bg: '#f9731615', label: 'High' },
-  medium:   { color: '#f59e0b', bg: '#f59e0b15', label: 'Medium' },
-  low:      { color: '#10b981', bg: '#10b98115', label: 'Low' },
+  critical: { color: 'var(--red)', bg: 'var(--red-soft)', label: 'Critical' },
+  high:     { color: 'var(--accent)', bg: 'var(--accent-soft)', label: 'High' },
+  medium:   { color: 'var(--yellow)', bg: 'var(--yellow-soft)', label: 'Medium' },
+  low:      { color: 'var(--green)', bg: 'var(--green-soft)', label: 'Low' },
 };
 
 function AvatarStack({ items }: { items: { label: string; color: string; bg: string; title?: string }[] }) {
@@ -95,11 +95,11 @@ function TaskCardContent({
     const initials = typeof task.assigneeAvatar === 'string' && task.assigneeAvatar.length <= 2
       ? task.assigneeAvatar
       : (task.assigneeName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || '?');
-    avatarItems.push({ label: initials, color: '#818cf8', bg: 'rgba(99,102,241,0.18)', title: task.assigneeName });
+    avatarItems.push({ label: initials, color: 'var(--blue)', bg: 'var(--blue-soft)', title: task.assigneeName });
   }
   if (task.reviewerName && task.reviewerName !== task.assigneeName) {
     const rInitials = task.reviewerName.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || '?';
-    avatarItems.push({ label: rInitials, color: '#34d399', bg: 'rgba(16,185,129,0.18)', title: `Reviewer: ${task.reviewerName}` });
+    avatarItems.push({ label: rInitials, color: 'var(--green)', bg: 'var(--green-soft)', title: `Reviewer: ${task.reviewerName}` });
   }
 
   const dueLabel = isOverdue

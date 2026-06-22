@@ -269,7 +269,7 @@ export default function DashboardPage() {
                     {tasks.filter((t: any) => t.assigneeId === user?.id && t.status === 'in_progress').length}
                   </span>
                   {' '}tasks in progress today &amp; your attendance rate this month is{' '}
-                  <span style={{ color: (stats?.attendanceRate || 0) > 0 ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                  <span style={{ color: (stats?.attendanceRate || 0) > 0 ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
                     {stats?.attendanceRate || 0}%
                   </span>
                 </p>
@@ -302,7 +302,7 @@ export default function DashboardPage() {
               iconColor="var(--green)"
               subValue={`${stats?.attendanceRate ?? 0}%`}
               subLabel="Present today"
-              subColor={(stats?.attendanceRate ?? 0) >= 85 ? '#22c55e' : '#ef4444'}
+              subColor={(stats?.attendanceRate ?? 0) >= 85 ? 'var(--green)' : 'var(--red)'}
               linkLabel="View log"
               onLinkClick={() => router.push('/attendance')}
             />
@@ -374,11 +374,11 @@ export default function DashboardPage() {
               label="New Hires"
               value={managementData?.headcount?.new_this_month ?? 4}
               icon={UserPlus}
-              iconBg="var(--kpi-pink-bg)"
-              iconColor="#ec4899"
+              iconBg="var(--purple-soft)"
+              iconColor="var(--purple)"
               subValue="+10% Join Rate"
               subLabel="MoM increase"
-              subColor="#22c55e"
+              subColor="var(--green)"
             />
           </div>
 
@@ -808,7 +808,7 @@ export default function DashboardPage() {
               iconColor={recentAttendance.find((a: any) => a.userId === user?.id)?.clockIn ? 'var(--green)' : 'var(--accent)'}
               subValue={recentAttendance.find((a: any) => a.userId === user?.id)?.status || 'Absent'}
               subLabel="today"
-              subColor={recentAttendance.find((a: any) => a.userId === user?.id)?.status === 'present' ? '#22c55e' : '#ef4444'}
+              subColor={recentAttendance.find((a: any) => a.userId === user?.id)?.status === 'present' ? 'var(--green)' : 'var(--red)'}
               linkLabel="View history"
               onLinkClick={() => router.push('/attendance')}
             />
@@ -859,20 +859,20 @@ export default function DashboardPage() {
                   <AreaChart data={WEEKLY_ATTENDANCE} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="presentGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="var(--green)" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="var(--green)" stopOpacity={0}/>
                       </linearGradient>
                       <linearGradient id="lateGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="var(--yellow)" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="var(--yellow)" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'var(--text-3)' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: 'var(--text-3)' }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="present" name="Present" stroke="#10b981" strokeWidth={2} fill="url(#presentGrad)" />
-                    <Area type="monotone" dataKey="late" name="Late" stroke="#f59e0b" strokeWidth={2} fill="url(#lateGrad)" />
+                    <Area type="monotone" dataKey="present" name="Present" stroke="var(--green)" strokeWidth={2} fill="url(#presentGrad)" />
+                    <Area type="monotone" dataKey="late" name="Late" stroke="var(--yellow)" strokeWidth={2} fill="url(#lateGrad)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>

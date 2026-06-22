@@ -6,10 +6,10 @@ import { attendanceApi, departmentsApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 
 const CELL_STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  present:  { bg: 'rgba(16, 185, 129, 0.15)', text: '#10b981', label: 'Present' },
-  late:     { bg: 'rgba(245, 158, 11, 0.15)', text: '#f59e0b', label: 'Late' },
-  absent:   { bg: 'rgba(239, 68, 68, 0.15)', text: '#ef4444', label: 'Absent' },
-  on_leave: { bg: 'rgba(139, 92, 246, 0.15)', text: '#8b5cf6', label: 'On Leave' },
+  present:  { bg: 'var(--green-soft)', text: 'var(--green)', label: 'Present' },
+  late:     { bg: 'var(--yellow-soft)', text: 'var(--yellow)', label: 'Late' },
+  absent:   { bg: 'var(--red-soft)', text: 'var(--red)', label: 'Absent' },
+  on_leave: { bg: 'var(--purple-soft)', text: 'var(--purple)', label: 'On Leave' },
 };
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -119,7 +119,7 @@ export default function TimesheetsPage() {
           <button className="btn-ghost-sm" onClick={handlePrevWeek} style={{ padding: '8px 12px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <span style={{ color: '#f8fafc', fontWeight: 600, minWidth: '180px', textAlign: 'center' }}>
+          <span style={{ color: 'var(--text-1)', fontWeight: 600, minWidth: '180px', textAlign: 'center' }}>
             {dateRangeDisplay}
           </span>
           <button className="btn-ghost-sm" onClick={handleNextWeek} style={{ padding: '8px 12px' }}>
@@ -137,7 +137,7 @@ export default function TimesheetsPage() {
               value={deptFilter}
               onChange={e => setDeptFilter(e.target.value)}
               className="form-input"
-              style={{ minWidth: '160px', background: '#0f172a', border: '1px solid #334155', color: '#f8fafc', padding: '8px 12px', borderRadius: '6px', fontSize: '14px' }}
+              style={{ minWidth: '160px', background: 'var(--bg-surface-2)', border: '1px solid var(--border)', color: 'var(--text-1)', padding: '8px 12px', borderRadius: '6px', fontSize: '14px' }}
             >
               <option value="all">All Departments</option>
               {departments.map((d: any) => (
@@ -164,7 +164,7 @@ export default function TimesheetsPage() {
       {/* Timesheet Grid Table */}
       <div className="table-card">
         {isTimesheetsLoading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#475569' }}>
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)' }}>
             <span className="spinner" style={{ margin: '0 auto 12px', display: 'block' }} />
             Loading Timesheets...
           </div>
@@ -190,12 +190,12 @@ export default function TimesheetsPage() {
                   <tr key={row.user.id} className="table-row">
                     <td className="sticky-left">
                       <div className="table-user-cell">
-                        <div className="table-avatar" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>
+                        <div className="table-avatar" style={{ background: 'var(--blue-soft)', color: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>
                           {row.user.avatar}
                         </div>
                         <div>
                           <p className="table-user-name">{row.user.name}</p>
-                          <p className="table-user-email" style={{ fontSize: '13px', color: '#64748b' }}>
+                          <p className="table-user-email" style={{ fontSize: '13px', color: 'var(--text-3)' }}>
                             {row.user.position} {row.user.department ? `· ${row.user.department}` : ''}
                           </p>
                         </div>
@@ -212,8 +212,8 @@ export default function TimesheetsPage() {
                           onClick={() => setSelectedCell({ employeeName: row.user.name, day })}
                           className="timesheet-cell-hover"
                           style={{
-                            background: hasHours ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
-                            color: hasHours ? '#22c55e' : '#ef4444',
+                            background: hasHours ? 'var(--green-soft)' : 'var(--red-soft)',
+                            color: hasHours ? 'var(--green)' : 'var(--red)',
                             textAlign: 'center',
                             fontSize: 13,
                             fontWeight: hasHours ? 500 : undefined,
@@ -226,17 +226,17 @@ export default function TimesheetsPage() {
                       );
                     })}
 
-                    <td style={{ textAlign: 'center', fontWeight: 700, color: '#f8fafc' }}>
+                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--text-1)' }}>
                       {row.totalHours.toFixed(1)}h
                     </td>
-                    <td style={{ textAlign: 'center', fontWeight: 600, color: row.overtimeHours > 0 ? '#f59e0b' : '#64748b' }}>
+                    <td style={{ textAlign: 'center', fontWeight: 600, color: row.overtimeHours > 0 ? 'var(--yellow)' : 'var(--text-3)' }}>
                       {row.overtimeHours > 0 ? `${row.overtimeHours.toFixed(1)}h` : '—'}
                     </td>
                   </tr>
                 ))}
                 {timesheets.length === 0 && (
                   <tr>
-                    <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
+                    <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-3)' }}>
                       No timesheets found.
                     </td>
                   </tr>
@@ -265,24 +265,24 @@ export default function TimesheetsPage() {
         >
           <div
             style={{
-              background: '#0f172a',
-              border: '1px solid #334155',
+              background: 'var(--bg-surface-2)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '12px',
               padding: '24px',
               width: '100%',
               maxWidth: '400px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5)',
+              boxShadow: 'var(--glass-shadow)',
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '12px', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', color: '#f8fafc', fontWeight: 600 }}>Attendance Details</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-1)', fontWeight: 600 }}>Attendance Details</h3>
               <button
                 onClick={() => setSelectedCell(null)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: 'var(--text-2)',
                   fontSize: '20px',
                   cursor: 'pointer',
                   padding: '4px',
@@ -295,43 +295,43 @@ export default function TimesheetsPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Employee</span>
-                <span style={{ fontSize: '15px', color: '#e2e8f0', fontWeight: 500 }}>{selectedCell.employeeName}</span>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block' }}>Employee</span>
+                <span style={{ fontSize: '15px', color: 'var(--text-1)', fontWeight: 500 }}>{selectedCell.employeeName}</span>
               </div>
 
               <div>
-                <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Date</span>
-                <span style={{ fontSize: '15px', color: '#e2e8f0', fontWeight: 500 }}>{formatCellDate(selectedCell.day.date)}</span>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block' }}>Date</span>
+                <span style={{ fontSize: '15px', color: 'var(--text-1)', fontWeight: 500 }}>{formatCellDate(selectedCell.day.date)}</span>
               </div>
 
               <div style={{ display: 'flex', gap: '24px' }}>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Clock In</span>
-                  <span style={{ fontSize: '15px', color: '#e2e8f0', fontWeight: 500 }}>{selectedCell.day.clockIn || '—'}</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block' }}>Clock In</span>
+                  <span style={{ fontSize: '15px', color: 'var(--text-1)', fontWeight: 500 }}>{selectedCell.day.clockIn || '—'}</span>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Clock Out</span>
-                  <span style={{ fontSize: '15px', color: '#e2e8f0', fontWeight: 500 }}>{selectedCell.day.clockOut || '—'}</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block' }}>Clock Out</span>
+                  <span style={{ fontSize: '15px', color: 'var(--text-1)', fontWeight: 500 }}>{selectedCell.day.clockOut || '—'}</span>
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '24px' }}>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Hours Worked</span>
-                  <span style={{ fontSize: '15px', color: '#e2e8f0', fontWeight: 600 }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block' }}>Hours Worked</span>
+                  <span style={{ fontSize: '15px', color: 'var(--text-1)', fontWeight: 600 }}>
                     {selectedCell.day.hoursWorked ? `${selectedCell.day.hoursWorked.toFixed(1)}h` : '—'}
                   </span>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '13px', color: '#64748b', display: 'block' }}>Method</span>
-                  <span style={{ fontSize: '14px', color: '#e2e8f0' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block' }}>Method</span>
+                  <span style={{ fontSize: '14px', color: 'var(--text-1)' }}>
                     {selectedCell.day.method ? (selectedCell.day.method === 'web' ? '🌐 Web App' : '🖐️ Hardware') : '—'}
                   </span>
                 </div>
               </div>
 
               <div>
-                <span style={{ fontSize: '13px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Status</span>
+                <span style={{ fontSize: '13px', color: 'var(--text-3)', display: 'block', marginBottom: '4px' }}>Status</span>
                 <span
                   style={{
                     display: 'inline-block',
@@ -339,8 +339,8 @@ export default function TimesheetsPage() {
                     borderRadius: '12px',
                     fontSize: '13px',
                     fontWeight: 600,
-                    background: CELL_STATUS_STYLES[selectedCell.day.status]?.bg || '#1e293b',
-                    color: CELL_STATUS_STYLES[selectedCell.day.status]?.text || '#64748b',
+                    background: CELL_STATUS_STYLES[selectedCell.day.status]?.bg || 'var(--bg-surface-2)',
+                    color: CELL_STATUS_STYLES[selectedCell.day.status]?.text || 'var(--text-3)',
                   }}
                 >
                   {CELL_STATUS_STYLES[selectedCell.day.status]?.label || selectedCell.day.status}
@@ -352,7 +352,7 @@ export default function TimesheetsPage() {
               <button
                 className="btn-ghost-sm"
                 onClick={() => setSelectedCell(null)}
-                style={{ padding: '8px 16px', background: '#334155', color: '#f8fafc', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                style={{ padding: '8px 16px', background: 'var(--bg-hover)', color: 'var(--text-1)', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
               >
                 Close
               </button>

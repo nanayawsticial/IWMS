@@ -35,6 +35,12 @@
   --purple-soft:    rgba(139,92,246,0.12);
   --teal:           #14b8a6;
   --teal-soft:      rgba(20,184,166,0.12);
+  --indigo:         #6366f1;
+  --indigo-soft:    rgba(99,102,241,0.12);
+  --orange:         #f97316;
+  --orange-soft:    rgba(249,115,22,0.12);
+  --pink:           #ec4899;
+  --pink-soft:      rgba(236,72,153,0.12);
 
   /* KPI icon backgrounds — match SmartHR colored circles */
   --kpi-orange-bg:  rgba(255,107,53,0.15);
@@ -45,13 +51,13 @@
   --kpi-pink-bg:    rgba(236,72,153,0.15);
 
   /* Typography scale */
-  --text-xs:   0.8125rem;
-  --text-sm:   0.875rem;
-  --text-base: 1rem;
-  --text-lg:   1.125rem;
-  --text-xl:   1.25rem;
-  --text-2xl:  1.5rem;
-  --text-3xl:  2rem;
+  --text-xs:   clamp(0.75rem, 0.75rem + 0.15vw, 0.8125rem);
+  --text-sm:   clamp(0.8125rem, 0.8125rem + 0.2vw, 0.875rem);
+  --text-base: clamp(0.875rem, 0.875rem + 0.35vw, 1rem);
+  --text-lg:   clamp(0.9375rem, 0.9375rem + 0.5vw, 1.125rem);
+  --text-xl:   clamp(1.0625rem, 1.0625rem + 0.6vw, 1.25rem);
+  --text-2xl:  clamp(1.25rem, 1.25rem + 0.8vw, 1.5rem);
+  --text-3xl:  clamp(1.5rem, 1.5rem + 1.2vw, 2rem);
 
   /* Shape */
   --radius-sm:  6px;
@@ -115,9 +121,9 @@
   --border-strong:  rgba(189, 107, 57, 0.24);
 
   /* Text */
-  --text-1:         #202a44; /* Navy text */
-  --text-2:         #64748b; /* Slate muted */
-  --text-3:         #94a3b8;
+  --text-1:         #202a44; /* Navy text (15.3:1 contrast) */
+  --text-2:         #576070; /* Navy muted (6.4:1 contrast) */
+  --text-3:         #627288; /* Slate muted (4.59:1 contrast) */
 
   /* Accent overrides to match terracotta in light mode */
   --accent:         #bd6b39;
@@ -131,6 +137,12 @@
   --blue-soft:      rgba(59,130,246,0.08);
   --purple-soft:    rgba(139,92,246,0.08);
   --teal-soft:      rgba(20,184,166,0.08);
+  --indigo:         #4f46e5;
+  --indigo-soft:    rgba(79,70,229,0.08);
+  --orange:         #ea580c;
+  --orange-soft:    rgba(234,88,12,0.08);
+  --pink:           #db2777;
+  --pink-soft:      rgba(219,39,119,0.08);
 
   --glass-bg:       rgba(255,255,255,0.7);
   --glass-border:   var(--border);
@@ -1125,7 +1137,9 @@ thead .sticky-left {
 .main-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: var(--bg-primary);
+  min-width: 0;
 }
 
 .page-content {
@@ -1478,7 +1492,8 @@ thead .sticky-left {
   display: flex;
   gap: 20px;
   align-items: start;
-  width: 100%;
+  min-width: 100%;
+  width: max-content;
   padding-bottom: 8px;
 }
 
@@ -1492,7 +1507,8 @@ thead .sticky-left {
   gap: 16px;
   min-height: 500px;
   flex: 1;
-  min-width: 200px;
+  min-width: 280px;
+  flex-shrink: 0;
 }
 
 .kanban-column-drop-active {
@@ -2929,8 +2945,8 @@ thead .sticky-left {
   }
 
   .page-content {
-    padding: 16px;
-    gap: 20px;
+    padding: clamp(12px, 3vw, 16px);
+    gap: clamp(16px, 4vw, 20px);
   }
 
   .app-container {
@@ -3846,6 +3862,11 @@ a:not(:disabled):active,
   height: 38px !important;
   box-sizing: border-box !important;
   flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+.tab-switcher::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* Ensure buttons within switchers sit concentricly and style properly */
@@ -3866,6 +3887,7 @@ a:not(:disabled):active,
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   min-height: 0 !important;
   transform: none !important; /* Disable scale click feedback inside tab switchers to prevent jitter */
+  flex-shrink: 0 !important;
 }
 
 .tab-switcher button:hover {
@@ -4495,6 +4517,23 @@ a:not(:disabled):active,
   color: var(--color-slate-muted);
   line-height: 1.6;
   margin-bottom: 28px;
+}
+
+/* Mobile Notifications Overlay */
+@media (max-width: 640px) {
+  .notif-dropdown {
+    position: fixed !important;
+    top: calc(var(--topbar-height) + 8px) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-height: calc(100vh - var(--topbar-height) - 24px) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+  }
+  .notif-list {
+    max-height: calc(100vh - var(--topbar-height) - 120px) !important;
+    overflow-y: auto !important;
+  }
 }
 
 /* Prevent focus outlines on charts and SVG elements */

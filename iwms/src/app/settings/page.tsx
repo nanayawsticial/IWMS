@@ -7,18 +7,18 @@ import { useSocketEvent } from '@/hooks/useSocket';
 
 // Telemetry visual helpers
 function getWifiColor(rssi: number | null | undefined): string {
-  if (rssi === null || rssi === undefined) return '#94a3b8'; // slate-400
-  if (rssi >= -55) return '#10b981'; // emerald-500
-  if (rssi >= -70) return '#6366f1'; // indigo-500
-  if (rssi >= -80) return '#f59e0b'; // amber-500
-  return '#ef4444'; // red-500
+  if (rssi === null || rssi === undefined) return 'var(--text-3)'; // slate-400
+  if (rssi >= -55) return 'var(--green)'; // emerald-500
+  if (rssi >= -70) return 'var(--indigo)'; // indigo-500
+  if (rssi >= -80) return 'var(--yellow)'; // amber-500
+  return 'var(--red)'; // red-500
 }
 
 function getBatteryColor(level: number | null | undefined): string {
-  if (level === null || level === undefined) return '#94a3b8'; // slate-400
-  if (level >= 80) return '#10b981'; // emerald-500
-  if (level >= 25) return '#fbbf24'; // amber-400
-  return '#ef4444'; // red-500
+  if (level === null || level === undefined) return 'var(--text-3)'; // slate-400
+  if (level >= 80) return 'var(--green)'; // emerald-500
+  if (level >= 25) return 'var(--yellow)'; // amber-400
+  return 'var(--red)'; // red-500
 }
 
 function formatUptime(seconds: number | null | undefined): string {
@@ -554,7 +554,7 @@ export default function SettingsPage() {
                       <h4>Employee Invite Code</h4>
                       <p>Share this code with employees so they can register and automatically join your organization.</p>
                       <div className="flex flex-wrap items-center gap-3 mt-3">
-                        <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '10px 16px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)', fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '1px', color: '#8b5cf6', fontWeight: 'bold' }}>
+                        <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '10px 16px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)', fontFamily: 'monospace', fontSize: '1.1rem', letterSpacing: '1px', color: 'var(--purple)', fontWeight: 'bold' }}>
                           {loadingOrg ? 'Loading...' : (orgDetails?.joinCode || '—')}
                         </div>
                         <button
@@ -590,7 +590,7 @@ export default function SettingsPage() {
                           type="button"
                           onClick={handleRegenerateJoinCode}
                           className="demo-btn"
-                          style={{ margin: 0, padding: '10px 16px', height: '100%', color: '#f43f5e', borderColor: 'rgba(244, 63, 94, 0.2)', background: 'rgba(244, 63, 94, 0.05)', flexShrink: 0 }}
+                          style={{ margin: 0, padding: '10px 16px', height: '100%', color: 'var(--red)', borderColor: 'var(--red-soft)', background: 'var(--red-soft)', flexShrink: 0 }}
                           disabled={loadingOrg}
                         >
                           Regenerate
@@ -728,7 +728,7 @@ export default function SettingsPage() {
                   onClick={() => setShowPairDeviceModal(true)}
                   className="btn-secondary-sm"
                   style={{
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo) 100%)',
                     color: '#fff',
                     border: 'none',
                     padding: '8px 16px',
@@ -749,7 +749,7 @@ export default function SettingsPage() {
           </div>
           <div className="settings-card bg-slate-900 border-indigo-500/20" style={{ padding: '24px' }}>
             <div className="hardware-preview-info">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" strokeWidth="2">
                 <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
                 <line x1="12" y1="19" x2="12" y2="22"/>
@@ -785,7 +785,7 @@ export default function SettingsPage() {
                             onClick={() => handleDeleteDevice(dev.id)}
                             style={{
                               background: 'rgba(239, 68, 68, 0.1)',
-                              color: '#ef4444',
+                              color: 'var(--red)',
                               border: 'none',
                               padding: '2px 8px',
                               borderRadius: '4px',
@@ -812,7 +812,7 @@ export default function SettingsPage() {
                         )}
                       </div>
 
-                      <div className="mt-3 text-slate-400 text-[11px]" style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid #1e293b', paddingTop: '8px' }}>
+                      <div className="mt-3 text-slate-400 text-[11px]" style={{ display: 'flex', flexDirection: 'column', gap: '2px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
                         {dev.lastSyncAt ? (
                           <span>Last Sync: {new Date(dev.lastSyncAt).toLocaleString()}</span>
                         ) : (
@@ -863,7 +863,7 @@ export default function SettingsPage() {
 
                             {/* Free RAM */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.4)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2.5">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="2.5">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                 <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
                               </svg>
@@ -877,7 +877,7 @@ export default function SettingsPage() {
 
                             {/* Uptime */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(15, 23, 42, 0.4)', padding: '5px 8px', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2.5">
                                 <circle cx="12" cy="12" r="10" />
                                 <polyline points="12 6 12 12 16 14" />
                               </svg>
@@ -899,7 +899,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #1e293b' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
                       {isAdmin && (
                         <button
                           onClick={() => handleProvisionDeviceKey(dev)}
@@ -947,7 +947,7 @@ export default function SettingsPage() {
             <h3 className="settings-sec-title">Biometric Event Simulator</h3>
             <div className="settings-card bg-slate-900 border-indigo-500/20" style={{ padding: '24px' }}>
               <div className="hardware-preview-info mb-6">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2">
                   <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
                   <line x1="12" y1="18" x2="12.01" y2="18" strokeWidth="4" strokeLinecap="round" />
                   <path d="M10 6h4M9 10h6" />
@@ -1041,7 +1041,7 @@ export default function SettingsPage() {
           </div>
           <div className="settings-card bg-slate-900 border-indigo-500/20" style={{ padding: '24px' }}>
             <div className="hardware-preview-info mb-6">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2">
                 <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8Z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg>
@@ -1060,7 +1060,7 @@ export default function SettingsPage() {
                 <p className="text-slate-400 text-sm">No geo-fence zones configured. Web clock-in allows any location.</p>
               ) : (
                 zones.map((zone) => (
-                  <div key={zone.id} className="geofence-card" style={{ background: '#0b1329', border: '1px solid #1e293b' }}>
+                  <div key={zone.id} className="geofence-card" style={{ background: 'var(--bg-page)', border: '1px solid var(--border)' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <h5 className="text-white font-semibold">{zone.name}</h5>
@@ -1096,17 +1096,17 @@ export default function SettingsPage() {
               <button className="modal-close" onClick={() => { setShowMfaSetupModal(false); setMfaSetupData(null); }}>✕</button>
             </div>
             <form onSubmit={handleVerifyMfaSetup} className="modal-body">
-              <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '16px', lineHeight: '1.5' }}>
+              <p style={{ color: 'var(--text-2)', fontSize: '13px', marginBottom: '16px', lineHeight: '1.5' }}>
                 Scan this QR code with your Authenticator app to set up MFA.
               </p>
               
-              <div style={{ background: '#fff', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'center', marginBottom: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <div style={{ background: 'var(--bg-surface)', padding: '12px', borderRadius: '12px', display: 'flex', justifyContent: 'center', marginBottom: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                 <img src={mfaSetupData.qrCodeUrl} alt="MFA QR Code" style={{ width: '180px', height: '180px' }} />
               </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <label className="form-label">Or enter code manually:</label>
-                <div style={{ background: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #1e293b', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'center', color: '#6366f1' }}>
+                <div style={{ background: 'var(--bg-surface)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'center', color: 'var(--indigo)' }}>
                   {mfaSetupData.secret}
                 </div>
               </div>
@@ -1125,12 +1125,12 @@ export default function SettingsPage() {
               </div>
 
               {mfaError && (
-                <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', textAlign: 'center', background: '#ef444415', padding: '8px', borderRadius: '6px', border: '1px solid #ef444430' }}>
+                <div style={{ color: 'var(--red)', fontSize: '13px', marginBottom: '16px', textAlign: 'center', background: 'var(--red-soft)', padding: '8px', borderRadius: '6px', border: '1px solid var(--red-soft)' }}>
                   {mfaError}
                 </div>
               )}
 
-              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
                 <button type="button" className="btn-ghost-sm" onClick={() => { setShowMfaSetupModal(false); setMfaSetupData(null); }} disabled={loading}>
                   Cancel
                 </button>
@@ -1152,7 +1152,7 @@ export default function SettingsPage() {
               <button className="modal-close" onClick={() => setShowMfaDisableModal(false)}>✕</button>
             </div>
             <form onSubmit={handleDisableMfa} className="modal-body">
-              <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '16px', lineHeight: '1.5' }}>
+              <p style={{ color: 'var(--text-2)', fontSize: '13px', marginBottom: '16px', lineHeight: '1.5' }}>
                 For security reasons, please enter your 6-digit authenticator code to confirm disabling MFA.
               </p>
 
@@ -1175,11 +1175,11 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
                 <button type="button" className="btn-ghost-sm" onClick={() => setShowMfaDisableModal(false)} disabled={loading}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary-sm" style={{ background: '#ef4444', color: '#fff' }} disabled={loading || mfaDisableCode.length !== 6}>
+                <button type="submit" className="btn-primary-sm" style={{ background: 'var(--red)', color: '#fff' }} disabled={loading || mfaDisableCode.length !== 6}>
                   {loading ? 'Disabling...' : 'Confirm Disable'}
                 </button>
               </div>
@@ -1293,7 +1293,7 @@ export default function SettingsPage() {
                 </label>
               </div>
 
-              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px', marginTop: '20px' }}>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '20px' }}>
                 <button type="button" className="btn-ghost-sm" onClick={() => setShowAddDeviceModal(false)}>
                   Cancel
                 </button>
@@ -1362,11 +1362,11 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px', marginTop: '20px' }}>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '20px' }}>
                 <button type="button" className="btn-ghost-sm" onClick={() => setShowPairDeviceModal(false)} disabled={pairing}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary-sm" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', border: 'none' }} disabled={pairing || pairCode.length !== 6 || !pairName}>
+                <button type="submit" className="btn-primary-sm" style={{ background: 'linear-gradient(135deg, var(--indigo) 0%, var(--indigo) 100%)', border: 'none' }} disabled={pairing || pairCode.length !== 6 || !pairName}>
                   {pairing ? 'Pairing...' : 'Pair Device'}
                 </button>
               </div>
@@ -1389,10 +1389,10 @@ export default function SettingsPage() {
               </p>
               <div
                 style={{
-                  background: '#020617',
-                  border: '1px solid #1e293b',
+                  background: 'var(--bg-page)',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
-                  color: '#93c5fd',
+                  color: 'var(--blue)',
                   fontFamily: 'monospace',
                   fontSize: '12px',
                   lineHeight: 1.5,
@@ -1406,7 +1406,7 @@ export default function SettingsPage() {
                 Last four: {provisionedKey.apiKeyLast4}
               </p>
             </div>
-            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
               <button type="button" className="btn-primary-sm" onClick={() => setProvisionedKey(null)}>
                 Done
               </button>
@@ -1485,7 +1485,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '12px', marginTop: '20px' }}>
+              <div className="modal-footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '20px' }}>
                 <button type="button" className="btn-ghost-sm" onClick={() => setShowAddZoneModal(false)}>
                   Cancel
                 </button>
@@ -1535,14 +1535,14 @@ export default function SettingsPage() {
                               width: '28px',
                               height: '28px',
                               borderRadius: '50%',
-                              background: '#1e293b',
-                              color: '#fff',
+                              background: 'var(--bg-surface-2)',
+                              color: 'var(--text-1)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               fontSize: '11px',
                               fontWeight: 'bold',
-                              border: '1px solid #334155'
+                              border: '1px solid var(--border-strong)'
                             }}>
                               {log.userAvatar || '?'}
                             </span>

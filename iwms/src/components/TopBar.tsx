@@ -364,15 +364,15 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
   };
 
   const ROLE_COLORS: Record<string, string> = {
-    super_admin: '#ef4444',
-    admin: '#6366f1',
-    hr_manager: '#f59e0b',
-    manager: '#8b5cf6',
-    team_lead: '#06b6d4',
-    employee: '#10b981',
+    super_admin: 'var(--red)',
+    admin: 'var(--indigo)',
+    hr_manager: 'var(--yellow)',
+    manager: 'var(--purple)',
+    team_lead: 'var(--teal)',
+    employee: 'var(--green)',
   };
   
-  const avatarColor = user ? (ROLE_COLORS[user.role] || '#6366f1') : '#6366f1';
+  const avatarColor = user ? (ROLE_COLORS[user.role] || 'var(--indigo)') : 'var(--indigo)';
 
   return (
     <header className="topbar">
@@ -570,7 +570,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
                           <p className="notif-text" style={{ fontSize: '13px', margin: 0, color: 'var(--text-primary)', lineHeight: '1.4' }}>{n.text}</p>
                           {n.metadata?.uid && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-                              <code style={{ fontFamily: 'monospace', fontSize: '12px', background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}>
+                              <code style={{ fontFamily: 'monospace', fontSize: '12px', background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-1)' }}>
                                 {n.metadata.uid}
                               </code>
                               <button
@@ -580,7 +580,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
                                   const target = e.currentTarget;
                                   const originalText = target.innerText;
                                   target.innerText = 'Copied!';
-                                  target.style.background = '#10b981';
+                                  target.style.background = 'var(--green)';
                                   setTimeout(() => {
                                     target.innerText = originalText;
                                     target.style.background = 'var(--accent)';
@@ -606,7 +606,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
                             color: 'var(--text-muted)', padding: '2px', display: 'flex',
                             alignItems: 'center', justifyContent: 'center', borderRadius: '4px'
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
                           onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none'; }}
                           title="Dismiss"
                         >
@@ -674,10 +674,10 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
                       padding: '9px 12px', background: 'none', border: 'none',
-                      borderRadius: '8px', cursor: 'pointer', color: '#ef4444', fontSize: '13px',
+                      borderRadius: '8px', cursor: 'pointer', color: 'var(--red)', fontSize: '13px',
                       transition: 'background 0.15s',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#ef444415')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--red-soft)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                   >
                     <LogOut size={15} />
