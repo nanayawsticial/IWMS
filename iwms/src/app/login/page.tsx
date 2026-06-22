@@ -269,7 +269,7 @@ export default function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="new-auth-input"
-                        placeholder="you@company.com"
+                        placeholder="you@stemaide.com"
                         required
                       />
                       <Mail size={16} className="new-auth-input-icon" />

@@ -232,7 +232,7 @@ function RegisterPageContent() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="new-auth-input"
-                      placeholder="john@company.com"
+                      placeholder="john@stemaide.com"
                       required
                     />
                     <Mail size={16} className="new-auth-input-icon" />

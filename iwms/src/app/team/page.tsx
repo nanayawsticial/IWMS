@@ -233,7 +233,7 @@ export default function TeamPage() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Email *</label>
-                  <input className="form-input" type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} placeholder="john@company.com" />
+                  <input className="form-input" type="email" value={newUser.email} onChange={e => setNewUser(p => ({ ...p, email: e.target.value }))} placeholder="john@stemaide.com" />
                 </div>
               </div>
               <div className="form-row">

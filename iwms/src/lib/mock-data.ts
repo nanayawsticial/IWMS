@@ -62,18 +62,18 @@ export const DEPARTMENTS: Department[] = [
 ];
 
 export const USERS: User[] = [
-  { id: 'u1', name: 'Alex Thompson', email: 'alex@company.com', role: 'admin', department: 'Engineering', position: 'CTO', avatar: 'AT', status: 'active', joinDate: '2020-01-15', phone: '+1-555-0101' },
-  { id: 'u2', name: 'Sarah Johnson', email: 'sarah@company.com', role: 'manager', department: 'Engineering', position: 'Engineering Manager', avatar: 'SJ', status: 'active', joinDate: '2020-03-22', phone: '+1-555-0102' },
-  { id: 'u3', name: 'Michael Chen', email: 'michael@company.com', role: 'manager', department: 'Product', position: 'Product Manager', avatar: 'MC', status: 'active', joinDate: '2021-06-10', phone: '+1-555-0103' },
-  { id: 'u4', name: 'Emma Davis', email: 'emma@company.com', role: 'team_lead', department: 'Design', position: 'Design Lead', avatar: 'ED', status: 'active', joinDate: '2021-08-05', phone: '+1-555-0104' },
-  { id: 'u5', name: 'James Wilson', email: 'james@company.com', role: 'hr_manager', department: 'HR', position: 'HR Manager', avatar: 'JW', status: 'active', joinDate: '2019-11-01', phone: '+1-555-0105' },
-  { id: 'u6', name: 'Olivia Brown', email: 'olivia@company.com', role: 'manager', department: 'Marketing', position: 'Marketing Manager', avatar: 'OB', status: 'active', joinDate: '2022-01-20', phone: '+1-555-0106' },
-  { id: 'u7', name: 'Daniel Lee', email: 'daniel@company.com', role: 'manager', department: 'Finance', position: 'Finance Manager', avatar: 'DL', status: 'active', joinDate: '2020-07-14', phone: '+1-555-0107' },
-  { id: 'u8', name: 'Sophia Martinez', email: 'sophia@company.com', role: 'employee', department: 'Engineering', position: 'Senior Developer', avatar: 'SM', status: 'active', joinDate: '2022-03-08', phone: '+1-555-0108' },
-  { id: 'u9', name: 'Liam Anderson', email: 'liam@company.com', role: 'employee', department: 'Engineering', position: 'Developer', avatar: 'LA', status: 'active', joinDate: '2023-01-15', phone: '+1-555-0109' },
-  { id: 'u10', name: 'Ava Thomas', email: 'ava@company.com', role: 'employee', department: 'Design', position: 'UI/UX Designer', avatar: 'AT', status: 'active', joinDate: '2022-09-12', phone: '+1-555-0110' },
-  { id: 'u11', name: 'Noah Jackson', email: 'noah@company.com', role: 'employee', department: 'Marketing', position: 'Content Specialist', avatar: 'NJ', status: 'inactive', joinDate: '2021-04-20', phone: '+1-555-0111' },
-  { id: 'u12', name: 'Isabella White', email: 'isabella@company.com', role: 'employee', department: 'Product', position: 'Product Analyst', avatar: 'IW', status: 'active', joinDate: '2023-05-01', phone: '+1-555-0112' },
+  { id: 'u1', name: 'Alex Thompson', email: 'alex@stemaide.com', role: 'admin', department: 'Engineering', position: 'CTO', avatar: 'AT', status: 'active', joinDate: '2020-01-15', phone: '+1-555-0101' },
+  { id: 'u2', name: 'Sarah Johnson', email: 'sarah@stemaide.com', role: 'manager', department: 'Engineering', position: 'Engineering Manager', avatar: 'SJ', status: 'active', joinDate: '2020-03-22', phone: '+1-555-0102' },
+  { id: 'u3', name: 'Michael Chen', email: 'michael@stemaide.com', role: 'manager', department: 'Product', position: 'Product Manager', avatar: 'MC', status: 'active', joinDate: '2021-06-10', phone: '+1-555-0103' },
+  { id: 'u4', name: 'Emma Davis', email: 'emma@stemaide.com', role: 'team_lead', department: 'Design', position: 'Design Lead', avatar: 'ED', status: 'active', joinDate: '2021-08-05', phone: '+1-555-0104' },
+  { id: 'u5', name: 'James Wilson', email: 'james@stemaide.com', role: 'hr_manager', department: 'HR', position: 'HR Manager', avatar: 'JW', status: 'active', joinDate: '2019-11-01', phone: '+1-555-0105' },
+  { id: 'u6', name: 'Olivia Brown', email: 'olivia@stemaide.com', role: 'manager', department: 'Marketing', position: 'Marketing Manager', avatar: 'OB', status: 'active', joinDate: '2022-01-20', phone: '+1-555-0106' },
+  { id: 'u7', name: 'Daniel Lee', email: 'daniel@stemaide.com', role: 'manager', department: 'Finance', position: 'Finance Manager', avatar: 'DL', status: 'active', joinDate: '2020-07-14', phone: '+1-555-0107' },
+  { id: 'u8', name: 'Sophia Martinez', email: 'sophia@stemaide.com', role: 'employee', department: 'Engineering', position: 'Senior Developer', avatar: 'SM', status: 'active', joinDate: '2022-03-08', phone: '+1-555-0108' },
+  { id: 'u9', name: 'Liam Anderson', email: 'liam@stemaide.com', role: 'employee', department: 'Engineering', position: 'Developer', avatar: 'LA', status: 'active', joinDate: '2023-01-15', phone: '+1-555-0109' },
+  { id: 'u10', name: 'Ava Thomas', email: 'ava@stemaide.com', role: 'employee', department: 'Design', position: 'UI/UX Designer', avatar: 'AT', status: 'active', joinDate: '2022-09-12', phone: '+1-555-0110' },
+  { id: 'u11', name: 'Noah Jackson', email: 'noah@stemaide.com', role: 'employee', department: 'Marketing', position: 'Content Specialist', avatar: 'NJ', status: 'inactive', joinDate: '2021-04-20', phone: '+1-555-0111' },
+  { id: 'u12', name: 'Isabella White', email: 'isabella@stemaide.com', role: 'employee', department: 'Product', position: 'Product Analyst', avatar: 'IW', status: 'active', joinDate: '2023-05-01', phone: '+1-555-0112' },
 ];
 
 const today = new Date().toISOString().split('T')[0];
