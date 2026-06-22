@@ -243,10 +243,11 @@ export default function DashboardPage() {
   return (
     <div className="page-content">
       {/* Welcome Banner */}
-      <div className="card bg-gradient-to-r from-[var(--bg-surface)] to-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-lg)] p-6">
+      <div className="card bg-gradient-to-r from-[var(--bg-surface)] to-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-lg)] p-6 md:p-8 mb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)] font-bold text-xl border border-[var(--border-strong)] shadow-inner">
+
               {initials}
             </div>
             <div>
@@ -275,8 +276,9 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto mt-4 md:mt-0">
             <Link href="/attendance" className="welcome-btn-secondary justify-center text-center">
+
               <Clock size={16} />
               View Attendance
             </Link>
@@ -384,7 +386,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Row 3 (3-Column Layout) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+
             {/* Column 1: Employee Status Panel */}
             <div className="card flex flex-col justify-between">
               <div>
@@ -403,20 +406,20 @@ export default function DashboardPage() {
                   <div style={{ width: '5%' }} className="bg-var(--red) bg-red-500" title="Intern: 5%" />
                 </div>
                 {/* 2x2 grid stats */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="p-3.5 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                <div className="grid grid-cols-2 gap-5 mb-8">
+                  <div className="p-4 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
                     <span className="label block text-[var(--text-3)] text-xs mb-1.5">Gender Ratio</span>
                     <span className="text-sm sm:text-base font-bold text-[var(--text-1)]">62% M / 38% F</span>
                   </div>
-                  <div className="p-3.5 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                  <div className="p-4 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
                     <span className="label block text-[var(--text-3)] text-xs mb-1.5">Workspace</span>
                     <span className="text-sm sm:text-base font-bold text-[var(--text-1)]">84% Onsite / 16% Rem</span>
                   </div>
-                  <div className="p-3.5 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                  <div className="p-4 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
                     <span className="label block text-[var(--text-3)] text-xs mb-1.5">Shift Coverage</span>
                     <span className="text-sm sm:text-base font-bold text-[var(--text-1)]">94% Day / 6% Night</span>
                   </div>
-                  <div className="p-3.5 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                  <div className="p-4 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
                     <span className="label block text-[var(--text-3)] text-xs mb-1.5">Engagement</span>
                     <span className="text-sm sm:text-base font-bold text-[var(--text-1)]">88% score</span>
                   </div>
@@ -479,7 +482,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="w-full grid grid-cols-3 gap-2 text-center pt-4 border-t border-[var(--border)]">
+              <div className="w-full grid grid-cols-3 gap-3 text-center pt-6 mt-4 border-t border-[var(--border)]">
                 <div>
                   <span className="text-base font-bold text-[var(--green)]">
                     {managementData?.attendance?.present ?? stats?.presentCount ?? 0}
@@ -520,9 +523,9 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="border-t border-[var(--border)] pt-4">
-                <h4 className="text-xs font-semibold text-[var(--text-2)] uppercase tracking-wider mb-3">Today's Scans</h4>
-                <div className="space-y-4">
+              <div className="border-t border-[var(--border)] pt-6 mt-6">
+                <h4 className="text-xs font-semibold text-[var(--text-2)] uppercase tracking-wider mb-4">Today's Scans</h4>
+                <div className="space-y-5">
                   {recentAttendance.slice(0, 3).map((a: any) => {
                     const isClockedOut = !!a.clockOut;
                     const isPresent = a.status === 'present';
@@ -560,7 +563,7 @@ export default function DashboardPage() {
 
           {/* Row: Pending Leave Requests & Action items */}
           {isAdmin && pendingLeaves.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
               <div className="card lg:col-span-2 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-4">
@@ -604,17 +607,17 @@ export default function DashboardPage() {
                               {l.reason || '—'}
                             </td>
                             <td className="py-3 text-right">
-                              <div className="flex gap-2 justify-end">
+                              <div className="flex gap-3 justify-end">
                                 <button
                                   onClick={() => handleReject(l.id)}
-                                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
+                                  className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-[11px] font-bold cursor-pointer transition-colors"
                                   disabled={updateLeaveStatus.isPending}
                                 >
                                   Reject
                                 </button>
                                 <button
                                   onClick={() => handleApprove(l.id)}
-                                  className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
+                                  className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 rounded-lg text-[11px] font-bold cursor-pointer transition-colors"
                                   disabled={updateLeaveStatus.isPending}
                                 >
                                   Approve
@@ -654,35 +657,35 @@ export default function DashboardPage() {
           )}
 
           {/* Row 4: Applicants, Active Employees, Quick Action Todo List */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Column 1 & 2: Applicants and Active Directory */}
             <div className="card lg:col-span-2 flex flex-col justify-between">
               <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border)] pb-4 mb-4 gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border)] pb-5 mb-5 gap-4">
                   <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)]">Recruitment Pipeline</h3>
-                  <div className="flex items-center gap-1.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl flex-shrink-0 p-1" style={{ height: '40px' }}>
+                  <div className="flex items-center gap-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl flex-shrink-0 p-1.5" style={{ height: '44px' }}>
                     <button
                       onClick={() => setApplicantFilter('all')}
-                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'all' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'all' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)]'}`}
                     >
                       All
                     </button>
                     <button
                       onClick={() => setApplicantFilter('shortlisted')}
-                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'shortlisted' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'shortlisted' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)]'}`}
                     >
                       Shortlisted
                     </button>
                     <button
                       onClick={() => setApplicantFilter('interviewing')}
-                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'interviewing' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'interviewing' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)]'}`}
                     >
                       Interviewing
                     </button>
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto mt-4.5">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-[var(--border)] text-[var(--text-2)] text-[12px] uppercase font-bold tracking-wider">
@@ -695,16 +698,16 @@ export default function DashboardPage() {
                     <tbody className="divide-y divide-[var(--border)]">
                       {filteredApplicants.map((a) => (
                         <tr key={a.id} className="text-sm hover:bg-[var(--bg-hover)]/30 transition-colors">
-                          <td className="py-3.5 font-semibold text-[var(--text-1)]">{a.name}</td>
-                          <td className="py-3.5 text-[var(--text-2)]">{a.position}</td>
-                          <td className="py-3.5">
+                          <td className="py-4 font-semibold text-[var(--text-1)]">{a.name}</td>
+                          <td className="py-4 text-[var(--text-2)]">{a.position}</td>
+                          <td className="py-4">
                             <span className={`badge ${
                               a.status === 'interviewing' ? 'badge-orange' : a.status === 'shortlisted' ? 'badge-blue' : 'badge-yellow'
                             }`} style={{ fontSize: '10px', padding: '4px 8px' }}>
                               {a.status}
                             </span>
                           </td>
-                          <td className="py-3.5 text-right text-xs text-[var(--text-3)] font-mono">{a.date}</td>
+                          <td className="py-4 text-right text-xs text-[var(--text-3)] font-mono">{a.date}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -713,8 +716,8 @@ export default function DashboardPage() {
               </div>
 
               {/* Active employee avatar strip */}
-              <div className="border-t border-[var(--border)] pt-4 mt-6">
-                <h4 className="text-xs font-bold text-[var(--text-2)] uppercase tracking-wider mb-3.5">Today's Active Team</h4>
+              <div className="border-t border-[var(--border)] pt-6 mt-8">
+                <h4 className="text-xs font-bold text-[var(--text-2)] uppercase tracking-wider mb-4">Today's Active Team</h4>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   {recentAttendance.slice(0, 10).map((a: any) => (
                     <div
@@ -737,7 +740,7 @@ export default function DashboardPage() {
               <div>
                 <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)] mb-4">Quick Todo List</h3>
                 
-                <form onSubmit={handleAddTodo} className="flex gap-2.5 mb-5">
+                <form onSubmit={handleAddTodo} className="flex gap-3.5 mb-6">
                   <input
                     type="text"
                     value={todoInput}
@@ -746,16 +749,16 @@ export default function DashboardPage() {
                     className="control-compact flex-1"
                     style={{ background: 'var(--bg-elevated)', height: '40px', fontSize: '0.875rem' }}
                   />
-                  <button type="submit" className="w-10 h-10 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer">
+                  <button type="submit" className="w-[40px] h-[40px] bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer">
                     <Plus size={18} />
                   </button>
                 </form>
 
-                <div className="space-y-2.5 max-h-[250px] overflow-y-auto pr-1">
+                <div className="space-y-3.5 max-h-[260px] overflow-y-auto pr-1">
                   {todos.map((todo) => (
                     <div
                       key={todo.id}
-                      className="flex items-center justify-between p-3.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-md)] hover:border-[var(--border-strong)] transition-colors"
+                      className="flex items-center justify-between p-4 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-md)] hover:border-[var(--border-strong)] transition-colors"
                     >
                       <button
                         onClick={() => handleToggleTodo(todo.id)}
@@ -781,7 +784,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="text-xs text-[var(--text-3)] text-center border-t border-[var(--border)] pt-3.5 mt-5">
+              <div className="text-xs text-[var(--text-3)] text-center border-t border-[var(--border)] pt-4 mt-6">
                 Saved in local state &middot; {todos.filter(t => t.completed).length}/{todos.length} completed
               </div>
             </div>

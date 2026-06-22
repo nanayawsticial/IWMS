@@ -3144,13 +3144,13 @@ thead .sticky-left {
 .welcome-btn-secondary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 20px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
+  gap: 10px;
+  height: 42px;
+  padding: 0 24px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  color: var(--text-primary);
+  color: var(--text-1);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -3160,17 +3160,17 @@ thead .sticky-left {
 }
 
 .welcome-btn-secondary:hover {
-  background: var(--bg-accent);
-  border-color: rgba(255,255,255,0.12);
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
 }
 
 .welcome-btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 20px;
-  background: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-purple) 100%);
+  gap: 10px;
+  height: 42px;
+  padding: 0 24px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
   border: none;
   border-radius: 10px;
   color: #fff;
@@ -3179,15 +3179,16 @@ thead .sticky-left {
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+  box-shadow: 0 4px 16px rgba(255,107,53,0.25);
   white-space: nowrap;
 }
 
 .welcome-btn-primary:hover {
-  opacity: 0.92;
-  box-shadow: 0 4px 24px rgba(99,102,241,0.45);
+  opacity: 0.95;
+  box-shadow: 0 4px 24px rgba(255,107,53,0.4);
   transform: translateY(-1px);
 }
+
 
 /* KPI detail link */
 .kpi-link {
@@ -3455,22 +3456,22 @@ thead .sticky-left {
 .kpi-grid-4 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .kpi-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .kpi-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 @media (max-width: 1280px) {
@@ -3481,22 +3482,22 @@ thead .sticky-left {
 @media (max-width: 640px) {
   .kpi-grid-4,
   .kpi-grid-3,
-  .kpi-grid-2 { grid-template-columns: 1fr; }
+  .kpi-grid-2 { grid-template-columns: 1fr; gap: 1rem; }
 }
 
 /* ── Chart layout ─────────────────────────────────────── */
 .chart-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .chart-row-3 {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 @media (max-width: 1024px) {
