@@ -388,7 +388,7 @@ export default function DashboardPage() {
             {/* Column 1: Employee Status Panel */}
             <div className="card flex flex-col justify-between">
               <div>
-                <h3 className="section-title mb-4">Employee Status</h3>
+                <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)] mb-4">Employee Status</h3>
                 <div className="flex justify-between items-baseline mb-2">
                   <span className="text-sm text-[var(--text-2)]">Active Employees</span>
                   <span className="text-xl font-bold text-[var(--text-1)]">
@@ -396,7 +396,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 {/* Horizontal proportion bar */}
-                <div className="h-2 w-full rounded-full bg-[var(--bg-hover)] overflow-hidden flex mb-4">
+                <div className="h-2.5 w-full rounded-full bg-[var(--bg-hover)] overflow-hidden flex mb-5">
                   <div style={{ width: '70%' }} className="bg-var(--green) bg-emerald-500" title="Full Time: 70%" />
                   <div style={{ width: '15%' }} className="bg-var(--blue) bg-blue-500" title="Part Time: 15%" />
                   <div style={{ width: '10%' }} className="bg-var(--yellow) bg-amber-500" title="Contract: 10%" />
@@ -404,39 +404,39 @@ export default function DashboardPage() {
                 </div>
                 {/* 2x2 grid stats */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
-                    <span className="label block text-[var(--text-3)] text-xs mb-1">Gender Ratio</span>
-                    <span className="text-sm font-semibold text-[var(--text-1)]">62% M / 38% F</span>
+                  <div className="p-3.5 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <span className="label block text-[var(--text-3)] text-xs mb-1.5">Gender Ratio</span>
+                    <span className="text-sm sm:text-base font-bold text-[var(--text-1)]">62% M / 38% F</span>
                   </div>
-                  <div className="p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
-                    <span className="label block text-[var(--text-3)] text-xs mb-1">Workspace</span>
-                    <span className="text-sm font-semibold text-[var(--text-1)]">84% Onsite / 16% Rem</span>
+                  <div className="p-3.5 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <span className="label block text-[var(--text-3)] text-xs mb-1.5">Workspace</span>
+                    <span className="text-sm sm:text-base font-bold text-[var(--text-1)]">84% Onsite / 16% Rem</span>
                   </div>
-                  <div className="p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
-                    <span className="label block text-[var(--text-3)] text-xs mb-1">Shift Coverage</span>
-                    <span className="text-sm font-semibold text-[var(--text-1)]">94% Day / 6% Night</span>
+                  <div className="p-3.5 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <span className="label block text-[var(--text-3)] text-xs mb-1.5">Shift Coverage</span>
+                    <span className="text-sm sm:text-base font-bold text-[var(--text-1)]">94% Day / 6% Night</span>
                   </div>
-                  <div className="p-3 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
-                    <span className="label block text-[var(--text-3)] text-xs mb-1">Engagement</span>
-                    <span className="text-sm font-semibold text-[var(--text-1)]">88% score</span>
+                  <div className="p-3.5 bg-[var(--bg-surface-2)] rounded-[var(--radius-md)] border border-[var(--border)]">
+                    <span className="label block text-[var(--text-3)] text-xs mb-1.5">Engagement</span>
+                    <span className="text-sm sm:text-base font-bold text-[var(--text-1)]">88% score</span>
                   </div>
                 </div>
               </div>
 
               {/* Top Performer Section */}
               {managementData?.topPerformers?.[0] && (
-                <div className="p-4 bg-gradient-to-r from-[var(--bg-surface-2)] to-[var(--bg-hover)] rounded-[var(--radius-md)] border border-[var(--border-strong)] flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[var(--accent-soft)] border border-[var(--accent)] flex items-center justify-center text-[var(--accent)] font-semibold text-lg">
+                <div className="p-4 bg-gradient-to-r from-[var(--bg-surface-2)] to-[var(--bg-hover)] rounded-[var(--radius-md)] border border-[var(--border-strong)] flex items-center gap-4.5">
+                  <div className="w-12 h-12 rounded-full bg-[var(--accent-soft)] border border-[var(--accent)] flex items-center justify-center text-[var(--accent)] font-bold text-lg flex-shrink-0">
                     {managementData.topPerformers[0].avatar}
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-[var(--text-3)] text-[10px] uppercase font-bold tracking-wider">Top Performer</span>
-                    <h4 className="text-sm font-semibold text-[var(--text-1)] truncate">{managementData.topPerformers[0].name}</h4>
-                    <p className="text-xs text-[var(--text-2)] truncate">{managementData.topPerformers[0].department}</p>
+                    <h4 className="text-sm sm:text-base font-bold text-[var(--text-1)] truncate mt-0.5">{managementData.topPerformers[0].name}</h4>
+                    <p className="text-xs text-[var(--text-2)] truncate mt-0.5">{managementData.topPerformers[0].department}</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-bold text-[var(--green)]">+{managementData.topPerformers[0].tasksCompleted}</span>
-                    <p className="text-[10px] text-[var(--text-3)]">tasks done</p>
+                    <span className="text-sm font-extrabold text-[var(--green)]">+{managementData.topPerformers[0].tasksCompleted}</span>
+                    <p className="text-[10px] text-[var(--text-3)] mt-0.5">tasks done</p>
                   </div>
                 </div>
               )}
@@ -445,7 +445,7 @@ export default function DashboardPage() {
             {/* Column 2: Attendance Gauge */}
             <div className="card flex flex-col justify-between items-center relative min-h-[300px]">
               <div className="w-full flex items-center justify-between mb-4">
-                <h3 className="section-title">Attendance Gauge</h3>
+                <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)]">Attendance Gauge</h3>
                 <span className="badge badge-green">Healthy</span>
               </div>
 
@@ -481,22 +481,22 @@ export default function DashboardPage() {
 
               <div className="w-full grid grid-cols-3 gap-2 text-center pt-4 border-t border-[var(--border)]">
                 <div>
-                  <span className="text-sm font-bold text-[var(--green)]">
+                  <span className="text-base font-bold text-[var(--green)]">
                     {managementData?.attendance?.present ?? stats?.presentCount ?? 0}
                   </span>
-                  <p className="text-[10px] text-[var(--text-3)] mt-0.5">Present</p>
+                  <p className="text-[11px] font-medium text-[var(--text-3)] mt-0.5">Present</p>
                 </div>
                 <div>
-                  <span className="text-sm font-bold text-[var(--yellow)]">
+                  <span className="text-base font-bold text-[var(--yellow)]">
                     {managementData?.attendance?.late ?? stats?.lateCount ?? 0}
                   </span>
-                  <p className="text-[10px] text-[var(--text-3)] mt-0.5">Late</p>
+                  <p className="text-[11px] font-medium text-[var(--text-3)] mt-0.5">Late</p>
                 </div>
                 <div>
-                  <span className="text-sm font-bold text-[var(--red)]">
+                  <span className="text-base font-bold text-[var(--red)]">
                     {managementData?.attendance?.absent ?? stats?.absentCount ?? 0}
                   </span>
-                  <p className="text-[10px] text-[var(--text-3)] mt-0.5">Absent</p>
+                  <p className="text-[11px] font-medium text-[var(--text-3)] mt-0.5">Absent</p>
                 </div>
               </div>
             </div>
@@ -504,10 +504,10 @@ export default function DashboardPage() {
             {/* Column 3: Departments Size & Clock Logs */}
             <div className="card flex flex-col justify-between">
               <div>
-                <h3 className="section-title mb-4">Department Sizes</h3>
+                <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)] mb-4">Department Sizes</h3>
                 <div style={{ width: '100%', height: 120 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: -15, right: 10, top: 0, bottom: 0 }}>
+                    <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: -10, right: 10, top: 0, bottom: 0 }}>
                       <XAxis type="number" hide />
                       <YAxis dataKey="name" type="category" stroke="var(--text-3)" fontSize={10} width={80} tickLine={false} axisLine={false} />
                       <Bar dataKey="headcount" fill="var(--accent)" radius={[0, 4, 4, 0]} barSize={8}>
@@ -522,7 +522,7 @@ export default function DashboardPage() {
 
               <div className="border-t border-[var(--border)] pt-4">
                 <h4 className="text-xs font-semibold text-[var(--text-2)] uppercase tracking-wider mb-3">Today's Scans</h4>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {recentAttendance.slice(0, 3).map((a: any) => {
                     const isClockedOut = !!a.clockOut;
                     const isPresent = a.status === 'present';
@@ -533,19 +533,19 @@ export default function DashboardPage() {
                     const timeVal = isClockedOut ? a.clockOut : a.clockIn;
 
                     return (
-                      <div key={a.id || a.userId} className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center text-[var(--text-2)] font-semibold">
+                      <div key={a.id || a.userId} className="flex items-center justify-between text-xs py-1">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center text-[var(--text-2)] font-semibold flex-shrink-0">
                             {a.userAvatar}
                           </div>
                           <div>
-                            <p className="font-semibold text-[var(--text-1)]">{a.userName}</p>
-                            <p className="text-[10px] text-[var(--text-3)]">{a.userDepartment || 'General'}</p>
+                            <p className="font-semibold text-[var(--text-1)] text-sm">{a.userName}</p>
+                            <p className="text-[11px] text-[var(--text-3)] mt-0.5">{a.userDepartment || 'General'}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className={`badge ${statusColor}`}>{statusText}</span>
-                          <p className="text-[10px] text-[var(--text-3)] mt-1 font-mono">{timeVal || '—'}</p>
+                        <div className="text-right flex flex-col items-end">
+                          <span className={`badge ${statusColor}`} style={{ fontSize: '10px', padding: '3px 6px' }}>{statusText}</span>
+                          <p className="text-[10px] text-[var(--text-3)] mt-1.5 font-mono">{timeVal || '—'}</p>
                         </div>
                       </div>
                     );
@@ -658,24 +658,24 @@ export default function DashboardPage() {
             {/* Column 1 & 2: Applicants and Active Directory */}
             <div className="card lg:col-span-2 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-4 flex-wrap gap-4">
-                  <h3 className="section-title">Recruitment Pipeline</h3>
-                  <div className="control-compact flex items-center gap-1 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl" style={{ padding: '3px', height: '38px' }}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border)] pb-4 mb-4 gap-4">
+                  <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)]">Recruitment Pipeline</h3>
+                  <div className="control-compact flex items-center gap-1 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl flex-shrink-0" style={{ padding: '3px', height: '36px' }}>
                     <button
                       onClick={() => setApplicantFilter('all')}
-                      className={`px-3 h-full text-xs font-semibold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-3.5 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'all' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
                     >
                       All
                     </button>
                     <button
                       onClick={() => setApplicantFilter('shortlisted')}
-                      className={`px-3 h-full text-xs font-semibold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'shortlisted' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-3.5 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'shortlisted' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
                     >
                       Shortlisted
                     </button>
                     <button
                       onClick={() => setApplicantFilter('interviewing')}
-                      className={`px-3 h-full text-xs font-semibold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'interviewing' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
+                      className={`px-3.5 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'interviewing' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-3)] hover:text-[var(--text-2)]'}`}
                     >
                       Interviewing
                     </button>
@@ -685,26 +685,26 @@ export default function DashboardPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-[11px] uppercase font-semibold">
-                        <th className="py-2.5">Candidate</th>
-                        <th className="py-2.5">Position Applied</th>
-                        <th className="py-2.5">Status</th>
-                        <th className="py-2.5 text-right">Applied Date</th>
+                      <tr className="border-b border-[var(--border)] text-[var(--text-2)] text-[12px] uppercase font-bold tracking-wider">
+                        <th className="py-3">Candidate</th>
+                        <th className="py-3">Position Applied</th>
+                        <th className="py-3">Status</th>
+                        <th className="py-3 text-right">Applied Date</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
                       {filteredApplicants.map((a) => (
-                        <tr key={a.id} className="text-xs hover:bg-[var(--bg-hover)]/30 transition-colors">
-                          <td className="py-3 font-semibold text-[var(--text-1)]">{a.name}</td>
-                          <td className="py-3 text-[var(--text-2)]">{a.position}</td>
-                          <td className="py-3">
+                        <tr key={a.id} className="text-sm hover:bg-[var(--bg-hover)]/30 transition-colors">
+                          <td className="py-3.5 font-semibold text-[var(--text-1)]">{a.name}</td>
+                          <td className="py-3.5 text-[var(--text-2)]">{a.position}</td>
+                          <td className="py-3.5">
                             <span className={`badge ${
                               a.status === 'interviewing' ? 'badge-orange' : a.status === 'shortlisted' ? 'badge-blue' : 'badge-yellow'
-                            }`}>
+                            }`} style={{ fontSize: '10px', padding: '4px 8px' }}>
                               {a.status}
                             </span>
                           </td>
-                          <td className="py-3 text-right text-[var(--text-3)] font-mono">{a.date}</td>
+                          <td className="py-3.5 text-right text-xs text-[var(--text-3)] font-mono">{a.date}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -714,75 +714,75 @@ export default function DashboardPage() {
 
               {/* Active employee avatar strip */}
               <div className="border-t border-[var(--border)] pt-4 mt-6">
-                <h4 className="text-xs font-semibold text-[var(--text-3)] uppercase tracking-wider mb-3">Today's Active Team</h4>
-                <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-xs font-bold text-[var(--text-2)] uppercase tracking-wider mb-3.5">Today's Active Team</h4>
+                <div className="flex items-center gap-2.5 flex-wrap">
                   {recentAttendance.slice(0, 10).map((a: any) => (
                     <div
                       key={a.id || a.userId}
-                      className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] border-2 border-emerald-500/80 flex items-center justify-center text-xs font-bold text-[var(--text-1)] cursor-pointer hover:scale-105 transition-transform"
+                      className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] border border-emerald-500/80 flex items-center justify-center text-xs font-bold text-[var(--text-1)] cursor-pointer hover:scale-105 transition-transform shadow-sm"
                       title={`${a.userName} is active`}
                     >
                       {a.userAvatar}
                     </div>
                   ))}
                   {recentAttendance.length === 0 && (
-                    <p className="text-xs text-[var(--text-3)]">No team members active currently</p>
+                    <p className="text-sm text-[var(--text-3)]">No team members active currently</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Column 3: Quick Action Todo List */}
-            <div className="card flex flex-col justify-between min-h-[350px]">
+            <div className="card flex flex-col justify-between min-h-[360px]">
               <div>
-                <h3 className="section-title mb-4">Quick Todo List</h3>
+                <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)] mb-4">Quick Todo List</h3>
                 
-                <form onSubmit={handleAddTodo} className="flex gap-2 mb-4">
+                <form onSubmit={handleAddTodo} className="flex gap-2.5 mb-5">
                   <input
                     type="text"
                     value={todoInput}
                     onChange={(e) => setTodoInput(e.target.value)}
                     placeholder="Add a quick task..."
                     className="control-compact flex-1"
-                    style={{ background: 'var(--bg-elevated)' }}
+                    style={{ background: 'var(--bg-elevated)', height: '40px', fontSize: '0.875rem' }}
                   />
-                  <button type="submit" className="px-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl transition-colors flex items-center justify-center h-[38px] flex-shrink-0">
-                    <Plus size={16} />
+                  <button type="submit" className="w-10 h-10 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl transition-colors flex items-center justify-center flex-shrink-0 cursor-pointer">
+                    <Plus size={18} />
                   </button>
                 </form>
 
-                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-[250px] overflow-y-auto pr-1">
                   {todos.map((todo) => (
                     <div
                       key={todo.id}
-                      className="flex items-center justify-between p-2.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-md)] hover:border-[var(--border-strong)] transition-colors"
+                      className="flex items-center justify-between p-3.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-[var(--radius-md)] hover:border-[var(--border-strong)] transition-colors"
                     >
                       <button
                         onClick={() => handleToggleTodo(todo.id)}
-                        className={`flex items-center gap-2.5 text-left text-xs ${todo.completed ? 'text-[var(--text-3)] line-through' : 'text-[var(--text-1)]'}`}
+                        className={`flex items-center gap-3 text-left flex-1 min-w-0 ${todo.completed ? 'text-[var(--text-3)] line-through' : 'text-[var(--text-1)]'}`}
                       >
-                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${todo.completed ? 'bg-[var(--green)] border-[var(--green)] text-white' : 'border-[var(--border-strong)] bg-transparent'}`}>
-                          {todo.completed && <Check size={12} />}
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${todo.completed ? 'bg-[var(--green)] border-[var(--green)] text-white' : 'border-[var(--border-strong)] bg-transparent'}`}>
+                          {todo.completed && <Check size={10} />}
                         </div>
-                        <span className="truncate max-w-[170px]">{todo.text}</span>
+                        <span className="text-sm font-medium truncate flex-1 min-w-0">{todo.text}</span>
                       </button>
                       <button
                         onClick={() => handleDeleteTodo(todo.id)}
-                        className="text-[var(--text-3)] hover:text-red-500 transition-colors p-1"
+                        className="text-[var(--text-3)] hover:text-red-500 transition-colors p-1 flex items-center justify-center cursor-pointer"
                         title="Delete task"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
                   {todos.length === 0 && (
-                    <p className="text-xs text-[var(--text-3)] text-center py-6">No quick todos. Enjoy your day! 🎉</p>
+                    <p className="text-sm text-[var(--text-3)] text-center py-8">No quick todos. Enjoy your day! 🎉</p>
                   )}
                 </div>
               </div>
 
-              <div className="text-xs text-[var(--text-3)] text-center border-t border-[var(--border)] pt-3 mt-4">
-                Saved in local state · {todos.filter(t => t.completed).length}/{todos.length} completed
+              <div className="text-xs text-[var(--text-3)] text-center border-t border-[var(--border)] pt-3.5 mt-5">
+                Saved in local state &middot; {todos.filter(t => t.completed).length}/{todos.length} completed
               </div>
             </div>
           </div>
