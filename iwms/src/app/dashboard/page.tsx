@@ -343,24 +343,21 @@ export default function DashboardPage() {
 
           <div className="kpi-grid-4">
             <KpiCard
-              label="Monthly Earnings"
-              value="GHS 25,430"
-              icon={DollarSign}
-              iconBg="var(--green-soft)"
-              iconColor="var(--green)"
-              subValue="12.5%"
-              subLabel="vs last month"
-              subColor="#22c55e"
+              label="Avg Hours Worked"
+              value={managementData?.attendance?.avgHoursWorked ? `${managementData.attendance.avgHoursWorked.toFixed(1)} hrs` : "—"}
+              icon={Clock}
+              iconBg="var(--blue-soft)"
+              iconColor="var(--blue)"
+              subLabel="Avg daily hours"
             />
             <KpiCard
-              label="Total Revenue"
-              value="GHS 142,500"
-              icon={TrendingUp}
+              label="Task Completion"
+              value={managementData?.tasks?.completionRate !== undefined && managementData?.tasks?.completionRate !== null ? `${Math.round(managementData.tasks.completionRate * 100)}%` : "0%"}
+              icon={CheckCircle}
               iconBg="var(--teal-soft)"
               iconColor="var(--teal)"
-              subValue="8%"
-              subLabel="vs last quarter"
-              subColor="#22c55e"
+              subValue={`${managementData?.tasks?.completed ?? 0}/${managementData?.tasks?.total ?? 0}`}
+              subLabel="completed"
             />
             <KpiCard
               label="Leaves Approved"
