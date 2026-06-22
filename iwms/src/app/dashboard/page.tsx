@@ -510,9 +510,9 @@ export default function DashboardPage() {
                 <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)] mb-4">Department Sizes</h3>
                 <div style={{ width: '100%', height: 160 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: -10, right: 10, top: 0, bottom: 0 }}>
+                    <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: 15, right: 10, top: 0, bottom: 0 }}>
                       <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" stroke="var(--text-3)" fontSize={11} width={110} tickLine={false} axisLine={false} />
+                      <YAxis dataKey="name" type="category" stroke="var(--text-3)" fontSize={11} width={125} tickLine={false} axisLine={false} />
                       <Bar dataKey="headcount" fill="var(--accent)" radius={[0, 4, 4, 0]} barSize={8}>
                         {managementData?.departments?.map((entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={entry.color || 'var(--accent)'} />
@@ -663,22 +663,22 @@ export default function DashboardPage() {
               <div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border)] pb-5 mb-5 gap-4">
                   <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)]">Recruitment Pipeline</h3>
-                  <div className="flex items-center gap-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-xl flex-shrink-0 p-1.5" style={{ height: '44px' }}>
+                  <div className="tab-switcher">
                     <button
                       onClick={() => setApplicantFilter('all')}
-                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'all' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)]'}`}
+                      className={applicantFilter === 'all' ? 'active' : ''}
                     >
                       All
                     </button>
                     <button
                       onClick={() => setApplicantFilter('shortlisted')}
-                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'shortlisted' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)]'}`}
+                      className={applicantFilter === 'shortlisted' ? 'active' : ''}
                     >
                       Shortlisted
                     </button>
                     <button
                       onClick={() => setApplicantFilter('interviewing')}
-                      className={`px-4 h-full text-xs font-bold rounded-lg transition-colors cursor-pointer ${applicantFilter === 'interviewing' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-hover)]'}`}
+                      className={applicantFilter === 'interviewing' ? 'active' : ''}
                     >
                       Interviewing
                     </button>

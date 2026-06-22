@@ -4475,7 +4475,10 @@ a:not(:disabled):active,
   margin-bottom: 28px;
 }
 
-
-
-
-
+/* Prevent focus outlines on charts and SVG elements */
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible,
+svg *:focus,
+svg *:focus-visible {
+  outline: none !important;
+}
