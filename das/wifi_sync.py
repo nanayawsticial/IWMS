@@ -232,6 +232,21 @@ class WiFiSync:
         if not self._queue:
             return
 
+        # Ensure all queued events match the current device_id before uploading
+        device_id = getattr(config, "DEVICE_ID", None)
+        if device_id:
+            for event in self._queue:
+                if event.get("device_id") != device_id:
+                    old_device_id = event.get("device_id")
+                    event["device_id"] = device_id
+                    
+                    # Update terminal_event_id to match the new device_id prefix
+                    old_event_id = event.get("terminal_event_id")
+                    if old_event_id and old_device_id:
+                        if old_event_id.startswith(old_device_id + "-"):
+                            suffix = old_event_id[len(old_device_id) + 1:]
+                            event["terminal_event_id"] = "{}-{}".format(device_id, suffix)
+
         print("Sync: flushing {} queued event(s) via batch endpoint...".format(len(self._queue)))
 
         url = config.SERVER_URL.rstrip('/') + "/api/attendance/hardware-punch/batch"

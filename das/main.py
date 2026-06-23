@@ -808,7 +808,7 @@ def app_data_dump():
     display.print(ip if ip else "offline")
     display.set_pos(20, 130); display.print("Queued Events:")
     display.set_pos(200, 130); display.print(str(wifi_sync.queue_length()))
-    display.set_pos(20, 160); display.print("Dumping JSON to Shell…")
+    display.set_pos(20, 160); display.print("Dumping JSON to Shell...")
 
     print("\n========== USERS ==========")
     print(json.dumps(user_db))
