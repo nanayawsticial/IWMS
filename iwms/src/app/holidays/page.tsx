@@ -212,69 +212,73 @@ export default function HolidaysPage() {
 
       {/* Calendar Grid */}
       <div className="bg-slate-900/35 border border-slate-850/80 rounded-2xl overflow-hidden backdrop-blur-lg">
-        {/* Weekdays Header */}
-        <div className="grid grid-cols-7 border-b border-slate-800/80 bg-slate-900/60 py-3 text-center text-xs font-semibold text-slate-400">
-          {weekdayNames.map(day => (
-            <div key={day}>{day}</div>
-          ))}
-        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ minWidth: 700 }}>
+            {/* Weekdays Header */}
+            <div className="grid grid-cols-7 border-b border-slate-800/80 bg-slate-900/60 py-3 text-center text-xs font-semibold text-slate-400">
+              {weekdayNames.map(day => (
+                <div key={day}>{day}</div>
+              ))}
+            </div>
 
-        {/* Days Grid */}
-        <div className="grid grid-cols-7 grid-rows-6 divide-x divide-y divide-slate-800/50 min-h-[500px]">
-          {calendarDays.map((dayObj, index) => {
-            const formatted = formatDateStr(dayObj.date);
-            const isToday = formatted === todayStr;
-            const dayHolidays = getHolidaysForDate(dayObj.date);
+            {/* Days Grid */}
+            <div className="grid grid-cols-7 grid-rows-6 divide-x divide-y divide-slate-800/50 min-h-[500px]">
+              {calendarDays.map((dayObj, index) => {
+                const formatted = formatDateStr(dayObj.date);
+                const isToday = formatted === todayStr;
+                const dayHolidays = getHolidaysForDate(dayObj.date);
 
-            return (
-              <div
-                key={index}
-                style={{
-                  height: 80,
-                  verticalAlign: 'top',
-                  padding: '6px 8px',
-                  border: '0.5px solid var(--border)',
-                  cursor: 'pointer',
-                }}
-                className={`flex flex-col justify-between transition-colors relative ${
-                  dayObj.isCurrentMonth ? 'bg-transparent text-slate-100' : 'bg-slate-950/20 text-slate-500'
-                } ${
-                  isAdmin && dayObj.isCurrentMonth ? 'hover:bg-slate-800/30' : ''
-                }`}
-                onClick={() => handleCellClick(dayObj.date)}
-              >
-                {/* Day Number */}
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${
-                      isToday
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-extrabold'
-                        : ''
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      minHeight: 80,
+                      verticalAlign: 'top',
+                      padding: '6px 8px',
+                      border: '0.5px solid var(--border)',
+                      cursor: 'pointer',
+                    }}
+                    className={`flex flex-col justify-between transition-colors relative ${
+                      dayObj.isCurrentMonth ? 'bg-transparent text-slate-100' : 'bg-slate-950/20 text-slate-500'
+                    } ${
+                      isAdmin && dayObj.isCurrentMonth ? 'hover:bg-slate-800/30' : ''
                     }`}
+                    onClick={() => handleCellClick(dayObj.date)}
                   >
-                    {dayObj.date.getDate()}
-                  </span>
-                </div>
-
-                {/* Holiday band / details */}
-                <div className="mt-2 space-y-1">
-                  {dayHolidays.map((holiday: any) => (
-                    <div
-                      key={holiday.id}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent trigger add holiday modal on click
-                        setShowDeleteModal(holiday);
-                      }}
-                      className="px-2 py-1.5 text-[10px] font-semibold rounded-lg bg-gradient-to-r from-indigo-950/80 to-violet-950/80 border border-indigo-700/50 text-indigo-300 hover:border-red-500/50 hover:text-red-400 cursor-pointer transition shadow-sm"
-                      title={holiday.name}
-                    >
-                      <div className="truncate">{holiday.name}</div>
+                    {/* Day Number */}
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${
+                          isToday
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-extrabold'
+                            : ''
+                        }`}
+                      >
+                        {dayObj.date.getDate()}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+
+                    {/* Holiday band / details */}
+                    <div className="mt-2 space-y-1">
+                      {dayHolidays.map((holiday: any) => (
+                        <div
+                          key={holiday.id}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent trigger add holiday modal on click
+                            setShowDeleteModal(holiday);
+                          }}
+                          className="px-2 py-1.5 text-[10px] font-semibold rounded-lg bg-gradient-to-r from-indigo-950/80 to-violet-950/80 border border-indigo-700/50 text-indigo-300 hover:border-red-500/50 hover:text-red-400 cursor-pointer transition shadow-sm"
+                          title={holiday.name}
+                        >
+                          <div className="truncate">{holiday.name}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
       <p style={{ fontSize: '0.75rem', opacity: 0.4, marginTop: 8, textAlign: 'center' }}>

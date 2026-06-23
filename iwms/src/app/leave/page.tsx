@@ -138,53 +138,55 @@ export default function LeavePage() {
         <div style={{ marginBottom: '30px' }}>
           <h3 className="section-title" style={{ marginBottom: '12px', fontSize: '16px', color: 'var(--text-1)' }}>Pending Leave Approvals</h3>
           <div className="table-card">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Leave Type</th>
-                  <th>Duration</th>
-                  <th>Reason</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingApprovals.map((l: any) => (
-                  <tr key={l.id} className="table-row">
-                    <td>
-                      <div className="table-user-cell">
-                        <div className="table-avatar">{l.userName.split(' ').map((w: any) => w[0]).join('')}</div>
-                        <div>
-                          <p className="table-user-name">{l.userName}</p>
-                          <p className="table-user-email">{l.department}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="role-badge" style={{
-                        background: l.type === 'vacation' ? 'var(--blue-soft)' : l.type === 'sick' ? 'var(--red-soft)' : 'var(--yellow-soft)',
-                        color: l.type === 'vacation' ? 'var(--blue)' : l.type === 'sick' ? 'var(--red)' : 'var(--yellow)'
-                      }}>
-                        {l.type.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="table-text">{l.startDate} to {l.endDate} ({getDaysCount(l.startDate, l.endDate)} days)</span>
-                    </td>
-                    <td>
-                      <span className="table-text" style={{ maxWidth: '250px', display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {l.reason || 'No reason provided'}
-                      </span>
-                    </td>
-                    <td>
-                      <button className="btn-primary-sm" onClick={() => setShowApprovalModal(l)} style={{ padding: '4px 10px', fontSize: '11px' }}>
-                        Review
-                      </button>
-                    </td>
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Leave Type</th>
+                    <th>Duration</th>
+                    <th>Reason</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pendingApprovals.map((l: any) => (
+                    <tr key={l.id} className="table-row">
+                      <td>
+                        <div className="table-user-cell">
+                          <div className="table-avatar">{l.userName.split(' ').map((w: any) => w[0]).join('')}</div>
+                          <div>
+                            <p className="table-user-name">{l.userName}</p>
+                            <p className="table-user-email">{l.department}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="role-badge" style={{
+                          background: l.type === 'vacation' ? 'var(--blue-soft)' : l.type === 'sick' ? 'var(--red-soft)' : 'var(--yellow-soft)',
+                          color: l.type === 'vacation' ? 'var(--blue)' : l.type === 'sick' ? 'var(--red)' : 'var(--yellow)'
+                        }}>
+                          {l.type.toUpperCase()}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="table-text">{l.startDate} to {l.endDate} ({getDaysCount(l.startDate, l.endDate)} days)</span>
+                      </td>
+                      <td>
+                        <span className="table-text" style={{ maxWidth: '250px', display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {l.reason || 'No reason provided'}
+                        </span>
+                      </td>
+                      <td>
+                        <button className="btn-primary-sm" onClick={() => setShowApprovalModal(l)} style={{ padding: '4px 10px', fontSize: '11px' }}>
+                          Review
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -203,53 +205,55 @@ export default function LeavePage() {
               You haven't taken any leave yet
             </div>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Leave Type</th>
-                  <th>Dates</th>
-                  <th>Days</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Manager Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {myLeaves.map((l: any) => (
-                  <tr key={l.id} className="table-row">
-                    <td>
-                      <span className="role-badge" style={{
-                        background: l.type === 'vacation' ? 'var(--blue-soft)' : l.type === 'sick' ? 'var(--red-soft)' : 'var(--yellow-soft)',
-                        color: l.type === 'vacation' ? 'var(--blue)' : l.type === 'sick' ? 'var(--red)' : 'var(--yellow)'
-                      }}>
-                        {l.type.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="table-text">{l.startDate} to {l.endDate}</span>
-                    </td>
-                    <td>
-                      <span className="table-text">{getDaysCount(l.startDate, l.endDate)} days</span>
-                    </td>
-                    <td>
-                      <span className="table-text">{l.reason || '—'}</span>
-                    </td>
-                    <td>
-                      <span className={`status-pill ${
-                        l.status === 'approved' ? 'status-present' : l.status === 'rejected' ? 'status-absent' : 'status-late'
-                      }`} style={{ textTransform: 'capitalize' }}>
-                        {l.status}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="table-text" style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
-                        {l.managerNotes || '—'}
-                      </span>
-                    </td>
+            <div className="table-scroll">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Leave Type</th>
+                    <th>Dates</th>
+                    <th>Days</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Manager Notes</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {myLeaves.map((l: any) => (
+                    <tr key={l.id} className="table-row">
+                      <td>
+                        <span className="role-badge" style={{
+                          background: l.type === 'vacation' ? 'var(--blue-soft)' : l.type === 'sick' ? 'var(--red-soft)' : 'var(--yellow-soft)',
+                          color: l.type === 'vacation' ? 'var(--blue)' : l.type === 'sick' ? 'var(--red)' : 'var(--yellow)'
+                        }}>
+                          {l.type.toUpperCase()}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="table-text">{l.startDate} to {l.endDate}</span>
+                      </td>
+                      <td>
+                        <span className="table-text">{getDaysCount(l.startDate, l.endDate)} days</span>
+                      </td>
+                      <td>
+                        <span className="table-text">{l.reason || '—'}</span>
+                      </td>
+                      <td>
+                        <span className={`status-pill ${
+                          l.status === 'approved' ? 'status-present' : l.status === 'rejected' ? 'status-absent' : 'status-late'
+                        }`} style={{ textTransform: 'capitalize' }}>
+                          {l.status}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="table-text" style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                          {l.managerNotes || '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

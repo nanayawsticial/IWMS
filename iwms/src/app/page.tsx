@@ -8,8 +8,8 @@ export default function WelcomePage() {
     <div className="landing-page">
       <style dangerouslySetInnerHTML={{ __html: `
         .landing-page {
-          background-color: #060814;
-          color: #f8fafc;
+          background-color: var(--bg-page);
+          color: var(--text-1);
           font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
           min-height: 100vh;
           display: flex;
@@ -53,7 +53,7 @@ export default function WelcomePage() {
           font-size: 1.25rem;
           font-weight: 800;
           letter-spacing: -0.5px;
-          background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+          background: linear-gradient(135deg, var(--text-1) 0%, var(--text-2) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -131,7 +131,7 @@ export default function WelcomePage() {
         }
 
         .primary-cta {
-          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background: var(--btn-bg);
           color: #fff;
           font-size: 1.05rem;
           font-weight: 600;

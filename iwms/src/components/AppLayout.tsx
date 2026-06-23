@@ -141,10 +141,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#090d16]">
+      <div className="flex items-center justify-center min-h-screen bg-[var(--bg-page)]">
         <div className="flex flex-col items-center gap-4">
           <span className="spinner" />
-          <p className="text-slate-400 text-sm">Verifying Session...</p>
+          <p className="text-[var(--text-3)] text-sm">Verifying Session...</p>
         </div>
       </div>
     );

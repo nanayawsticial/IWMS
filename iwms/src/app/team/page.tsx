@@ -183,38 +183,40 @@ export default function TeamPage() {
         <div className="users-grid">{filtered.map((u: any) => <UserCard key={u.id} user={u} />)}</div>
       ) : (
         <div className="table-card">
-          <table className="data-table">
-            <thead>
-              <tr><th>Employee</th><th>Position</th><th>Department</th><th>Role</th><th>Joined</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              {filtered.map((u: any) => {
-                const avatarColors = getAvatarColor(u.name);
-                return (
-                  <tr key={u.id} className="table-row">
-                    <td>
-                      <div className="table-user-cell">
-                        <Link href={`/team/${u.id}`} style={{ textDecoration: 'none' }}>
-                          <div className="table-avatar" style={{ background: avatarColors.bg, color: avatarColors.color }}>{u.avatar}</div>
-                        </Link>
-                        <div>
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr><th>Employee</th><th>Position</th><th>Department</th><th>Role</th><th>Joined</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {filtered.map((u: any) => {
+                  const avatarColors = getAvatarColor(u.name);
+                  return (
+                    <tr key={u.id} className="table-row">
+                      <td>
+                        <div className="table-user-cell">
                           <Link href={`/team/${u.id}`} style={{ textDecoration: 'none' }}>
-                            <p className="table-user-name" style={{ margin: 0 }}>{u.name}</p>
+                            <div className="table-avatar" style={{ background: avatarColors.bg, color: avatarColors.color }}>{u.avatar}</div>
                           </Link>
-                          <p className="table-user-email">{u.email}</p>
+                          <div>
+                            <Link href={`/team/${u.id}`} style={{ textDecoration: 'none' }}>
+                              <p className="table-user-name" style={{ margin: 0 }}>{u.name}</p>
+                            </Link>
+                            <p className="table-user-email">{u.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td><span className="table-text">{u.position}</span></td>
-                    <td><span className="dept-badge" style={{ background: `${DEPT_COLORS[u.department]}20`, color: DEPT_COLORS[u.department] }}>{u.department}</span></td>
-                    <td><span className="role-badge" style={{ background: `${ROLE_COLORS[u.role]}20`, color: ROLE_COLORS[u.role] }}>{ROLE_LABELS[u.role]}</span></td>
-                    <td><span className="table-text">{new Date(u.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span></td>
-                    <td><span className={`status-pill ${u.status === 'active' ? 'status-present' : 'status-absent'}`}>{u.status}</span></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td><span className="table-text">{u.position}</span></td>
+                      <td><span className="dept-badge" style={{ background: `${DEPT_COLORS[u.department]}20`, color: DEPT_COLORS[u.department] }}>{u.department}</span></td>
+                      <td><span className="role-badge" style={{ background: `${ROLE_COLORS[u.role]}20`, color: ROLE_COLORS[u.role] }}>{ROLE_LABELS[u.role]}</span></td>
+                      <td><span className="table-text">{new Date(u.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span></td>
+                      <td><span className={`status-pill ${u.status === 'active' ? 'status-present' : 'status-absent'}`}>{u.status}</span></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

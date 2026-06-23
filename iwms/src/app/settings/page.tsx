@@ -1170,7 +1170,7 @@ export default function SettingsPage() {
               </div>
 
               {mfaError && (
-                <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', textAlign: 'center', background: '#ef444415', padding: '8px', borderRadius: '6px', border: '1px solid #ef444430' }}>
+                <div style={{ color: 'var(--red)', fontSize: '13px', marginBottom: '16px', textAlign: 'center', background: 'var(--red-soft)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                   {mfaError}
                 </div>
               )}

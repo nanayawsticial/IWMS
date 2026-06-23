@@ -38,12 +38,12 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  super_admin: '#ef4444',
-  admin: '#6366f1',
-  hr_manager: '#f59e0b',
-  manager: '#8b5cf6',
-  team_lead: '#06b6d4',
-  employee: '#10b981',
+  super_admin: 'var(--red)',
+  admin: 'var(--blue)',
+  hr_manager: 'var(--yellow)',
+  manager: 'var(--purple)',
+  team_lead: 'var(--teal)',
+  employee: 'var(--green)',
 };
 
 interface NavItem {

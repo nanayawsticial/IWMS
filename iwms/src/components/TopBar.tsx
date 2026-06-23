@@ -557,7 +557,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
                   <span>Notifications</span>
                   <span className="notif-count">{notifCount} active</span>
                 </div>
-                <div className="notif-list" style={{ maxHeight: '320px', overflowY: 'auto' }}>
+                <div className="notif-list">
                   {notifications.length === 0 ? (
                     <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
                       No active notifications

@@ -285,63 +285,65 @@ export default function WeeklyReportsPage() {
           ) : myReports.length === 0 ? (
             <div className="empty-state">📄 No weekly reports submitted yet. Click &ldquo;+ New Weekly Report&rdquo; to get started.</div>
           ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th style={{ width: '30%', textAlign: 'left' }}>Reporting Week</th>
-                  <th style={{ width: '15%', textAlign: 'left' }}>Status</th>
-                  <th style={{ width: '15%', textAlign: 'left' }}>Submitted At</th>
-                  <th style={{ width: '30%', textAlign: 'left' }}>HOD Feedback</th>
-                  <th style={{ width: '10%', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {myReports.map((r: any) => (
-                  <tr key={r.id}>
-                    <td style={{ fontWeight: 600 }}>{r.startDate} to {r.endDate}</td>
-                    <td>
-                      <span className={`status-badge ${
-                        r.status === 'approved' ? 'completed' : 
-                        r.status === 'needs_revision' ? 'absent' : 
-                        r.status === 'submitted' ? 'late' : 'offline'
-                      }`}>
-                        {r.status === 'needs_revision' ? 'needs revision' : r.status}
-                      </span>
-                    </td>
-                    <td>{new Date(r.updatedAt).toLocaleDateString()}</td>
-                    <td style={{ color: r.reviewNotes ? 'var(--text-1)' : 'var(--text-3)', fontSize: '13px' }}>
-                      {r.reviewNotes || '—'}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div className="table-actions">
-                        <button className="action-btn" title="View details" onClick={async () => {
-                          const detailed = await reportsApi.get(r.id);
-                          setViewingReport(detailed);
-                        }}>
-                          👁️
-                        </button>
-                        {r.status === 'draft' || r.status === 'needs_revision' ? (
-                          <button className="action-btn" title="Edit draft" onClick={async () => {
-                            const detailed = await reportsApi.get(r.id);
-                            startNewReport(detailed);
-                          }}>
-                            ✏️
-                          </button>
-                        ) : null}
-                        <button 
-                          className="action-btn" 
-                          title="Export Word DOCX"
-                          disabled={exportingId === r.id}
-                          onClick={() => handleExport(r.id, user?.name || '', r.startDate)}
-                        >
-                          {exportingId === r.id ? '⏳' : '📥'}
-                        </button>
-                      </div>
-                    </td>
+            <div className="table-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '30%', textAlign: 'left' }}>Reporting Week</th>
+                    <th style={{ width: '15%', textAlign: 'left' }}>Status</th>
+                    <th style={{ width: '15%', textAlign: 'left' }}>Submitted At</th>
+                    <th style={{ width: '30%', textAlign: 'left' }}>HOD Feedback</th>
+                    <th style={{ width: '10%', textAlign: 'right' }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {myReports.map((r: any) => (
+                    <tr key={r.id}>
+                      <td style={{ fontWeight: 600 }}>{r.startDate} to {r.endDate}</td>
+                      <td>
+                        <span className={`status-badge ${
+                          r.status === 'approved' ? 'completed' : 
+                          r.status === 'needs_revision' ? 'absent' : 
+                          r.status === 'submitted' ? 'late' : 'offline'
+                        }`}>
+                          {r.status === 'needs_revision' ? 'needs revision' : r.status}
+                        </span>
+                      </td>
+                      <td>{new Date(r.updatedAt).toLocaleDateString()}</td>
+                      <td style={{ color: r.reviewNotes ? 'var(--text-1)' : 'var(--text-3)', fontSize: '13px' }}>
+                        {r.reviewNotes || '—'}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div className="table-actions">
+                          <button className="action-btn" title="View details" onClick={async () => {
+                            const detailed = await reportsApi.get(r.id);
+                            setViewingReport(detailed);
+                          }}>
+                            👁️
+                          </button>
+                          {r.status === 'draft' || r.status === 'needs_revision' ? (
+                            <button className="action-btn" title="Edit draft" onClick={async () => {
+                              const detailed = await reportsApi.get(r.id);
+                              startNewReport(detailed);
+                            }}>
+                              ✏️
+                            </button>
+                          ) : null}
+                          <button 
+                            className="action-btn" 
+                            title="Export Word DOCX"
+                            disabled={exportingId === r.id}
+                            onClick={() => handleExport(r.id, user?.name || '', r.startDate)}
+                          >
+                            {exportingId === r.id ? '⏳' : '📥'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
@@ -401,54 +403,56 @@ export default function WeeklyReportsPage() {
             ) : teamReports.length === 0 ? (
               <div className="empty-state">🔍 No weekly reports found matching your filters.</div>
             ) : (
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '20%', textAlign: 'left' }}>Prepared By</th>
-                    <th style={{ width: '20%', textAlign: 'left' }}>Department</th>
-                    <th style={{ width: '25%', textAlign: 'left' }}>Reporting Week</th>
-                    <th style={{ width: '12%', textAlign: 'left' }}>Status</th>
-                    <th style={{ width: '13%', textAlign: 'left' }}>Submission Date</th>
-                    <th style={{ width: '10%', textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {teamReports.map((r: any) => (
-                    <tr key={r.id}>
-                      <td style={{ fontWeight: 600 }}>{r.user.name}</td>
-                      <td>{r.user.department?.name || 'General'}</td>
-                      <td>{r.startDate} to {r.endDate}</td>
-                      <td>
-                        <span className={`status-badge ${
-                          r.status === 'approved' ? 'completed' : 
-                          r.status === 'needs_revision' ? 'absent' : 'late'
-                        }`}>
-                          {r.status === 'needs_revision' ? 'needs revision' : r.status}
-                        </span>
-                      </td>
-                      <td>{new Date(r.updatedAt).toLocaleDateString()}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div className="table-actions">
-                          <button className="action-btn" title="Review Report" onClick={async () => {
-                            const detailed = await reportsApi.get(r.id);
-                            setViewingReport(detailed);
-                          }}>
-                            👁️ Review
-                          </button>
-                          <button 
-                            className="action-btn" 
-                            title="Export Word"
-                            disabled={exportingId === r.id}
-                            onClick={() => handleExport(r.id, r.user.name, r.startDate)}
-                          >
-                            {exportingId === r.id ? '⏳' : '📥 Word'}
-                          </button>
-                        </div>
-                      </td>
+              <div className="table-scroll">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '20%', textAlign: 'left' }}>Prepared By</th>
+                      <th style={{ width: '20%', textAlign: 'left' }}>Department</th>
+                      <th style={{ width: '25%', textAlign: 'left' }}>Reporting Week</th>
+                      <th style={{ width: '12%', textAlign: 'left' }}>Status</th>
+                      <th style={{ width: '13%', textAlign: 'left' }}>Submission Date</th>
+                      <th style={{ width: '10%', textAlign: 'right' }}>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {teamReports.map((r: any) => (
+                      <tr key={r.id}>
+                        <td style={{ fontWeight: 600 }}>{r.user.name}</td>
+                        <td>{r.user.department?.name || 'General'}</td>
+                        <td>{r.startDate} to {r.endDate}</td>
+                        <td>
+                          <span className={`status-badge ${
+                            r.status === 'approved' ? 'completed' : 
+                            r.status === 'needs_revision' ? 'absent' : 'late'
+                          }`}>
+                            {r.status === 'needs_revision' ? 'needs revision' : r.status}
+                          </span>
+                        </td>
+                        <td>{new Date(r.updatedAt).toLocaleDateString()}</td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className="table-actions">
+                            <button className="action-btn" title="Review Report" onClick={async () => {
+                              const detailed = await reportsApi.get(r.id);
+                              setViewingReport(detailed);
+                            }}>
+                              👁️ Review
+                            </button>
+                            <button 
+                              className="action-btn" 
+                              title="Export Word"
+                              disabled={exportingId === r.id}
+                              onClick={() => handleExport(r.id, r.user.name, r.startDate)}
+                            >
+                              {exportingId === r.id ? '⏳' : '📥 Word'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </>

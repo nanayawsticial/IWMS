@@ -18,7 +18,7 @@ export default function Error({
       {/* Brand logo at top */}
       <div className="new-auth-brand-logo" style={{ marginBottom: '32px' }}>
         <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-          <rect width="32" height="32" rx="8" fill="#bd6b39" />
+          <rect width="32" height="32" rx="8" fill="var(--accent)" />
           <path d="M8 16L14 22L24 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span>IWMS</span>

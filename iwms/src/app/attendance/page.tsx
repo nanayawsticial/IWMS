@@ -127,7 +127,7 @@ function ClockWidget() {
           <button
             className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
               clockedIn
-                ? 'bg-red-500 hover:bg-red-600 text-white'
+                ? 'bg-[var(--red)] hover:opacity-90 text-white'
                 : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white'
             }`}
             onClick={() => clockedIn ? clockOut.mutate() : clockIn.mutate()}
@@ -490,7 +490,7 @@ function AttendancePageContent() {
                 <div className="mobile-scroll-hint">
                   <span>←</span> Swipe to see all columns <span>→</span>
                 </div>
-                <div className="table-scroll">
+                <div className="table-scroll" style={{ width: '100%', maxWidth: '100%' }}>
                   <table className="w-full text-left border-collapse text-sm" style={{ minWidth: 640 }}>
                     <thead>
                       <tr className="border-b border-[var(--border)] text-[var(--text-3)] text-xs uppercase font-semibold">

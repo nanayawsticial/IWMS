@@ -362,36 +362,38 @@ export default function EmployeeProfilePage() {
             {attendance.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No attendance records logged.</p>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Clock In</th>
-                    <th>Clock Out</th>
-                    <th>Hours worked</th>
-                    <th>Method</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendance.slice(0, 5).map((log: any) => (
-                    <tr key={log.id} className="table-row">
-                      <td><span className="table-text">{log.date}</span></td>
-                      <td><span className="table-text">{log.clockIn || '—'}</span></td>
-                      <td><span className="table-text">{log.clockOut || '—'}</span></td>
-                      <td><span className="table-text">{log.hoursWorked ? `${log.hoursWorked}h` : '—'}</span></td>
-                      <td><span className="table-text" style={{ textTransform: 'capitalize' }}>{log.method}</span></td>
-                      <td>
-                        <span className={`status-pill ${
-                          log.status === 'present' ? 'status-present' : log.status === 'late' ? 'status-late' : 'status-absent'
-                        }`} style={{ textTransform: 'capitalize' }}>
-                          {log.status}
-                        </span>
-                      </td>
+              <div className="table-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Clock In</th>
+                      <th>Clock Out</th>
+                      <th>Hours worked</th>
+                      <th>Method</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {attendance.slice(0, 5).map((log: any) => (
+                      <tr key={log.id} className="table-row">
+                        <td><span className="table-text">{log.date}</span></td>
+                        <td><span className="table-text">{log.clockIn || '—'}</span></td>
+                        <td><span className="table-text">{log.clockOut || '—'}</span></td>
+                        <td><span className="table-text">{log.hoursWorked ? `${log.hoursWorked}h` : '—'}</span></td>
+                        <td><span className="table-text" style={{ textTransform: 'capitalize' }}>{log.method}</span></td>
+                        <td>
+                          <span className={`status-pill ${
+                            log.status === 'present' ? 'status-present' : log.status === 'late' ? 'status-late' : 'status-absent'
+                          }`} style={{ textTransform: 'capitalize' }}>
+                            {log.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
@@ -401,54 +403,56 @@ export default function EmployeeProfilePage() {
             {tasks.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>No tasks currently assigned.</p>
             ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Task Name</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Due Date</th>
-                    <th>Progress</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tasks.map((task: any) => {
-                    const progress = task.estimatedHours > 0 ? Math.min(100, Math.round((task.loggedHours / task.estimatedHours) * 100)) : 0;
-                    return (
-                      <tr key={task.id} className="table-row">
-                        <td>
-                          <div>
-                            <p className="table-user-name" style={{ margin: 0 }}>{task.title}</p>
-                            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{task.projectName}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="role-badge" style={{
-                            background: task.priority === 'critical' ? 'var(--red-soft)' : task.priority === 'high' ? 'var(--orange-soft)' : 'var(--yellow-soft)',
-                            color: task.priority === 'critical' ? 'var(--red)' : task.priority === 'high' ? 'var(--orange)' : 'var(--yellow)'
-                          }}>
-                            {task.priority}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="role-badge" style={{ background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)' }}>
-                            {task.status.replace('_', ' ').toUpperCase()}
-                          </span>
-                        </td>
-                        <td><span className="table-text">{task.dueDate}</span></td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '60px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', background: 'var(--indigo)', width: `${progress}%` }} />
+              <div className="table-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Task Name</th>
+                      <th>Priority</th>
+                      <th>Status</th>
+                      <th>Due Date</th>
+                      <th>Progress</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tasks.map((task: any) => {
+                      const progress = task.estimatedHours > 0 ? Math.min(100, Math.round((task.loggedHours / task.estimatedHours) * 100)) : 0;
+                      return (
+                        <tr key={task.id} className="table-row">
+                          <td>
+                            <div>
+                              <p className="table-user-name" style={{ margin: 0 }}>{task.title}</p>
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{task.projectName}</span>
                             </div>
-                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{progress}%</span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td>
+                            <span className="role-badge" style={{
+                              background: task.priority === 'critical' ? 'var(--red-soft)' : task.priority === 'high' ? 'var(--orange-soft)' : 'var(--yellow-soft)',
+                              color: task.priority === 'critical' ? 'var(--red)' : task.priority === 'high' ? 'var(--orange)' : 'var(--yellow)'
+                            }}>
+                              {task.priority}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="role-badge" style={{ background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)' }}>
+                              {task.status.replace('_', ' ').toUpperCase()}
+                            </span>
+                          </td>
+                          <td><span className="table-text">{task.dueDate}</span></td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ width: '60px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', background: 'var(--indigo)', width: `${progress}%` }} />
+                              </div>
+                              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{progress}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>

@@ -185,7 +185,7 @@ export default function PresencePage() {
 
       {/* Search & Department Filters Toolbar */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl mb-6">
-        <div className="flex flex-col sm:flex-row gap-3 items-center w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 items-center w-full md:w-auto" style={{ minWidth: 0 }}>
           {/* Search */}
           <div className="control-compact w-full sm:w-64">
             <Search size={16} className="text-[var(--text-3)] flex-shrink-0" />

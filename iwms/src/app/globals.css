@@ -15,7 +15,11 @@
   /* Text */
   --text-1:         #f0f2f8;
   --text-2:         #8892a4;
-  --text-3:         #565f70;
+  --text-3:         #76839b;
+
+  /* Buttons */
+  --btn-bg:         #9a4e20;
+  --btn-bg-hover:   #813f17;
 
   /* Accent — orange like SmartHR */
   --accent:         #ff6b35;
@@ -125,15 +129,22 @@
   --text-2:         #576070; /* Navy muted (6.4:1 contrast) */
   --text-3:         #627288; /* Slate muted (4.59:1 contrast) */
 
+  /* Buttons */
+  --btn-bg:         #9a4e20;
+  --btn-bg-hover:   #813f17;
+
   /* Accent overrides to match terracotta in light mode */
   --accent:         #bd6b39;
   --accent-hover:   #a3582d;
   --accent-soft:    rgba(189, 107, 57, 0.08);
 
   /* Status overrides */
-  --green-soft:     rgba(34,197,94,0.08);
-  --yellow-soft:    rgba(245,158,11,0.08);
-  --red-soft:       rgba(239,68,68,0.08);
+  --green:          #15803d;
+  --green-soft:     #dcfce7;
+  --yellow:         #92400e;
+  --yellow-soft:    #fef3c7;
+  --red:            #991b1b;
+  --red-soft:       #fee2e2;
   --blue-soft:      rgba(59,130,246,0.08);
   --purple-soft:    rgba(139,92,246,0.08);
   --teal-soft:      rgba(20,184,166,0.08);
@@ -229,12 +240,12 @@
   white-space: nowrap;
 }
 
-.badge-green  { background: rgba(34,197,94,0.12);   color: #22c55e; }
-.badge-yellow { background: rgba(245,158,11,0.12);  color: #f59e0b; }
-.badge-red    { background: rgba(239,68,68,0.12);   color: #ef4444; }
-.badge-blue   { background: rgba(59,130,246,0.12);  color: #3b82f6; }
-.badge-purple { background: rgba(139,92,246,0.12);  color: #8b5cf6; }
-.badge-orange { background: rgba(249,115,22,0.12);  color: #f97316; }
+.badge-green  { background: var(--green-soft);   color: var(--green); }
+.badge-yellow { background: var(--yellow-soft);  color: var(--yellow); }
+.badge-red    { background: var(--red-soft);     color: var(--red); }
+.badge-blue   { background: var(--blue-soft);    color: var(--blue); }
+.badge-purple { background: var(--purple-soft);  color: var(--purple); }
+.badge-orange { background: var(--orange-soft);  color: var(--orange); }
 .badge-gray   { background: rgba(148,163,184,0.12); color: #94a3b8; }
 
 .avatar {
@@ -274,7 +285,7 @@
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--btn-bg);
   color: white;
   border: none;
   border-radius: var(--radius-md);
@@ -287,7 +298,7 @@
   gap: 6px;
   transition: background 0.15s;
 }
-.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:hover { background: var(--btn-bg-hover); }
 
 .btn-ghost {
   background: transparent;
@@ -375,6 +386,11 @@ code, kbd, pre, samp {
 thead .sticky-left {
   z-index: 3;
   background: var(--bg-secondary);
+}
+@media (max-width: 640px) {
+  .sticky-left {
+    min-width: 120px !important;
+  }
 }
 
 /* Spinner */
@@ -558,7 +574,7 @@ thead .sticky-left {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-purple) 100%);
+  background: var(--btn-bg);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -567,7 +583,7 @@ thead .sticky-left {
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(154, 78, 32, 0.2);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -575,7 +591,7 @@ thead .sticky-left {
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 6px 16px rgba(154, 78, 32, 0.3);
 }
 
 .btn-primary:active {
@@ -583,7 +599,7 @@ thead .sticky-left {
 }
 
 .btn-primary-sm {
-  background: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-purple) 100%);
+  background: var(--btn-bg);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1148,6 +1164,11 @@ thead .sticky-left {
   flex-direction: column;
   gap: 32px;
 }
+@media (max-width: 640px) {
+  .page-content {
+    padding: 16px 12px;
+  }
+}
 
 .page-header {
   display: flex;
@@ -1481,11 +1502,11 @@ thead .sticky-left {
   padding: 2px 6px;
   border-radius: 4px;
 }
-.status-done { background: rgba(16, 185, 129, 0.1); color: var(--color-green); }
-.status-in_progress { background: rgba(99, 102, 241, 0.1); color: var(--color-indigo); }
-.status-review { background: rgba(245, 158, 11, 0.1); color: var(--color-amber); }
-.status-todo { background: rgba(100, 116, 139, 0.1); color: var(--text-secondary); }
-.status-backlog { background: rgba(51, 65, 85, 0.1); color: var(--text-muted); }
+.status-done { background: var(--green-soft); color: var(--green); }
+.status-in_progress { background: var(--blue-soft); color: var(--blue); }
+.status-review { background: var(--yellow-soft); color: var(--yellow); }
+.status-todo { background: var(--bg-surface-2); color: var(--text-2); }
+.status-backlog { background: var(--bg-hover); color: var(--text-3); }
 
 /* Kanban Board */
 .kanban-board {
@@ -1495,6 +1516,7 @@ thead .sticky-left {
   min-width: 100%;
   width: max-content;
   padding-bottom: 8px;
+  overflow-x: auto;
 }
 
 .kanban-column {
@@ -1558,7 +1580,7 @@ thead .sticky-left {
   padding: 16px;
   cursor: grab;
   user-select: none;
-  touch-action: none;
+  touch-action: pan-y;
   transition: all 0.2s;
 }
 
@@ -3216,7 +3238,7 @@ thead .sticky-left {
   gap: 10px;
   height: 42px;
   padding: 0 24px;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+  background: var(--btn-bg);
   border: none;
   border-radius: 10px;
   color: #fff;
@@ -3225,13 +3247,13 @@ thead .sticky-left {
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s;
-  box-shadow: 0 4px 16px rgba(255,107,53,0.25);
+  box-shadow: 0 4px 16px rgba(154,78,32,0.25);
   white-space: nowrap;
 }
 
 .welcome-btn-primary:hover {
   opacity: 0.95;
-  box-shadow: 0 4px 24px rgba(255,107,53,0.4);
+  box-shadow: 0 4px 24px rgba(154,78,32,0.4);
   transform: translateY(-1px);
 }
 
@@ -3863,6 +3885,7 @@ a:not(:disabled):active,
   box-sizing: border-box !important;
   flex-shrink: 0;
   overflow-x: auto;
+  white-space: nowrap !important;
   scrollbar-width: none; /* Firefox */
 }
 .tab-switcher::-webkit-scrollbar {
@@ -4517,6 +4540,11 @@ a:not(:disabled):active,
   color: var(--color-slate-muted);
   line-height: 1.6;
   margin-bottom: 28px;
+}
+
+.notif-list {
+  max-height: calc(100vh - var(--topbar-height) - 120px);
+  overflow-y: auto;
 }
 
 /* Mobile Notifications Overlay */

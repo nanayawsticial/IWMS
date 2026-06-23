@@ -392,10 +392,10 @@ export default function DashboardPage() {
                 </div>
                 {/* Horizontal proportion bar */}
                 <div className="h-2.5 w-full rounded-full bg-[var(--bg-hover)] overflow-hidden flex mb-5">
-                  <div style={{ width: '70%' }} className="bg-var(--green) bg-emerald-500" title="Full Time: 70%" />
-                  <div style={{ width: '15%' }} className="bg-var(--blue) bg-blue-500" title="Part Time: 15%" />
-                  <div style={{ width: '10%' }} className="bg-var(--yellow) bg-amber-500" title="Contract: 10%" />
-                  <div style={{ width: '5%' }} className="bg-var(--red) bg-red-500" title="Intern: 5%" />
+                  <div style={{ width: '70%' }} className="bg-[var(--green)]" title="Full Time: 70%" />
+                  <div style={{ width: '15%' }} className="bg-[var(--blue)]" title="Part Time: 15%" />
+                  <div style={{ width: '10%' }} className="bg-[var(--yellow)]" title="Contract: 10%" />
+                  <div style={{ width: '5%' }} className="bg-[var(--red)]" title="Intern: 5%" />
                 </div>
                 {/* 2x2 grid stats */}
                 <div className="grid grid-cols-2 gap-5 mb-8">
@@ -611,14 +611,16 @@ export default function DashboardPage() {
                               <div className="flex gap-3 justify-end">
                                 <button
                                   onClick={() => handleReject(l.id)}
-                                  className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-[11px] font-bold cursor-pointer transition-colors"
+                                  className="px-4 py-2 border rounded-lg text-[11px] font-bold cursor-pointer transition-colors hover:opacity-85"
+                                  style={{ backgroundColor: 'var(--red-soft)', color: 'var(--red)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
                                   disabled={updateLeaveStatus.isPending}
                                 >
                                   Reject
                                 </button>
                                 <button
                                   onClick={() => handleApprove(l.id)}
-                                  className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 rounded-lg text-[11px] font-bold cursor-pointer transition-colors"
+                                  className="px-4 py-2 border rounded-lg text-[11px] font-bold cursor-pointer transition-colors hover:opacity-85"
+                                  style={{ backgroundColor: 'var(--green-soft)', color: 'var(--green)', borderColor: 'rgba(34, 197, 94, 0.2)' }}
                                   disabled={updateLeaveStatus.isPending}
                                 >
                                   Approve

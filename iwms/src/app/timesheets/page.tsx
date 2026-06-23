@@ -173,7 +173,7 @@ export default function TimesheetsPage() {
             <div className="mobile-scroll-hint">
               <span>←</span> Scroll horizontally to see all days <span>→</span>
             </div>
-            <div className="table-scroll">
+            <div className="table-scroll" style={{ width: '100%', maxWidth: '100%' }}>
               <table style={{ tableLayout: 'auto', minWidth: 780 }} className="data-table">
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)' }}>
                   <tr>

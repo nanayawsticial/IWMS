@@ -8,8 +8,8 @@ export default function GetStartedPage() {
     <div className="choice-page">
       <style dangerouslySetInnerHTML={{ __html: `
         .choice-page {
-          background-color: #060814;
-          color: #f8fafc;
+          background-color: var(--bg-page);
+          color: var(--text-1);
           font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
           min-height: 100vh;
           display: flex;
@@ -74,7 +74,7 @@ export default function GetStartedPage() {
           font-size: 1.5rem;
           font-weight: 800;
           letter-spacing: -0.5px;
-          background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+          background: linear-gradient(135deg, var(--text-1) 0%, var(--text-2) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -84,13 +84,13 @@ export default function GetStartedPage() {
           font-weight: 800;
           line-height: 1.2;
           letter-spacing: -0.01em;
-          color: #fff;
+          color: var(--text-1);
           margin-bottom: 12px;
         }
 
         .choice-subtitle {
           font-size: 1.05rem;
-          color: #94a3b8;
+          color: var(--text-2);
           max-width: 500px;
           margin: 0 auto;
         }
@@ -151,7 +151,7 @@ export default function GetStartedPage() {
 
         .choice-card-signin .card-icon-wrapper {
           background: rgba(99, 102, 241, 0.1);
-          color: #818cf8;
+          color: var(--blue);
         }
 
         .choice-card-signin:hover .card-icon-wrapper {
@@ -161,7 +161,7 @@ export default function GetStartedPage() {
 
         .choice-card-create .card-icon-wrapper {
           background: rgba(139, 92, 246, 0.1);
-          color: #a78bfa;
+          color: var(--purple);
         }
 
         .choice-card-create:hover .card-icon-wrapper {
@@ -172,13 +172,13 @@ export default function GetStartedPage() {
         .card-title {
           font-size: 1.35rem;
           font-weight: 700;
-          color: #fff;
+          color: var(--text-1);
           margin-bottom: 12px;
         }
 
         .card-desc {
           font-size: 0.95rem;
-          color: #94a3b8;
+          color: var(--text-2);
           line-height: 1.5;
           margin-bottom: 32px;
           flex-grow: 1;
@@ -200,41 +200,41 @@ export default function GetStartedPage() {
         .choice-card-signin .card-button {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          color: #fff;
+          color: var(--text-1);
         }
 
         .choice-card-signin:hover .card-button {
-          background: #6366f1;
-          border-color: #6366f1;
+          background: var(--blue);
+          border-color: var(--blue);
           box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         }
 
         .choice-card-create .card-button {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          color: #fff;
+          color: var(--text-1);
         }
 
         .choice-card-create:hover .card-button {
-          background: #8b5cf6;
-          border-color: #8b5cf6;
+          background: var(--purple);
+          border-color: var(--purple);
           box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
         }
 
         .choice-footer-text {
           font-size: 0.9rem;
-          color: #64748b;
+          color: var(--text-3);
         }
 
         .invite-link {
-          color: #818cf8;
+          color: var(--blue);
           text-decoration: none;
           font-weight: 500;
           transition: color 0.2s;
         }
 
         .invite-link:hover {
-          color: #a5b4fc;
+          color: var(--accent);
           text-decoration: underline;
         }
 

@@ -6,11 +6,11 @@ import { tasksApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 
 const STATUS_OPTIONS = [
-  { value: 'backlog', label: 'Backlog', color: '#64748b' },
-  { value: 'todo', label: 'To Do', color: '#94a3b8' },
-  { value: 'in_progress', label: 'In Progress', color: '#6366f1' },
-  { value: 'review', label: 'Review', color: '#f59e0b' },
-  { value: 'done', label: 'Done', color: '#10b981' },
+  { value: 'backlog', label: 'Backlog', color: 'var(--text-3)' },
+  { value: 'todo', label: 'To Do', color: 'var(--text-2)' },
+  { value: 'in_progress', label: 'In Progress', color: 'var(--blue)' },
+  { value: 'review', label: 'Review', color: 'var(--yellow)' },
+  { value: 'done', label: 'Done', color: 'var(--green)' },
 ];
 
 export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; onClose: () => void }) {

@@ -320,7 +320,7 @@ function RegisterPageContent() {
 export default function RegisterPage() {
   return (
     <Suspense fallback={
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#faf8f6', color: '#64748b' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--bg-page)', color: 'var(--text-3)' }}>
         <span className="spinner" style={{ marginRight: '8px' }} /> Loading...
       </div>
     }>

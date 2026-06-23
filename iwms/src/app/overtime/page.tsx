@@ -320,7 +320,7 @@ export default function OvertimePage() {
                   disabled={reviewOvertime.isPending}
                   style={{
                     padding: '8px 16px',
-                    background: actionType === 'approved' ? '#10b981' : '#ef4444',
+                    background: actionType === 'approved' ? 'var(--green)' : 'var(--red)',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '6px',
