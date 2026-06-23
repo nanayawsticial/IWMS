@@ -334,7 +334,7 @@ export default function FinancePage() {
                   <h3 className="section-title mb-4">6-Month Spending Trend</h3>
                   <div className="w-full h-[240px]">
                     {dashboard?.monthlySpendingTrend?.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                         <AreaChart data={dashboard.monthlySpendingTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                           <defs>
                             <linearGradient id="colorSpent" x1="0" y1="0" x2="0" y2="1">
@@ -360,7 +360,7 @@ export default function FinancePage() {
                   <h3 className="section-title mb-4">Expenses by Category</h3>
                   <div className="w-full h-[160px] relative flex items-center justify-center">
                     {dashboard?.expensesByCategory?.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                         <PieChart>
                           <Pie
                             data={dashboard.expensesByCategory}

@@ -446,7 +446,7 @@ export default function DepartmentDashboardPage() {
             <div className="card">
               <h3 className="section-title mb-4">4-Week Attendance Trend</h3>
               <div className="w-full h-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                   <LineChart data={attendanceTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="name" stroke="var(--text-3)" fontSize={11} />

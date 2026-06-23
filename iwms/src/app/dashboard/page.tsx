@@ -446,7 +446,7 @@ export default function DashboardPage() {
 
               <div className="relative w-full flex items-center justify-center flex-1">
                 <div style={{ width: '100%', height: 180 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                     <RadialBarChart
                       cx="50%"
                       cy="60%"
@@ -501,7 +501,7 @@ export default function DashboardPage() {
               <div>
                 <h3 className="section-title text-sm sm:text-base font-bold text-[var(--text-1)] mb-4">Department Sizes</h3>
                 <div style={{ width: '100%', height: 220 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                     <BarChart data={managementData?.departments || []} layout="vertical" margin={{ left: 5, right: 10, top: 5, bottom: 5 }}>
                       <XAxis type="number" hide />
                       <YAxis
@@ -860,7 +860,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div style={{ width: '100%', height: 240 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                   <AreaChart data={WEEKLY_ATTENDANCE} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="presentGrad" x1="0" y1="0" x2="0" y2="1">
@@ -888,7 +888,7 @@ export default function DashboardPage() {
                 <h3 className="section-title">My Tasks Status</h3>
               </div>
               <div style={{ width: '100%', height: 240 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                   <PieChart>
                     <Pie
                       data={[

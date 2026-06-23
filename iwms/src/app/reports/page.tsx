@@ -232,7 +232,7 @@ export default function ReportsPage() {
             <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>This week</span>
           </div>
           <div style={{ width: '100%', height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
               <BarChart data={WEEKLY_SHAPE} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="day" stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 12 }} />
@@ -252,7 +252,7 @@ export default function ReportsPage() {
             <h3 className="chart-title">Task Status Breakdown</h3>
             <span className="live-badge"><span className="live-dot" />LIVE</span>
           </div>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={180} initialDimension={{ width: 100, height: 180 }}>
             <PieChart>
               <Pie data={taskStatusCounts} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
                 {taskStatusCounts.map((e, i) => <Cell key={i} fill={e.color} />)}
@@ -278,7 +278,7 @@ export default function ReportsPage() {
             <h3 className="chart-title">Department Task Completion Rate</h3>
             <span className="live-badge"><span className="live-dot" />LIVE</span>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={200} initialDimension={{ width: 100, height: 200 }}>
             <BarChart data={deptData} margin={{ top: 5, right: 10, left: -20, bottom: 55 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
@@ -299,7 +299,7 @@ export default function ReportsPage() {
         {/* Leave Trends */}
         <div className="chart-card">
           <div className="chart-header"><h3 className="chart-title">Leave Trends (6 Months)</h3></div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={200} initialDimension={{ width: 100, height: 200 }}>
             <LineChart data={LEAVE_DATA} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="month" stroke="var(--text-3)" tick={{ fill: 'var(--text-2)', fontSize: 12 }} />

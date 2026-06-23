@@ -289,7 +289,7 @@ export default function HrDashboardPage() {
                   <h3 className="section-title mb-4">Department Distribution</h3>
                   <div className="w-full h-[220px]">
                     {dashboard?.headcountByDepartment?.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                         <BarChart data={dashboard.headcountByDepartment} layout="vertical" margin={{ left: -10, right: 10, top: 0, bottom: 0 }}>
                           <XAxis type="number" hide />
                           <YAxis dataKey="name" type="category" stroke="var(--text-3)" fontSize={11} width={80} tickLine={false} axisLine={false} />
@@ -307,7 +307,7 @@ export default function HrDashboardPage() {
                   <h3 className="section-title mb-4">Employment Structure</h3>
                   <div className="w-full h-[160px] relative flex items-center justify-center">
                     {dashboard?.employmentTypeBreakdown?.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                         <PieChart>
                           <Pie
                             data={dashboard.employmentTypeBreakdown}
@@ -578,7 +578,7 @@ export default function HrDashboardPage() {
               <div className="card lg:col-span-2">
                 <h3 className="section-title mb-4">Headcount MoM Trend</h3>
                 <div className="w-full h-[240px]">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                     <LineChart
                       data={[
                         { month: 'Jan', headcount: 18 },

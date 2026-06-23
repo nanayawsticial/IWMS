@@ -320,7 +320,7 @@ export default function ManagementDashboardPage() {
           </div>
           <div style={{ width: '100%', height: 280 }}>
             {mounted && departmentData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                 <BarChart data={departmentData} barGap={4}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-2)' }} axisLine={false} tickLine={false} />
@@ -348,7 +348,7 @@ export default function ManagementDashboardPage() {
             <div className="empty-state">No tasks created yet</div>
           ) : (
             <div className="relative w-full h-[240px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 100, height: 100 }}>
                 <PieChart>
                   <Pie
                     data={donutChartData}
