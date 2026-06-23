@@ -1039,6 +1039,283 @@ async function attendanceRoutes(fastify) {
     });
   });
 
+  // POST /api/attendance/hardware-punch/batch  ← Pico offline queue flush
+  // Accepts a JSON body: { events: [ { device_id, uid, event_type, timestamp, terminal_event_id, flags? }, ... ] }
+  // Authorization: X-Device-Key header (same as single punch).
+  // Strategy:
+  //   1. Verify device is registered & key is valid.
+  //   2. For each event in the batch:
+  //      a. Skip if terminalEventId already exists in DeviceSyncLog (dedup).
+  //      b. Skip if same uid + same event_type occurred within 5 min (double-tap mitigation).
+  //      c. If unknown uid → log to DeviceSyncLog with processed=false, continue.
+  //      d. Otherwise → upsert AttendanceRecord, emit Socket.IO, log to DeviceSyncLog.
+  //   3. Return per-event result summary so the Pico knows what was accepted.
+  fastify.post('/hardware-punch/batch', async (request, reply) => {
+    const body = request.body ?? {};
+    const events = Array.isArray(body.events) ? body.events : [];
+
+    if (events.length === 0) {
+      return reply.code(400).send({ error: 'Bad Request', message: 'events array is required and must not be empty' });
+    }
+
+    // Use the first event's device_id to locate the device (all events must be from the same terminal)
+    const firstDeviceId = normalizeOptionalString(events[0]?.device_id);
+    if (!firstDeviceId) {
+      return reply.code(400).send({ error: 'Bad Request', message: 'device_id is required on each event' });
+    }
+
+    // 1. Verify device is registered and active
+    const device = await prisma.biometricDevice.findFirst({
+      where: { serialNumber: firstDeviceId, isActive: true },
+    });
+
+    if (!device) {
+      return reply.code(403).send({
+        error: 'Forbidden',
+        message: `Device "${firstDeviceId}" is not registered. Add it in IWMS Settings → Biometric Hardware.`,
+      });
+    }
+
+    const { organizationId } = device;
+
+    // 1a. Validate X-Device-Key
+    const incomingKey = request.headers['x-device-key'];
+    const keyToCheck = Array.isArray(incomingKey) ? incomingKey[0] : incomingKey;
+    if (!device.apiKeyHash || !isValidDeviceApiKey(keyToCheck, device.apiKeyHash)) {
+      return reply.code(401).send({
+        error: 'Unauthorized',
+        message: 'Missing, invalid, or unprovisioned X-Device-Key.',
+      });
+    }
+
+    // Mark device as online (fire-and-forget)
+    prisma.biometricDevice.update({
+      where: { id: device.id },
+      data: { lastSeenAt: new Date(), lastSyncAt: new Date(), status: 'online' },
+    }).catch(() => {});
+
+    const serverDate = new Date().toISOString().split('T')[0];
+    const serverTime = currentTimeHHMM();
+    const io = global.io;
+
+    // Track what we've seen THIS batch to handle double-taps within the batch itself
+    // key: `${uid}:${event_type}` → ISO timestamp string of the most recent event in the batch we processed
+    const batchRecentEvents = new Map();
+
+    const results = [];
+
+    for (const ev of events) {
+      const normalizedUid       = normalizeOptionalString(ev.uid);
+      const event_type          = (ev.event_type || '').trim();
+      const rawTerminalEventId  = normalizeOptionalString(ev.terminal_event_id || ev.terminalEventId);
+      const normalizedFlags     = Array.isArray(ev.flags) ? ev.flags : [];
+      const evTimestamp         = (ev.timestamp || '').trim();
+
+      // Basic field validation
+      if (!normalizedUid || !event_type || !evTimestamp) {
+        results.push({ terminal_event_id: rawTerminalEventId || null, status: 'skipped', reason: 'Missing uid, event_type, or timestamp' });
+        continue;
+      }
+      if (!['clock_in', 'clock_out'].includes(event_type)) {
+        results.push({ terminal_event_id: rawTerminalEventId || null, status: 'skipped', reason: `Invalid event_type: ${event_type}` });
+        continue;
+      }
+
+      // Parse timestamp
+      const [deviceDate, timePart] = evTimestamp.split('T');
+      let date    = deviceDate;
+      let timeStr = timePart ? timePart.substring(0, 5) : '00:00';
+      if (deviceDate !== serverDate) { date = serverDate; timeStr = serverTime; }
+
+      // 2a. Dedup check against DeviceSyncLog
+      if (rawTerminalEventId) {
+        const existing = await prisma.deviceSyncLog.findUnique({
+          where: { deviceId_terminalEventId: { deviceId: device.id, terminalEventId: rawTerminalEventId } },
+        });
+        if (existing) {
+          results.push({ terminal_event_id: rawTerminalEventId, status: 'duplicate', reason: 'Already received', log_id: existing.id });
+          continue;
+        }
+      }
+
+      // 2b. Double-tap mitigation — within-batch: same uid + same event_type within 5 min
+      const tapKey = `${normalizedUid}:${event_type}`;
+      const lastSeen = batchRecentEvents.get(tapKey);
+      if (lastSeen) {
+        const diffMs = Math.abs(new Date(evTimestamp).getTime() - new Date(lastSeen).getTime());
+        if (diffMs < 5 * 60 * 1000) {
+          results.push({ terminal_event_id: rawTerminalEventId || null, uid: normalizedUid, status: 'skipped', reason: 'Double-tap within 5 min (in-batch)' });
+          continue;
+        }
+      }
+      // Also check against the DB for events that may have been processed in a previous flush
+      const recentDbLog = await prisma.deviceSyncLog.findFirst({
+        where: {
+          deviceId:  device.id,
+          employeeCode: normalizedUid,
+          eventType: event_type === 'clock_in' ? 'check_in' : 'check_out',
+          processed: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (recentDbLog) {
+        const diffMs = Math.abs(new Date(evTimestamp).getTime() - new Date(recentDbLog.createdAt).getTime());
+        if (diffMs < 5 * 60 * 1000) {
+          results.push({ terminal_event_id: rawTerminalEventId || null, uid: normalizedUid, status: 'skipped', reason: 'Double-tap within 5 min (DB)' });
+          continue;
+        }
+      }
+
+      // 2c. Look up employee
+      const user = await prisma.user.findFirst({
+        where: { employeeCode: normalizedUid, status: 'active', organizationId },
+        include: { department: true },
+      });
+
+      if (!user) {
+        // Log unknown card for admin visibility, but don't fail the whole batch
+        await prisma.deviceSyncLog.create({
+          data: {
+            deviceId:     device.id,
+            employeeCode: normalizedUid,
+            userId:       null,
+            eventType:    event_type === 'clock_in' ? 'check_in' : 'check_out',
+            eventTime:    evTimestamp,
+            terminalEventId: rawTerminalEventId || null,
+            verificationMode: 'rfid',
+            rawData:      JSON.stringify({ uid: normalizedUid, event_type, timestamp: evTimestamp, flags: normalizedFlags }),
+            processed:    false,
+          },
+        }).catch(() => {});
+        results.push({ terminal_event_id: rawTerminalEventId || null, uid: normalizedUid, status: 'unknown_card', reason: 'No active employee with this RFID uid' });
+        continue;
+      }
+
+      // 2d. Process valid punch
+      try {
+        let record;
+        let recordStatus = 'present';
+
+        if (event_type === 'clock_in') {
+          // Lateness check
+          const shift = await prisma.shift.findFirst({ where: { userId: user.id, date, organizationId } });
+          if (!shift || shift.type !== 'off') {
+            const [h, m] = timeStr.split(':').map(Number);
+            const mins = h * 60 + m;
+            let lateThreshold = 9 * 60 + 15;
+            if (shift?.startTime) {
+              const [sh] = shift.startTime.split(':').map(Number);
+              lateThreshold = sh * 60 + 15;
+            }
+            recordStatus = mins > lateThreshold ? 'late' : 'present';
+          }
+
+          const existingRecord = await prisma.attendanceRecord.findFirst({ where: { userId: user.id, date, organizationId } });
+          if (existingRecord?.clockIn) {
+            results.push({ terminal_event_id: rawTerminalEventId || null, uid: normalizedUid, name: user.name, status: 'already_clocked_in', reason: 'Already clocked in today' });
+            continue;
+          }
+
+          record = await prisma.attendanceRecord.upsert({
+            where:  { userId_date: { userId: user.id, date } },
+            update: { clockIn: timeStr, status: recordStatus, method: 'hardware', organizationId },
+            create: { userId: user.id, date, clockIn: timeStr, status: recordStatus, method: 'hardware', notes: normalizedFlags.join(', ') || null, organizationId },
+          });
+
+          if (io) {
+            const payload = {
+              userId: user.id, userName: user.name, userAvatar: user.avatar || '??',
+              userDepartment: user.department?.name || '', userRole: user.role || '', userPosition: user.position || '',
+              clockIn: timeStr, status: recordStatus, method: 'hardware', deviceName: device.name,
+              timestamp: new Date().toISOString(),
+            };
+            io.to(`org:${organizationId}`).emit('attendance:clockIn', payload);
+            if (recordStatus === 'late') io.to(`org:${organizationId}`).emit('attendance:late', payload);
+          }
+        } else {
+          // clock_out
+          const existingRecord = await prisma.attendanceRecord.findFirst({ where: { userId: user.id, date, organizationId } });
+          if (!existingRecord?.clockIn) {
+            results.push({ terminal_event_id: rawTerminalEventId || null, uid: normalizedUid, name: user.name, status: 'no_clock_in', reason: 'No clock-in record found for today' });
+            continue;
+          }
+          if (existingRecord?.clockOut) {
+            results.push({ terminal_event_id: rawTerminalEventId || null, uid: normalizedUid, name: user.name, status: 'already_clocked_out', reason: 'Already clocked out today' });
+            continue;
+          }
+
+          const hoursWorked = diffHoursHHMM(existingRecord.clockIn, timeStr);
+          record = await prisma.attendanceRecord.update({
+            where: { userId_date: { userId: user.id, date } },
+            data:  { clockOut: timeStr, hoursWorked },
+          });
+
+          // Auto-create overtime request if applicable
+          if (hoursWorked !== null && hoursWorked > 8) {
+            const existingOt = await prisma.overtimeRequest.findFirst({ where: { userId: user.id, date, organizationId } });
+            if (!existingOt) {
+              await prisma.overtimeRequest.create({
+                data: { userId: user.id, date, regularHours: 8, overtimeHours: hoursWorked - 8, reason: 'Auto-generated from hardware batch clock-out', organizationId },
+              }).catch(() => {});
+            }
+          }
+
+          if (io) {
+            io.to(`org:${organizationId}`).emit('attendance:clockOut', {
+              userId: user.id, userName: user.name, userAvatar: user.avatar || '??',
+              userDepartment: user.department?.name || '', userRole: user.role || '', userPosition: user.position || '',
+              clockIn: existingRecord.clockIn, clockOut: timeStr, hoursWorked: record.hoursWorked,
+              isOvertime: record.hoursWorked !== null && record.hoursWorked > 9,
+              method: 'hardware', deviceName: device.name, timestamp: new Date().toISOString(),
+            });
+          }
+        }
+
+        // Write sync log
+        await prisma.deviceSyncLog.create({
+          data: {
+            deviceId:     device.id,
+            employeeCode: normalizedUid,
+            userId:       user.id,
+            eventType:    event_type === 'clock_in' ? 'check_in' : 'check_out',
+            eventTime:    evTimestamp,
+            terminalEventId: rawTerminalEventId || null,
+            verificationMode: 'rfid',
+            rawData:      JSON.stringify({ uid: normalizedUid, event_type, timestamp: evTimestamp, flags: normalizedFlags }),
+            processed:    true,
+          },
+        }).catch((err) => { if (err.code !== 'P2002') throw err; });
+
+        // Mark in batch window
+        batchRecentEvents.set(tapKey, evTimestamp);
+
+        results.push({
+          terminal_event_id: rawTerminalEventId || null,
+          uid: normalizedUid,
+          name: user.name,
+          status: 'accepted',
+          event_type,
+          date,
+          time: timeStr,
+          record_id: record.id,
+          attendance_status: recordStatus,
+        });
+      } catch (err) {
+        results.push({ terminal_event_id: rawTerminalEventId || null, uid: normalizedUid, status: 'error', reason: err.message });
+      }
+    }
+
+    const accepted = results.filter(r => r.status === 'accepted').length;
+    const skipped  = results.filter(r => ['skipped', 'duplicate', 'unknown_card', 'already_clocked_in', 'already_clocked_out', 'no_clock_in'].includes(r.status)).length;
+    const errors   = results.filter(r => r.status === 'error').length;
+
+    return reply.code(200).send({
+      success: true,
+      summary: { total: events.length, accepted, skipped, errors },
+      results,
+    });
+  });
+
   // GET /api/attendance/presence — real-time team presence view
   fastify.get('/presence', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { role, sub, organizationId } = request.user;

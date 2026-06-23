@@ -7,7 +7,7 @@ import json
 KEEP_UIDS = {
     "136-4-13-10",   # Pearl Sam
     "156-81-137-24", # Kelvin
-    "211-58-49-248", # Samual
+    "136-4-16-23",   # Samuel
     "59-76-78-211",  # Shaibu
     "6-47-166-27",   # Michael Kwesi
 }

@@ -108,7 +108,7 @@ const EMPLOYEES = [
     role: 'employee',
     position: 'Staff',
     department: 'Product Development',
-    code: '211-58-49-248'  // Hardware RFID UID
+    code: '136-4-16-23'  // Hardware RFID UID
   },
   {
     name: 'Trinity',

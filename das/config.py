@@ -54,7 +54,7 @@ PUNCH_ENDPOINT = "/api/attendance/hardware-punch"
 # Must match the device you register in IWMS Settings → Biometric Hardware
 DEVICE_ID        = _local.get("device_id", "pico-gate-01")
 DEVICE_NAME      = "Main Gate"
-FIRMWARE_VERSION = "pico2w-rfid-0.2.0"
+FIRMWARE_VERSION = "pico2w-rfid-0.3.0"
 
 # Hardware API key provisioned from IWMS Settings → Biometric Hardware → Provision.
 # Leave as None if no key has been provisioned yet (local dev / first boot).

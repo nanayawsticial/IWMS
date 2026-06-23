@@ -205,6 +205,8 @@ class WiFiSync:
             ok, status, data = self._try_post(payload)
             if ok:
                 print("Sync ✓ {} {} → {}".format(event_type, name, timestamp))
+                if self._queue:
+                    self.flush_queue()
                 return True, status, data
             
             # If it failed due to a network/server issue (status <= 0 or 5xx), queue it
@@ -223,28 +225,42 @@ class WiFiSync:
 
     def flush_queue(self):
         """
-        Attempt to deliver all queued offline events.
-        Stops on the first failure so we don't spam a slow server.
+        Upload all queued events to the server in a single batch POST.
+        On a 2xx response the queue is cleared.
+        On any network/server error the queue is preserved and retried on the next flush.
         """
         if not self._queue:
             return
 
-        sent_indices = []
-        for i, payload in enumerate(self._queue):
-            ok, status, _ = self._try_post(payload)
-            # If successful, or if it's a validation conflict (409/404), count as done/discard
-            if ok or status in (404, 409):
-                sent_indices.append(i)
-                print("Sync: flushed queued event for {} (status {})".format(payload.get("name", "?"), status))
-            else:
-                print("Sync: server still unreachable or other error (status {}) — will retry later".format(status))
-                break
+        print("Sync: flushing {} queued event(s) via batch endpoint...".format(len(self._queue)))
 
-        if sent_indices:
-            # Remove delivered events (iterate in reverse to preserve indices)
-            for i in reversed(sent_indices):
-                self._queue.pop(i)
-            self._save_queue()
+        url = config.SERVER_URL.rstrip('/') + "/api/attendance/hardware-punch/batch"
+        try:
+            body = json.dumps({"events": self._queue})
+            headers = {"Content-Type": "application/json"}
+            device_key = getattr(config, "DEVICE_KEY", None)
+            if device_key:
+                headers["X-Device-Key"] = device_key
+            
+            res = requests.post(
+                url,
+                data=body,
+                headers=headers,
+                timeout=15,
+            )
+            status_code = res.status_code
+            res.close()
+
+            if 200 <= status_code < 300:
+                print("Sync: batch flush successful (status {}). Cleared {} event(s).".format(status_code, len(self._queue)))
+                self._queue = []
+                self._save_queue()
+            else:
+                print("Sync: batch flush failed with status {}. Will retry later.".format(status_code))
+        except OSError as e:
+            print("Sync: batch flush network error —", e)
+        except Exception as e:
+            print("Sync: batch flush unexpected error —", e)
 
     def queue_length(self):
         return len(self._queue)

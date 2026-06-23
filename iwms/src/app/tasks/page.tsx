@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useRef, useState, Suspense, useMemo, useEffect } from 'react';
+import React, { useState, Suspense, useMemo, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { tasksApi, usersApi } from '@/lib/api';
@@ -12,18 +13,14 @@ import {
   MoreVertical,
   Plus,
   Trash,
-  Calendar,
   Clock,
   MessageSquare,
   Search,
   CheckCircle,
-  AlertTriangle,
   FolderKanban,
   Edit,
   ArrowRight,
   Filter,
-  Check,
-  Play,
   X
 } from 'lucide-react';
 
@@ -212,8 +209,6 @@ function TaskCardContent({
 function TaskCard({
   task,
   isDragging,
-  onPointerDown,
-  onMouseDown,
   onClick,
   currentUserId,
   onActionClick,
@@ -221,8 +216,6 @@ function TaskCard({
 }: {
   task: any;
   isDragging: boolean;
-  onPointerDown: (event: React.PointerEvent<HTMLDivElement>, task: any) => void;
-  onMouseDown: (event: React.MouseEvent<HTMLDivElement>, task: any) => void;
   onClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   currentUserId?: string;
   onActionClick: (e: React.MouseEvent) => void;
@@ -231,8 +224,6 @@ function TaskCard({
   return (
     <div
       className={`task-card ${isDragging ? 'task-card-dragging' : ''}`}
-      onPointerDown={(event) => onPointerDown(event, task)}
-      onMouseDown={(event) => onMouseDown(event, task)}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -273,26 +264,15 @@ function TasksPageContent() {
   const assigneeId = searchParams.get('assignee') || undefined;
 
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const dragSessionRef = useRef<{
-    task: any;
-    startX: number;
-    startY: number;
-    width: number;
-    isDragging: boolean;
-  } | null>(null);
-  const suppressNextClickRef = useRef(false);
-  const pointerDragStartedRef = useRef(false);
 
   // Filters & Sorting States
   const [filter, setFilter] = useState<Priority | 'all'>('all');
   const [searchQ, setSearchQ] = useState('');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'title'>('dueDate');
   const [viewMode, setViewMode] = useState<'kanban' | 'gantt'>('kanban');
-  
+
   const [showModal, setShowModal] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
-  const [activeDropStatus, setActiveDropStatus] = useState<Status | null>(null);
-  const [dragPreview, setDragPreview] = useState<{ task: any; x: number; y: number; width: number } | null>(null);
   
   // Actions Menu Dropdown State
   const [actionsMenuTaskId, setActionsMenuTaskId] = useState<string | null>(null);
@@ -428,13 +408,6 @@ function TasksPageContent() {
   const pendingCount = filteredAndSortedTasks.filter((t: any) => t.status !== 'done').length;
   const completedCount = filteredAndSortedTasks.filter((t: any) => t.status === 'done').length;
 
-  const getDropStatusFromPoint = (x: number, y: number): Status | null => {
-    const element = document.elementFromPoint(x, y);
-    const column = element?.closest<HTMLElement>('.kanban-column');
-    const status = column?.dataset.status as Status | undefined;
-    return status && COLUMNS.some(col => col.id === status) ? status : null;
-  };
-
   const moveTaskToStatus = (task: any, targetStatus: Status | null) => {
     if (targetStatus && task.status !== targetStatus) {
       updateTask.mutate({ id: task.id, data: { status: targetStatus } });
@@ -442,128 +415,21 @@ function TasksPageContent() {
     emit('task:dragEnd', { taskId: task.id });
   };
 
-  const clearPointerDrag = () => {
-    document.body.classList.remove('task-drag-active');
-    dragSessionRef.current = null;
+  // @hello-pangea/dnd onDragEnd handler
+  const handleDragEnd = (result: DropResult) => {
     setDraggingId(null);
-    setActiveDropStatus(null);
-    setDragPreview(null);
-  };
-
-  const startDragSession = (task: any, x: number, y: number, width: number) => {
-    dragSessionRef.current = {
-      task,
-      startX: x,
-      startY: y,
-      width,
-      isDragging: false,
-    };
-  };
-
-  const updateDragSession = (x: number, y: number) => {
-    const session = dragSessionRef.current;
-    if (!session) return false;
-
-    const distance = Math.hypot(x - session.startX, y - session.startY);
-    if (!session.isDragging && distance < 8) return false;
-
-    if (!session.isDragging) {
-      session.isDragging = true;
-      suppressNextClickRef.current = true;
-      document.body.classList.add('task-drag-active');
-      setDraggingId(session.task.id);
-      emit('task:dragStart', { taskId: session.task.id, taskTitle: session.task.title });
+    if (!result.destination) return;
+    const targetStatus = result.destination.droppableId as Status;
+    const task = filteredAndSortedTasks.find((t: any) => t.id === result.draggableId);
+    if (task) {
+      emit('task:dragStart', { taskId: task.id, taskTitle: task.title });
+      moveTaskToStatus(task, targetStatus);
     }
-
-    setDragPreview({
-      task: session.task,
-      x,
-      y,
-      width: session.width,
-    });
-    setActiveDropStatus(getDropStatusFromPoint(x, y));
-    return true;
-  };
-
-  const finishDragSession = (x: number, y: number) => {
-    const session = dragSessionRef.current;
-    if (!session) return;
-
-    if (session.isDragging) {
-      moveTaskToStatus(session.task, getDropStatusFromPoint(x, y));
-      window.setTimeout(() => {
-        suppressNextClickRef.current = false;
-      }, 100);
-    }
-
-    clearPointerDrag();
-  };
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>, task: any) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-
-    // Suppress drag if clicking on the action menu button
-    const targetEl = event.target as HTMLElement;
-    if (targetEl.closest('.kanban-card-actions-trigger') || targetEl.closest('button')) return;
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    pointerDragStartedRef.current = true;
-    startDragSession(task, event.clientX, event.clientY, rect.width);
-
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      if (updateDragSession(moveEvent.clientX, moveEvent.clientY)) {
-        moveEvent.preventDefault();
-      }
-    };
-
-    const handlePointerUp = (upEvent: PointerEvent) => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.setTimeout(() => {
-        pointerDragStartedRef.current = false;
-      }, 80);
-      finishDragSession(upEvent.clientX, upEvent.clientY);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove, { passive: false });
-    window.addEventListener('pointerup', handlePointerUp);
-  };
-
-  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>, task: any) => {
-    if (event.button !== 0 || pointerDragStartedRef.current || dragSessionRef.current) return;
-
-    // Suppress drag if clicking on the action menu button
-    const targetEl = event.target as HTMLElement;
-    if (targetEl.closest('.kanban-card-actions-trigger') || targetEl.closest('button')) return;
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    startDragSession(task, event.clientX, event.clientY, rect.width);
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (updateDragSession(moveEvent.clientX, moveEvent.clientY)) {
-        moveEvent.preventDefault();
-      }
-    };
-
-    const handleMouseUp = (upEvent: MouseEvent) => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      finishDragSession(upEvent.clientX, upEvent.clientY);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove, { passive: false });
-    window.addEventListener('mouseup', handleMouseUp);
   };
 
   const handleTaskClick = (event: React.MouseEvent<HTMLDivElement>, taskId: string) => {
     const targetEl = event.target as HTMLElement;
     if (targetEl.closest('.kanban-card-actions-trigger') || targetEl.closest('button')) return;
-
-    if (suppressNextClickRef.current) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
     setActiveTaskId(taskId);
   };
 
@@ -773,101 +639,104 @@ function TasksPageContent() {
           </div>
 
           <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0" style={{ WebkitOverflowScrolling: 'touch' }}>
-            <div className="kanban-board">
-              {COLUMNS.map(col => {
-              const colTasks = filteredAndSortedTasks.filter((t: any) => t.status === col.id);
-              return (
-                <div
-                  key={col.id}
-                  data-status={col.id}
-                  className={`kanban-column ${activeDropStatus === col.id ? 'kanban-column-drop-active' : ''}`}
-                >
-                  <div className="kanban-col-header">
-                    <div className="kanban-col-title">
-                      <span className="kanban-col-ring" style={{ color: col.color }} />
-                      {col.label}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="kanban-col-count font-mono" style={{ background: `${col.color}20`, color: col.color }}>
-                        {colTasks.length}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="kanban-cards">
-                    {colTasks.map((task: any) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        isDragging={draggingId === task.id}
-                        onPointerDown={handlePointerDown}
-                        onMouseDown={handleMouseDown}
-                        onClick={(event) => handleTaskClick(event, task.id)}
-                        currentUserId={user?.id}
-                        onActionClick={(e) => handleOpenActionMenu(e, task.id)}
-                        isMenuOpen={actionsMenuTaskId === task.id}
-                      />
-                    ))}
-                    {colTasks.length === 0 && (
-                      <div className="kanban-empty">
-                        <FolderKanban size={18} opacity={0.3} className="mx-auto mb-1.5" />
-                        <p>Drop tasks here</p>
+            <DragDropContext
+              onDragStart={(start) => setDraggingId(start.draggableId)}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="kanban-board">
+                {COLUMNS.map(col => {
+                const colTasks = filteredAndSortedTasks.filter((t: any) => t.status === col.id);
+                return (
+                  <div
+                    key={col.id}
+                    data-status={col.id}
+                    className="kanban-column"
+                  >
+                    <div className="kanban-col-header">
+                      <div className="kanban-col-title">
+                        <span className="kanban-col-ring" style={{ color: col.color }} />
+                        {col.label}
                       </div>
-                    )}
-                  </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="kanban-col-count font-mono" style={{ background: `${col.color}20`, color: col.color }}>
+                          {colTasks.length}
+                        </span>
+                      </div>
+                    </div>
 
-                  {/* Quick Task Creation Field */}
-                  <div className="mt-3 p-2 bg-[var(--bg-surface-2)]/40 border border-dashed border-[var(--border)] rounded-xl">
-                    <input
-                      type="text"
-                      placeholder="+ Quick add task (press Enter)"
-                      value={quickTaskInputs[col.id] || ''}
-                      onChange={(e) => setQuickTaskInputs(prev => ({ ...prev, [col.id]: e.target.value }))}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && quickTaskInputs[col.id]?.trim()) {
-                          createTask.mutate({
-                            title: quickTaskInputs[col.id],
-                            status: col.id,
-                            assigneeId: user?.id,
-                            reviewerId: user?.id,
-                            priority: 'medium',
-                            dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-                            projectId: 'general',
-                            projectName: 'General',
-                            estimatedHours: 8,
-                          });
-                          setQuickTaskInputs(prev => ({ ...prev, [col.id]: '' }));
-                        }
-                      }}
-                      className="w-full bg-transparent border-none text-xs text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none"
-                    />
+                    <Droppable droppableId={col.id}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`kanban-cards ${snapshot.isDraggingOver ? 'kanban-column-drop-active' : ''}`}
+                        >
+                          {colTasks.map((task: any, index: number) => (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(dragProvided, dragSnapshot) => (
+                                <div
+                                  ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  {...dragProvided.dragHandleProps}
+                                >
+                                  <TaskCard
+                                    task={task}
+                                    isDragging={dragSnapshot.isDragging}
+                                    onClick={(event) => handleTaskClick(event, task.id)}
+                                    currentUserId={user?.id}
+                                    onActionClick={(e) => handleOpenActionMenu(e, task.id)}
+                                    isMenuOpen={actionsMenuTaskId === task.id}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                          {colTasks.length === 0 && !snapshot.isDraggingOver && (
+                            <div className="kanban-empty">
+                              <FolderKanban size={18} opacity={0.3} className="mx-auto mb-1.5" />
+                              <p>Drop tasks here</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Droppable>
+
+                    {/* Quick Task Creation Field */}
+                    <div className="mt-3 p-2 bg-[var(--bg-surface-2)]/40 border border-dashed border-[var(--border)] rounded-xl">
+                      <input
+                        type="text"
+                        placeholder="+ Quick add task (press Enter)"
+                        value={quickTaskInputs[col.id] || ''}
+                        onChange={(e) => setQuickTaskInputs(prev => ({ ...prev, [col.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && quickTaskInputs[col.id]?.trim()) {
+                            createTask.mutate({
+                              title: quickTaskInputs[col.id],
+                              status: col.id,
+                              assigneeId: user?.id,
+                              reviewerId: user?.id,
+                              priority: 'medium',
+                              dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+                              projectId: 'general',
+                              projectName: 'General',
+                              estimatedHours: 8,
+                            });
+                            setQuickTaskInputs(prev => ({ ...prev, [col.id]: '' }));
+                          }
+                        }}
+                        className="w-full bg-transparent border-none text-xs text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none"
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-            </div>
+                );
+              })}
+              </div>
+            </DragDropContext>
           </div>
         </>
       )}
 
-      {/* Drag Preview */}
-      {dragPreview && (
-        <div
-          className="task-card task-drag-preview"
-          style={{
-            left: dragPreview.x + 14,
-            top: dragPreview.y + 14,
-            width: dragPreview.width,
-          }}
-        >
-          <TaskCardContent
-            task={dragPreview.task}
-            currentUserId={user?.id}
-            onActionClick={() => {}}
-            isMenuOpen={false}
-          />
-        </div>
-      )}
 
       {/* Floating Three-Dot Actions Dropdown */}
       {actionsMenuTaskId && actionsMenuPosition && (() => {

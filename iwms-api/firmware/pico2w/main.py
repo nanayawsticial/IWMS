@@ -48,11 +48,17 @@ WIFI_PASSWORD = CONFIG.get("WIFI_PASSWORD", "YOUR_WIFI_PASSWORD")
 API_BASE = CONFIG.get("API_BASE", "https://api.company.com")
 DEVICE_SERIAL = CONFIG.get("DEVICE_SERIAL", "pico-gate-01")
 DEFAULT_EVENT_TYPE = "clock_in"
-FIRMWARE_VERSION = "pico2w-rfid-0.2.0"
+FIRMWARE_VERSION = "pico2w-rfid-0.3.0"
 QUEUE_FILE = "offline_queue.json"
+
+# Local debounce: ignore the same card swiped twice within DEBOUNCE_SECONDS
+DEBOUNCE_SECONDS = 10
 
 # Obfuscated key stored in config.json is decrypted dynamically at runtime
 DEVICE_KEY = deobfuscate(CONFIG.get("DEVICE_KEY_OBFUSCATED", ""), DEVICE_SERIAL)
+
+# In-memory debounce table: maps "uid:event_type" → unix timestamp of last accepted scan
+_debounce_table = {}
 
 
 def connect_wifi(timeout_seconds=20):
@@ -123,15 +129,47 @@ def build_punch_payload(uid, event_type=DEFAULT_EVENT_TYPE, flags=None, name="")
     }
 
 
+def is_debounced(uid, event_type):
+    """Return True if this uid+event_type was seen within DEBOUNCE_SECONDS."""
+    key = "{}:{}".format(uid, event_type)
+    last_seen = _debounce_table.get(key)
+    if last_seen is None:
+        return False
+    return (time.time() - last_seen) < DEBOUNCE_SECONDS
+
+
+def record_debounce(uid, event_type):
+    """Record the current time as the last seen time for this uid+event_type."""
+    key = "{}:{}".format(uid, event_type)
+    _debounce_table[key] = time.time()
+
+
 def send_rfid_punch(uid, event_type=DEFAULT_EVENT_TYPE, flags=None, name=""):
+    """
+    Process a single RFID tap:
+      1. Apply 10-second local hardware debounce (ignore rapid double-taps).
+      2. Attempt to send to /api/attendance/hardware-punch immediately.
+      3. On network failure, enqueue for the next batch flush.
+      4. Then flush any previously queued events via batch endpoint.
+    """
+    # 1. Local debounce — silently ignore taps within DEBOUNCE_SECONDS of the same card
+    if is_debounced(uid, event_type):
+        print("Debounced tap ignored for UID {} ({})".format(uid, event_type))
+        return {"success": False, "debounced": True}
+
+    record_debounce(uid, event_type)
+
     payload = build_punch_payload(uid, event_type, flags, name)
+
     try:
         result = api_post("/api/attendance/hardware-punch", payload)
+        # Wi-Fi is up — also flush any offline queue while we have connectivity
         flush_queue()
         return result
     except Exception as error:
         status_code = getattr(error, "status_code", None)
         if status_code == 404:
+            # Unknown card — report immediately if online
             print("Unknown card scanned (UID: {}). Reporting to admin...".format(uid))
             try:
                 unknown_payload = {
@@ -145,7 +183,11 @@ def send_rfid_punch(uid, event_type=DEFAULT_EVENT_TYPE, flags=None, name=""):
                 print("Failed to report unknown card:", report_error)
                 return {"success": False, "error": "Report failed: {}".format(report_error)}
         else:
+            # Network down — queue for later batch upload
             enqueue_payload(payload)
+            print("Wi-Fi unavailable. Queued event for later upload (queue size: {}).".format(
+                len(load_queue())
+            ))
             return {"success": False, "queued": True, "error": str(error)}
 
 
@@ -169,30 +211,39 @@ def enqueue_payload(payload):
     queue = load_queue()
     max_size = 500
     while len(queue) >= max_size:
-        queue.pop(0)
+        queue.pop(0)  # Drop oldest event if full
     queue.append(payload)
     save_queue(queue)
 
 
 def flush_queue():
+    """
+    Upload all queued events to the server in a single batch POST.
+    On a 2xx response the queue is cleared.
+    On any network/server error the queue is preserved and retried on the next flush.
+    """
     queue = load_queue()
     if not queue:
         return 0
 
-    sent = 0
-    remaining = []
-    for payload in queue:
-        try:
-            api_post("/api/attendance/hardware-punch", payload)
-            sent += 1
-        except Exception:
-            remaining.append(payload)
-            break
+    print("Flushing {} queued event(s) via batch endpoint...".format(len(queue)))
 
-    if sent < len(queue):
-        remaining.extend(queue[sent + len(remaining):])
-    save_queue(remaining)
-    return sent
+    try:
+        body = api_post("/api/attendance/hardware-punch/batch", {"events": queue})
+        # Server accepted the batch (HTTP 200) — clear the local queue regardless of
+        # per-event results (unknown cards etc.) so we don't re-upload indefinitely.
+        save_queue([])
+        summary = body.get("summary", {})
+        print("Batch flush complete: accepted={}, skipped={}, errors={}".format(
+            summary.get("accepted", "?"),
+            summary.get("skipped", "?"),
+            summary.get("errors", "?"),
+        ))
+        return summary.get("accepted", len(queue))
+    except Exception as error:
+        # Network down or server error — keep the queue and retry next cycle
+        print("Batch flush failed ({}). Will retry next cycle.".format(error))
+        return 0
 
 
 def read_rfid_uid():

@@ -144,7 +144,7 @@ def save_json(filename, data):
 _DEFAULT_USERS = {
     #"136-4-13-10":   "Godfred Sam",
     #"156-81-137-24": "Kelvin",
-    #"211-58-49-248": "Samual",
+    #"136-4-16-23":   "Samuel",
     #"59-76-78-211":  "Shaibu",
     #"6-47-166-27":   "Michael Kwesi",
 }
@@ -153,6 +153,23 @@ user_db      = load_json(config.DB_FILE,  _DEFAULT_USERS)
 attendance   = load_json(config.LOG_FILE, {})
 
 save_json(config.DB_FILE, user_db)   # ensure file exists
+
+# ── Debounce ──────────────────────────────────────────────────────────────────
+DEBOUNCE_SECONDS = 10
+_debounce_table = {}
+
+def is_debounced(uid, event_type):
+    """Return True if this uid+event_type was seen within DEBOUNCE_SECONDS."""
+    key = "{}:{}".format(uid, event_type)
+    last_seen = _debounce_table.get(key)
+    if last_seen is None:
+        return False
+    return (time.time() - last_seen) < DEBOUNCE_SECONDS
+
+def record_debounce(uid, event_type):
+    """Record the current time as the last seen time for this uid+event_type."""
+    key = "{}:{}".format(uid, event_type)
+    _debounce_table[key] = time.time()
 
 # ── State ─────────────────────────────────────────────────────────────────────
 current_mode    = "NONE"   # "NONE" | "IN" | "OUT"
@@ -295,6 +312,13 @@ def draw_main_desktop():
 def process_rfid_scan(uid_str):
     """Handle a card scan: update local logs and sync to IWMS."""
     global current_mode, attendance
+
+    event_type = "clock_in" if current_mode == "IN" else "clock_out"
+    if is_debounced(uid_str, event_type):
+        print("Debounced tap ignored for UID {} ({})".format(uid_str, event_type))
+        return
+
+    record_debounce(uid_str, event_type)
 
     print("\nRFID:", uid_str, " mode:", current_mode)
 
