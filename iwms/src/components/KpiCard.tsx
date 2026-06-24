@@ -69,6 +69,7 @@ export function KpiCard({
       </div>
       {linkLabel && (
         <button
+          type="button"
           onClick={onLinkClick}
           style={{
             marginTop: '0.75rem',
@@ -76,7 +77,7 @@ export function KpiCard({
             borderTop: '0.5px solid var(--border)',
             background: 'none',
             border: 'none',
-            color: 'var(--accent)',
+            color: 'var(--accent-text)',
             fontSize: '0.75rem',
             fontWeight: 500,
             cursor: 'pointer',

@@ -28,7 +28,8 @@ import {
   Trash2,
   Check,
   Building,
-  UserCheck
+  UserCheck,
+  X
 } from 'lucide-react';
 
 const WEEKLY_ATTENDANCE = [
@@ -74,6 +75,10 @@ export default function DashboardPage() {
   const today = new Date().toISOString().split('T')[0];
   const queryClient = useQueryClient();
   const [newArrivals, setNewArrivals] = useState<Record<string, boolean>>({});
+
+  // Reject leave modal state
+  const [rejectingLeaveId, setRejectingLeaveId] = useState<string | null>(null);
+  const [rejectionNotes, setRejectionNotes] = useState('');
 
   // Todo list state
   const [todoInput, setTodoInput] = useState('');
@@ -138,8 +143,8 @@ export default function DashboardPage() {
   };
 
   const handleReject = (id: string) => {
-    const reason = prompt('Please enter a rejection reason (optional):') || '';
-    updateLeaveStatus.mutate({ id, status: 'rejected', notes: reason });
+    setRejectingLeaveId(id);
+    setRejectionNotes('');
   };
 
   const pendingLeaves = leaves.filter((l: any) => l.status === 'pending' && l.userId !== user?.id);
@@ -1008,6 +1013,41 @@ export default function DashboardPage() {
             </div>
           </div>
         </>
+      )}
+
+      {rejectingLeaveId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4" onClick={() => setRejectingLeaveId(null)}>
+          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-md p-6 relative shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="modal-header flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <h3 className="text-base font-extrabold text-[var(--text-1)] uppercase tracking-wide">Reject Leave Request</h3>
+              <button className="modal-close text-[var(--text-3)] hover:text-white cursor-pointer" onClick={() => setRejectingLeaveId(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body space-y-4 text-sm mt-4">
+              <p className="text-[var(--text-2)]">Please enter a reason for rejecting this leave request (optional):</p>
+              <textarea
+                className="w-full p-2.5 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] resize-none"
+                placeholder="Reason for rejection..."
+                rows={3}
+                value={rejectionNotes}
+                onChange={e => setRejectionNotes(e.target.value)}
+              />
+            </div>
+            <div className="modal-footer flex gap-2 justify-end pt-4 border-t border-[var(--border)] mt-6">
+              <button className="py-2 px-4 bg-[var(--bg-surface-2)] border border-[var(--border)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] font-semibold rounded-lg transition-colors cursor-pointer" onClick={() => setRejectingLeaveId(null)}>Cancel</button>
+              <button
+                className="py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors cursor-pointer"
+                onClick={() => {
+                  updateLeaveStatus.mutate({ id: rejectingLeaveId, status: 'rejected', notes: rejectionNotes });
+                  setRejectingLeaveId(null);
+                }}
+              >
+                Reject Request
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

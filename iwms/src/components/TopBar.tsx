@@ -27,10 +27,17 @@ const PAGE_TITLES: Record<string, string> = {
   '/reports':    'Reports',
   '/settings':   'Settings',
   '/hr':         'HR Dashboard',
-  '/finance':    'Finance Dashboard',
+  '/finance':    'Finance',
   '/presence':   'Team Presence',
   '/weekly-reports': 'Weekly Reports',
   '/department-dashboard': 'My Team',
+  '/holidays':   'Holidays',
+  '/leave':      'Leave Management',
+  '/overtime':   'Overtime Management',
+  '/timesheets': 'Timesheets',
+  '/attendance-dashboard': 'Attendance Dashboard',
+  '/management': 'Management Dashboard',
+  '/get-started': 'Get Started',
 };
 
 export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {}) {
@@ -160,6 +167,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
     }
   };
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifCount, setNotifCount] = useState(2);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notifications, setNotifications] = useState<
     { id: string; text: string; time: string; type: 'info' | 'success' | 'warning' | 'error' | 'task'; metadata?: { uid?: string; deviceSerial?: string } }[]
@@ -198,6 +206,14 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
       });
     }
   }, [dbNotifications]);
+
+  useEffect(() => {
+    if (notifOpen) {
+      setNotifCount(0);
+    } else {
+      setNotifCount(notifications.length);
+    }
+  }, [notifications.length, notifOpen]);
 
   // Load WebSocket event listeners
   const { on } = useSocket();
@@ -331,7 +347,6 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
   }, []);
 
   const title = Object.entries(PAGE_TITLES).find(([key]) => pathname.startsWith(key))?.[1] || 'IWMS';
-  const notifCount = notifications.length;
 
   const handleLogout = () => {
     logout();
@@ -619,7 +634,7 @@ export default function TopBar({ onMenuClick }: { onMenuClick?: () => void } = {
                   )}
                 </div>
                 {notifications.length > 0 && (
-                  <button className="notif-clear" onClick={clearAllNotifications} style={{ width: '100%', background: 'none', border: 'none', padding: '12px', color: 'var(--accent)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textAlign: 'center', borderTop: '1px solid var(--border-color)', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-soft)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
+                  <button className="notif-clear" onClick={clearAllNotifications} style={{ width: '100%', background: 'none', border: 'none', padding: '12px', color: 'var(--accent-text)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textAlign: 'center', borderTop: '1px solid var(--border-color)', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-soft)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
                     Clear all notifications
                   </button>
                 )}

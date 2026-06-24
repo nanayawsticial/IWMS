@@ -277,6 +277,7 @@ function TasksPageContent() {
   // Actions Menu Dropdown State
   const [actionsMenuTaskId, setActionsMenuTaskId] = useState<string | null>(null);
   const [actionsMenuPosition, setActionsMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
   // Forms
   const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium' as Priority, dueDate: '', tags: '', assigneeId: '', reviewerId: '' });
@@ -778,9 +779,8 @@ function TasksPageContent() {
             <div className="border-t border-[var(--border)] my-1" />
             <button
               onClick={() => {
-                if (confirm('Delete this task permanent?')) {
-                  deleteTask.mutate(actionsMenuTaskId);
-                }
+                setDeletingTaskId(actionsMenuTaskId);
+                setActionsMenuTaskId(null);
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-red-500/20 text-red-400 hover:text-red-500 flex items-center gap-1.5 cursor-pointer"
             >
@@ -863,6 +863,37 @@ function TasksPageContent() {
 
       {activeTaskId && (
         <TaskDetailPanel taskId={activeTaskId} onClose={() => setActiveTaskId(null)} />
+      )}
+
+      {deletingTaskId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4" onClick={() => setDeletingTaskId(null)}>
+          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-md p-6 relative shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="modal-header flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <h3 className="text-base font-extrabold text-[var(--text-1)] uppercase tracking-wide flex items-center gap-2">
+                <Trash size={18} className="text-red-500" /> Delete Task
+              </h3>
+              <button className="modal-close text-[var(--text-3)] hover:text-white cursor-pointer" onClick={() => setDeletingTaskId(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body space-y-3 text-sm mt-4">
+              <p className="text-[var(--text-2)]">Are you sure you want to permanently delete this task? This action cannot be undone.</p>
+            </div>
+            <div className="modal-footer flex gap-2 justify-end pt-4 border-t border-[var(--border)] mt-6">
+              <button className="py-2 px-4 bg-[var(--bg-surface-2)] border border-[var(--border)] hover:bg-[var(--bg-hover)] text-[var(--text-2)] font-semibold rounded-lg transition-colors cursor-pointer" onClick={() => setDeletingTaskId(null)}>Cancel</button>
+              <button
+                className="py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                onClick={() => {
+                  deleteTask.mutate(deletingTaskId);
+                  setDeletingTaskId(null);
+                }}
+                disabled={deleteTask.isPending}
+              >
+                {deleteTask.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

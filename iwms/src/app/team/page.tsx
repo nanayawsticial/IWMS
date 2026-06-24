@@ -19,6 +19,18 @@ const DEPT_COLORS: Record<string, string> = {
   HR: 'var(--yellow)', Marketing: 'var(--green)', Finance: 'var(--teal)',
 };
 
+// Hash-based fallback palette for departments not in DEPT_COLORS (LP-5)
+const DEPT_FALLBACK_PALETTE = [
+  'var(--blue)', 'var(--orange)', 'var(--teal)', 'var(--pink)',
+  'var(--purple)', 'var(--indigo)', 'var(--green)', 'var(--yellow)',
+];
+function getDeptColor(dept: string): string {
+  if (DEPT_COLORS[dept]) return DEPT_COLORS[dept];
+  let hash = 0;
+  for (let i = 0; i < dept.length; i++) hash = (hash * 31 + dept.charCodeAt(i)) >>> 0;
+  return DEPT_FALLBACK_PALETTE[hash % DEPT_FALLBACK_PALETTE.length];
+}
+
 function getAvatarColor(name: string): { bg: string; color: string } {
   const initial = name.trim().toUpperCase()[0] || 'A'
   const code = initial.charCodeAt(0)
@@ -34,7 +46,7 @@ function getAvatarColor(name: string): { bg: string; color: string } {
 }
 
 function UserCard({ user }: { user: any }) {
-  const deptColor = DEPT_COLORS[user.department] || 'var(--indigo)';
+  const deptColor = getDeptColor(user.department);
   const avatarColors = getAvatarColor(user.name);
   return (
     <div
@@ -83,7 +95,7 @@ export default function TeamPage() {
   const [activeDept, setActiveDept] = useState('all');
   const [searchQ, setSearchQ] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', department: 'Engineering', position: '', role: 'employee', password: 'Welcome123!' });
+  const [newUser, setNewUser] = useState({ name: '', email: '', department: 'Engineering', position: '', role: 'employee', password: '' });
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
@@ -100,7 +112,7 @@ export default function TeamPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setShowAddModal(false);
-      setNewUser({ name: '', email: '', department: 'Engineering', position: '', role: 'employee', password: 'Welcome123!' });
+      setNewUser({ name: '', email: '', department: 'Engineering', position: '', role: 'employee', password: '' });
     },
   });
 
@@ -113,7 +125,7 @@ export default function TeamPage() {
   });
 
   const handleAdd = () => {
-    if (!newUser.name || !newUser.email) return;
+    if (!newUser.name || !newUser.email || !newUser.password) return;
     createUser.mutate({
       name: newUser.name,
       email: newUser.email,
@@ -207,7 +219,7 @@ export default function TeamPage() {
                         </div>
                       </td>
                       <td><span className="table-text">{u.position}</span></td>
-                      <td><span className="dept-badge" style={{ background: `${DEPT_COLORS[u.department]}20`, color: DEPT_COLORS[u.department] }}>{u.department}</span></td>
+                      <td><span className="dept-badge" style={{ background: `${getDeptColor(u.department)}20`, color: getDeptColor(u.department) }}>{u.department}</span></td>
                       <td><span className="role-badge" style={{ background: `${ROLE_COLORS[u.role]}20`, color: ROLE_COLORS[u.role] }}>{ROLE_LABELS[u.role]}</span></td>
                       <td><span className="table-text">{new Date(u.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span></td>
                       <td><span className={`status-pill ${u.status === 'active' ? 'status-present' : 'status-absent'}`}>{u.status}</span></td>
@@ -258,8 +270,18 @@ export default function TeamPage() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Temp Password</label>
-                  <input className="form-input" value={newUser.password} onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))} placeholder="Welcome123!" />
+                  <label className="form-label">Temporary Password *</label>
+                  <input
+                    className="form-input"
+                    type="password"
+                    value={newUser.password}
+                    onChange={e => setNewUser(p => ({ ...p, password: e.target.value }))}
+                    placeholder="Min. 8 characters"
+                    autoComplete="new-password"
+                  />
+                  <p style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '4px' }}>
+                    Employee will be prompted to change this on first login.
+                  </p>
                 </div>
               </div>
             </div>

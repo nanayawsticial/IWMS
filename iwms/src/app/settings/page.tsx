@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { mfaApi, devicesApi, geofenceApi, usersApi, organizationApi } from '@/lib/api';
 import { useSocketEvent } from '@/hooks/useSocket';
+import { useToast } from '@/components/Toast';
 
 // Telemetry visual helpers
 function getWifiColor(rssi: number | null | undefined): string {
@@ -34,6 +35,10 @@ function formatUptime(seconds: number | null | undefined): string {
 
 export default function SettingsPage() {
   const { user, refreshSelf } = useAuth();
+  const { addToast: _addToast } = useToast();
+  // Call-site adapter: maps local (message, type) signature to global (title, message, type)
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') =>
+    _addToast('Settings', message, type);
   
   const [mfaSetupData, setMfaSetupData] = useState<{ secret: string; qrCodeUrl: string } | null>(null);
   const [mfaCode, setMfaCode] = useState('');
@@ -96,17 +101,6 @@ export default function SettingsPage() {
   const [zoneLng, setZoneLng] = useState('');
   const [zoneRadius, setZoneRadius] = useState('200');
   const [zoneNotes, setZoneNotes] = useState('');
-
-  // Custom Toasts State
-  const [toasts, setToasts] = useState<Array<{ id: number; message: string; type: 'success' | 'error' | 'info' }>>([]);
-  
-  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4500);
-  };
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -714,6 +708,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+
+              <p style={{ fontSize: '12px', color: 'var(--text-3)', marginTop: '12px', fontStyle: 'italic' }}>
+                ℹ️ Preference saving coming soon — changes are not yet persisted.
+              </p>
             </div>
           </div>
         </div>
@@ -1582,17 +1580,6 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
-
-      {/* Toasts Container */}
-      <div className="toast-container">
-        {toasts.map(t => (
-          <div key={t.id} className={`toast toast-${t.type}`}>
-            <div className="toast-content">
-              <span className="toast-text">{t.message}</span>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

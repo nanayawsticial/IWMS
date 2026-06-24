@@ -25,6 +25,7 @@
   --accent:         #ff6b35;
   --accent-hover:   #e85a24;
   --accent-soft:    rgba(255,107,53,0.12);
+  --accent-text:    #ff8554; /* 7.16:1 vs --bg-surface */
 
   /* Status */
   --green:          #22c55e;
@@ -137,6 +138,7 @@
   --accent:         #bd6b39;
   --accent-hover:   #a3582d;
   --accent-soft:    rgba(189, 107, 57, 0.08);
+  --accent-text:    #9b4f24; /* 5.94:1 vs #ffffff */
 
   /* Status overrides */
   --green:          #15803d;
@@ -145,7 +147,8 @@
   --yellow-soft:    #fef3c7;
   --red:            #991b1b;
   --red-soft:       #fee2e2;
-  --blue-soft:      rgba(59,130,246,0.08);
+  --blue:           #1d4ed8;
+  --blue-soft:      rgba(29, 78, 216, 0.08);
   --purple-soft:    rgba(139,92,246,0.08);
   --teal-soft:      rgba(20,184,166,0.08);
   --indigo:         #4f46e5;
@@ -243,7 +246,8 @@
 .badge-green  { background: var(--green-soft);   color: var(--green); }
 .badge-yellow { background: var(--yellow-soft);  color: var(--yellow); }
 .badge-red    { background: var(--red-soft);     color: var(--red); }
-.badge-blue   { background: var(--blue-soft);    color: var(--blue); }
+.badge-blue   { background: var(--blue-soft);    color: #93c5fd; }
+.light-theme .badge-blue {                       color: var(--blue); }
 .badge-purple { background: var(--purple-soft);  color: var(--purple); }
 .badge-orange { background: var(--orange-soft);  color: var(--orange); }
 .badge-gray   { background: rgba(148,163,184,0.12); color: #94a3b8; }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leavesApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -16,6 +16,13 @@ export default function LeavePage() {
   const [managerNotes, setManagerNotes] = useState('');
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState<any>(null); // holds leave request when active
+  const [dateError, setDateError] = useState('');
+
+  useEffect(() => {
+    if (!showApplyModal) {
+      setDateError('');
+    }
+  }, [showApplyModal]);
 
   // Fetch leaves
   const { data: leaves = [], isLoading } = useQuery({
@@ -75,6 +82,11 @@ export default function LeavePage() {
   const handleApply = (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate) return;
+    if (new Date(endDate) < new Date(startDate)) {
+      setDateError('End date cannot be earlier than start date');
+      return;
+    }
+    setDateError('');
     applyLeave.mutate({ startDate, endDate, type, reason });
   };
 
@@ -285,6 +297,11 @@ export default function LeavePage() {
                   <input type="date" className="form-input" value={endDate} onChange={e => setEndDate(e.target.value)} required />
                 </div>
               </div>
+              {dateError && (
+                <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: '-8px', marginBottom: '12px', fontWeight: 500 }}>
+                  ⚠️ {dateError}
+                </div>
+              )}
               <div className="form-group">
                 <label className="form-label">Reason</label>
                 <textarea
