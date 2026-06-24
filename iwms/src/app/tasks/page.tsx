@@ -586,7 +586,7 @@ function TasksPageContent() {
       )}
 
       {isLoading ? (
-        <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="kanban-scroll-wrapper">
           <div className="kanban-board">
             {['Backlog', 'Todo', 'In Progress', 'Done'].map((col, idx) => (
               <div key={idx} className="kanban-column">
@@ -639,7 +639,7 @@ function TasksPageContent() {
             </div>
           </div>
 
-          <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="kanban-scroll-wrapper">
             <DragDropContext
               onDragStart={(start) => setDraggingId(start.draggableId)}
               onDragEnd={handleDragEnd}
