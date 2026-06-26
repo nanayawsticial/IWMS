@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { reportsApi, usersApi, departmentsApi } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 // --- Utility: Get recent Mondays for the week selector ---
 function getRecentMondays(count = 8) {
@@ -52,6 +53,7 @@ function AutoFilledBadge({ alsoInRoadblocks = false }: { alsoInRoadblocks?: bool
 
 export default function WeeklyReportsPage() {
   const { user } = useAuth();
+  const { addToast } = useToast();
   const queryClient = useQueryClient();
   const weeks = getRecentMondays();
   const autoDraftRequestedRef = useRef(false);
@@ -64,6 +66,7 @@ export default function WeeklyReportsPage() {
   const [reviewNotes, setReviewNotes] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [autoFilling, setAutoFilling] = useState(false);
 
   // Filters for review tab
   const [filterDept, setFilterDept] = useState('');
@@ -155,25 +158,37 @@ export default function WeeklyReportsPage() {
     setViewingReport(null);
   };
 
+  const appendUniqueBySource = (current: any[], incoming: any[] = []) => {
+    const existingSourceIds = new Set(current.map(item => item.sourceTaskId).filter(Boolean));
+    const additions = incoming.filter(item => !item.sourceTaskId || !existingSourceIds.has(item.sourceTaskId));
+    return [...current, ...additions];
+  };
+
   const handleAutoPopulate = async () => {
+    const allSectionsHaveContent =
+      activities.length > 0 &&
+      roadblocks.length > 0 &&
+      plans.length > 0 &&
+      supportItems.length > 0 &&
+      insights.length > 0;
+
+    if (allSectionsHaveContent && !window.confirm('This will add auto-filled rows to your existing content. Continue?')) {
+      return;
+    }
+
+    setAutoFilling(true);
     try {
       const populated = await reportsApi.autoPopulate(selectedWeek.startDate, selectedWeek.endDate);
-      setActivities(prev => {
-        const existingNames = new Set(prev.map(a => a.taskName));
-        const newActivities = [...prev];
-        for (const item of populated.activities || []) {
-          if (!existingNames.has(item.taskName)) {
-            newActivities.push(item);
-          }
-        }
-        return newActivities;
-      });
-      setRoadblocks(prev => [...prev, ...(populated.roadblocks || []).filter((item: any) => !prev.some(rb => rb.sourceTaskId && rb.sourceTaskId === item.sourceTaskId))]);
-      setPlans(prev => [...prev, ...(populated.plans || []).filter((item: any) => !prev.some(pl => pl.sourceTaskId && pl.sourceTaskId === item.sourceTaskId))]);
-      setSupportItems(prev => [...prev, ...(populated.supportItems || []).filter((item: any) => !prev.some(s => s.sourceTaskId && s.sourceTaskId === item.sourceTaskId))]);
-      setInsights(prev => [...prev, ...(populated.insights || []).filter((item: any) => !prev.some(ins => ins.sourceTaskId && ins.sourceTaskId === item.sourceTaskId && ins.insight === item.insight))]);
+      setActivities(prev => appendUniqueBySource(prev, populated.activities || []));
+      setRoadblocks(prev => appendUniqueBySource(prev, populated.roadblocks || []));
+      setPlans(prev => appendUniqueBySource(prev, populated.plans || []));
+      setSupportItems(prev => appendUniqueBySource(prev, populated.supportItems || []));
+      setInsights(prev => appendUniqueBySource(prev, populated.insights || []));
+      addToast('Auto-fill Complete', 'Report sections filled from your tasks. Review and edit before submitting.', 'success');
     } catch (err) {
-      alert('Failed to auto-populate tasks.');
+      addToast('Auto-fill Failed', 'Could not load tasks - check your connection and try again.', 'error');
+    } finally {
+      setAutoFilling(false);
     }
   };
 
@@ -786,25 +801,36 @@ export default function WeeklyReportsPage() {
                 </select>
               </div>
               <button
-                className="btn-ghost-sm"
+                className="btn-primary-sm"
                 onClick={handleAutoPopulate}
+                disabled={autoFilling}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
                   fontWeight: 700,
                   border: '1px solid var(--accent)',
-                  color: 'var(--accent)',
-                  background: 'var(--accent-soft)',
+                  color: '#fff',
+                  background: 'var(--accent)',
                   borderRadius: '8px',
-                  padding: '6px 14px',
+                  padding: '8px 14px',
                   fontSize: '12px',
-                  cursor: 'pointer',
+                  cursor: autoFilling ? 'not-allowed' : 'pointer',
+                  opacity: autoFilling ? 0.8 : 1,
                 }}
                 title="Auto-fill all sections from your tasks, blockers, plans, and #insight comments this week"
               >
-                ✨ Auto-fill from My Tasks
+                {autoFilling ? (
+                  <>
+                    <span className="spinner sm-spinner" />
+                    Filling...
+                  </>
+                ) : (
+                  '\u2726 Auto-fill from My Tasks'
+                )}
               </button>
+              <button className="btn-ghost-sm" style={{ border: '1px solid var(--blue-soft)', color: 'var(--blue)' }} onClick={() => saveReport(false)}>Save Draft</button>
+              <button className="btn-primary-sm" onClick={() => saveReport(true)}>Submit Weekly Report</button>
               <button className="btn-ghost-sm" onClick={() => setEditingReport(null)}>Cancel</button>
             </div>
           </div>

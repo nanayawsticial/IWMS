@@ -7,14 +7,21 @@ function toDateBoundary(date, endOfDay = false) {
 function mapTaskStatus(status) {
   if (status === 'done') return 'Completed';
   if (status === 'in_progress') return 'In Progress';
+  if (status === 'review') return 'Under Review';
   if (status === 'backlog' || status === 'blocked') return 'Blocked';
   return 'Pending';
 }
 
 function mapUrgency(priority) {
-  if (priority === 'high' || priority === 'critical') return 'high';
-  if (priority === 'low') return 'low';
-  return 'medium';
+  if (priority === 'high' || priority === 'critical') return 'High';
+  if (priority === 'low') return 'Low';
+  return 'Medium';
+}
+
+function mapSupportType(priority) {
+  if (priority === 'high' || priority === 'critical') return 'Urgent / Escalation';
+  if (priority === 'low') return 'Advisory';
+  return 'Technical';
 }
 
 function stripInsightPrefix(content) {
@@ -39,8 +46,15 @@ async function buildReportAutoPopulateData({ userId, startDate, endDate, organiz
       where: {
         assigneeId: userId,
         organizationId,
-        blockerNote: { not: null },
-        status: { in: ['todo', 'in_progress', 'review'] },
+        AND: [
+          { blockerNote: { not: null } },
+          { blockerNote: { not: '' } },
+        ],
+        OR: [
+          { scheduledDate: { gte: startDate, lte: endDate } },
+          { scheduledDate: null, dueDate: { gte: startDate, lte: endDate } },
+          { dueDate: { gte: startDate, lte: endDate } },
+        ],
       },
       include: {
         assignee: { select: { id: true, name: true } },
@@ -84,7 +98,7 @@ async function buildReportAutoPopulateData({ userId, startDate, endDate, organiz
     taskName: task.title,
     type: task.projectName || 'General',
     status: mapTaskStatus(task.status),
-    impact: task.outcomeImpact || '',
+    impact: task.outcomeImpact || `Contributed measurable progress on ${task.title} during this reporting period.`,
     hoursSpent: Math.round((taskHours.get(task.id) || 0) * 10) / 10,
     links: task.deliverableLink || '',
     isAutoFilled: true,
@@ -95,7 +109,7 @@ async function buildReportAutoPopulateData({ userId, startDate, endDate, organiz
 
   const roadblocks = blockerTasksWithNote.map(task => ({
     challenge: task.blockerNote || '',
-    impact: `Impact of delay on ${task.title}`,
+    impact: `Delay risk on: ${task.title}`,
     mitigation: '',
     supportRequired: '',
     responsibleParty: task.assignee?.name || '',
@@ -117,7 +131,7 @@ async function buildReportAutoPopulateData({ userId, startDate, endDate, organiz
 
   const supportItems = blockerTasksWithNote.map(task => ({
     description: `Support needed: ${task.blockerNote}`,
-    supportType: 'Technical',
+    supportType: mapSupportType(task.priority),
     requestedFrom: task.reviewer?.name || '',
     urgency: mapUrgency(task.priority),
     dueDate: task.dueDate || '',
