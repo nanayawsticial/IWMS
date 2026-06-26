@@ -880,7 +880,16 @@ function TasksPageContent() {
                           {colTasks.length === 0 && !snapshot.isDraggingOver && (
                             <div className="kanban-empty">
                               <FolderKanban size={18} opacity={0.3} className="mx-auto mb-1.5" />
-                              <p>Drop tasks here</p>
+                              <p>{dateViewMode === 'all' ? 'Drop tasks here' : 'No tasks in this date filter'}</p>
+                              {dateViewMode !== 'all' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDateViewMode('all')}
+                                  className="mt-2 text-[10px] font-bold text-[var(--accent)]"
+                                >
+                                  Show all tasks
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>

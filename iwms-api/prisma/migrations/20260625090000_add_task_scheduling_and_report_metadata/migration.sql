@@ -6,6 +6,10 @@ ALTER TABLE "Task"
   ADD COLUMN "deliverableLink" TEXT,
   ADD COLUMN "blockerNote" TEXT;
 
+UPDATE "Task"
+SET "scheduledDate" = "dueDate"
+WHERE "scheduledDate" IS NULL;
+
 ALTER TABLE "Task"
   ALTER COLUMN "estimatedHours" SET DATA TYPE DOUBLE PRECISION USING "estimatedHours"::double precision;
 
