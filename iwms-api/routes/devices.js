@@ -897,32 +897,33 @@ async function devicesRoutes(fastify) {
       return reply.code(401).send({ error: 'Invalid device key' });
     }
 
-    // 2. Check if the UID has already been reported in the database for this organization
-    const recentNotifs = await prisma.notification.findMany({
+    // 2. Normalise UID and check for an existing UNREAD notification for this UID.
+    //    Once the admin reads the alert, re-scanning the card will fire a fresh one.
+    const cleanUid = uid.replace(/[\[\]\s]/g, '');
+
+    const existingUnread = await prisma.notification.findFirst({
       where: {
         type: 'UNREGISTERED_CARD',
-        organizationId: device.organizationId
+        organizationId: device.organizationId,
+        isRead: false,
       },
-      take: 50,
       orderBy: { createdAt: 'desc' }
     });
 
-    const isDuplicate = recentNotifs.some(n => {
+    if (existingUnread) {
       try {
-        const meta = typeof n.metadata === 'string' ? JSON.parse(n.metadata) : n.metadata;
-        return meta && meta.uid === uid;
+        const meta = typeof existingUnread.metadata === 'string' ? JSON.parse(existingUnread.metadata) : existingUnread.metadata;
+        const existingUid = (meta?.uid || '').replace(/[\[\]\s]/g, '');
+        if (existingUid === cleanUid) {
+          return reply.send({ success: true, message: 'Card already reported (pending admin action)' });
+        }
       } catch (e) {
-        return false;
+        // parse error — fall through to create notification
       }
-    });
-
-    if (isDuplicate) {
-      return reply.send({ success: true, message: 'Card already reported' });
     }
 
-    // 3. If not a duplicate, create a new notification record in the database
-    // targeting all users with role: SUPER_ADMIN or MANAGEMENT
-    const message = `Unregistered card scanned: UID [${uid}] at Terminal [${device.name || deviceSerial}]. Go to an employee's Edit Profile to assign this card.`;
+    // 3. If not a pending duplicate, create a new notification record
+    const message = `Unregistered card scanned: UID ${cleanUid} at Terminal [${device.name || deviceSerial}]. Copy the UID and assign it in an employee's Edit Profile.`;
 
     const targetRoles = ['SUPER_ADMIN', 'MANAGEMENT'];
     const createdNotifications = await Promise.all(
@@ -931,7 +932,7 @@ async function devicesRoutes(fastify) {
           data: {
             message,
             type: 'UNREGISTERED_CARD',
-            metadata: { uid, deviceSerial },
+            metadata: { uid: cleanUid, deviceSerial },
             targetRole: role,
             organizationId: device.organizationId
           }
@@ -942,13 +943,12 @@ async function devicesRoutes(fastify) {
     // 4. Emit the real-time update to the organization room
     const io = global.io;
     if (io) {
-      // Find the created notification for MANAGEMENT to broadcast to the UI
       const broadcastNotif = createdNotifications.find(n => n.targetRole === 'MANAGEMENT') || createdNotifications[0];
       io.to(`org:${device.organizationId}`).emit('notification:new', {
         id: broadcastNotif.id,
         text: broadcastNotif.message,
         type: 'warning',
-        metadata: { uid, deviceSerial },
+        metadata: { uid: cleanUid, deviceSerial },
         createdAt: broadcastNotif.createdAt.toISOString()
       });
     }

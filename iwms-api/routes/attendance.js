@@ -6,6 +6,77 @@ function normalizeOptionalString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+async function findActiveDeviceByIdentity(identity) {
+  return prisma.biometricDevice.findFirst({
+    where: {
+      OR: [
+        { id: identity },
+        { serialNumber: identity },
+      ],
+      isActive: true,
+    },
+  });
+}
+
+async function notifyUnknownCard(device, uid, deviceSerial) {
+  // Normalise the UID: strip any accidental brackets/spaces that may have been
+  // copy-pasted into the employee code field (e.g. "[136-4-13-10]" → "136-4-13-10")
+  const cleanUid = uid.replace(/[\[\]\s]/g, '');
+
+  // Only suppress if there is already an UNREAD notification for this UID.
+  // Once the admin reads/dismisses the previous alert, a re-scan will fire a
+  // fresh notification so the admin sees the card again.
+  const existingUnread = await prisma.notification.findFirst({
+    where: {
+      type: 'UNREGISTERED_CARD',
+      organizationId: device.organizationId,
+      isRead: false,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (existingUnread) {
+    try {
+      const meta = typeof existingUnread.metadata === 'string'
+        ? JSON.parse(existingUnread.metadata)
+        : existingUnread.metadata;
+      const existingUid = (meta?.uid || '').replace(/[\[\]\s]/g, '');
+      if (existingUid === cleanUid) return; // already pending, don't spam
+    } catch {
+      // ignore parse errors — fall through to create a new notification
+    }
+  }
+
+  const message = `Unregistered card scanned: UID ${cleanUid} at Terminal [${device.name || deviceSerial}]. Copy the UID and assign it in an employee's Edit Profile.`;
+  const createdNotifications = await Promise.all(
+    ['SUPER_ADMIN', 'MANAGEMENT'].map(targetRole =>
+      prisma.notification.create({
+        data: {
+          message,
+          type: 'UNREGISTERED_CARD',
+          // Store clean uid so frontend Copy button works without bracket-stripping
+          metadata: { uid: cleanUid, deviceSerial },
+          targetRole,
+          organizationId: device.organizationId,
+        },
+      })
+    )
+  );
+
+  const io = global.io;
+  if (io) {
+    const broadcastNotif = createdNotifications.find(n => n.targetRole === 'MANAGEMENT') || createdNotifications[0];
+    io.to(`org:${device.organizationId}`).emit('notification:new', {
+      id: broadcastNotif.id,
+      text: broadcastNotif.message,
+      type: 'warning',
+      metadata: { uid: cleanUid, deviceSerial },
+      createdAt: broadcastNotif.createdAt.toISOString(),
+    });
+  }
+}
+
+
 async function getLatenessStatus(userId, date, timeStr, organizationId) {
   const shift = await prisma.shift.findFirst({
     where: { userId, date, organizationId },
@@ -783,12 +854,7 @@ async function attendanceRoutes(fastify) {
     }
 
     // 2. Verify device is registered and active
-    const device = await prisma.biometricDevice.findFirst({
-      where: {
-        serialNumber: normalizedDeviceId,
-        isActive: true
-      },
-    });
+    const device = await findActiveDeviceByIdentity(normalizedDeviceId);
 
     if (!device) {
       return reply.code(403).send({
@@ -822,6 +888,10 @@ async function attendanceRoutes(fastify) {
     const seenUpdate = { lastSeenAt: new Date(), status: 'online' };
     if (normalizedFirmware) seenUpdate.firmwareVersion = normalizedFirmware;
 
+    // Normalise the UID: strip brackets/spaces so UIDs like "[136-4-13-10]" copied
+    // from a notification message still match the stored employeeCode "136-4-13-10"
+    const cleanUid = normalizedUid.replace(/[\[\]\s]/g, '');
+
     const [, duplicate, user] = await Promise.all([
       prisma.biometricDevice.update({ where: { id: device.id }, data: seenUpdate }),
       terminalEventId
@@ -829,8 +899,14 @@ async function attendanceRoutes(fastify) {
             where: { deviceId_terminalEventId: { deviceId: device.id, terminalEventId } },
           })
         : Promise.resolve(null),
+      // Try exact match first; fall back to bracket-stripped match via OR
       prisma.user.findFirst({
-        where: { employeeCode: normalizedUid, status: 'active', organizationId },
+        where: {
+          OR: [
+            { employeeCode: cleanUid, status: 'active', organizationId },
+            { employeeCode: normalizedUid, status: 'active', organizationId },
+          ],
+        },
         include: { department: true },
       }),
     ]);
@@ -858,6 +934,7 @@ async function attendanceRoutes(fastify) {
           processed:    false,
         },
       });
+      await notifyUnknownCard(device, normalizedUid, normalizedDeviceId);
       return reply.code(404).send({
         error: 'Employee Not Found',
         message: `No active employee with RFID uid "${normalizedUid}". Set their Employee Code in IWMS Users → Edit Profile.`,
@@ -1065,9 +1142,7 @@ async function attendanceRoutes(fastify) {
     }
 
     // 1. Verify device is registered and active
-    const device = await prisma.biometricDevice.findFirst({
-      where: { serialNumber: firstDeviceId, isActive: true },
-    });
+    const device = await findActiveDeviceByIdentity(firstDeviceId);
 
     if (!device) {
       return reply.code(403).send({
