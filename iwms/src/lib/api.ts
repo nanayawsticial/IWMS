@@ -128,8 +128,12 @@ export const tasksApi = {
   create: (data: Record<string, unknown>) => api.post('/api/tasks', data).then(r => r.data),
   update: (id: string, data: Record<string, unknown>) => api.patch(`/api/tasks/${id}`, data).then(r => r.data),
   remove: (id: string) => api.delete(`/api/tasks/${id}`).then(r => r.data),
+  dailyBudget: (date: string, userId?: string) =>
+    api.get('/api/tasks/daily-budget', { params: userId ? { date, userId } : { date } }).then(r => r.data),
   addComment: (id: string, content: string) =>
     api.post(`/api/tasks/${id}/comments`, { content }).then(r => r.data),
+  updateComment: (taskId: string, commentId: string, content: string) =>
+    api.patch(`/api/tasks/${taskId}/comments/${commentId}`, { content }).then(r => r.data),
   logTime: (id: string, data: { hours: number; date: string; note?: string }) =>
     api.post(`/api/tasks/${id}/timelogs`, data).then(r => r.data),
 };
@@ -215,6 +219,8 @@ export const geofenceApi = {
 export const reportsApi = {
   autoPopulate: (startDate: string, endDate: string) =>
     api.get('/api/reports/auto-populate', { params: { startDate, endDate } }).then(r => r.data),
+  autoDraft: (startDate: string, endDate: string) =>
+    api.post('/api/reports/auto-draft', { startDate, endDate }).then(r => r.data),
   myReports: () =>
     api.get('/api/reports/my-reports').then(r => r.data),
   reviewList: (params?: Record<string, string>) =>
@@ -277,5 +283,4 @@ export const financeApi = {
   updateBudget: (id: string, data: any) => api.patch(`/api/finance/budgets/${id}`, data).then(r => r.data),
   getPayrollSummary: (params?: any) => api.get('/api/finance/payroll-summary', { params }).then(r => r.data),
 };
-
 

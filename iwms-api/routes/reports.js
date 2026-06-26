@@ -1,8 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
-const crypto = require('crypto');
 const prisma = require('../lib/prisma');
+const { buildReportAutoPopulateData, ensureAutoDraft } = require('../lib/reportAutomation');
 
 async function reportsRoutes(fastify) {
   // Helper: check if a user is in Management
@@ -15,7 +14,7 @@ async function reportsRoutes(fastify) {
   }
 
   // GET /api/reports/auto-populate
-  // Queries active tasks and weekly hours logged by the user to prefill activities
+  // Queries task data, blockers, future plans, support needs, and #insight comments to prefill a report
   fastify.get('/auto-populate', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { sub, organizationId } = request.user;
     const { startDate, endDate } = request.query;
@@ -25,72 +24,45 @@ async function reportsRoutes(fastify) {
     }
 
     try {
-      // 1. Get tasks where user logged hours in the date range
-      const timeLogs = await prisma.taskTimeLog.findMany({
-        where: {
-          userId: sub,
-          date: { gte: startDate, lte: endDate },
-          task: { organizationId }
-        },
-        include: { task: true }
-      });
-
-      // Sum hours per task
-      const taskHours = {};
-      const loggedTasks = [];
-      const seenTaskIds = new Set();
-
-      for (const log of timeLogs) {
-        if (log.task) {
-          taskHours[log.taskId] = (taskHours[log.taskId] || 0) + log.hours;
-          if (!seenTaskIds.has(log.taskId)) {
-            seenTaskIds.add(log.taskId);
-            loggedTasks.push(log.task);
-          }
-        }
-      }
-
-      // 2. Get active tasks assigned to the user that are NOT completed but might not have logs yet
-      const activeTasks = await prisma.task.findMany({
-        where: {
-          assigneeId: sub,
-          status: { in: ['todo', 'in_progress', 'review'] },
-          organizationId
-        }
-      });
-
-      // Merge logged tasks and active tasks
-      const allTasks = [...loggedTasks];
-      for (const t of activeTasks) {
-        if (!seenTaskIds.has(t.id)) {
-          seenTaskIds.add(t.id);
-          allTasks.push(t);
-        }
-      }
-
-      // Format activities for weekly report
-      const activities = allTasks.map(t => {
-        // Map DB task status to report status
-        let status = 'Pending';
-        if (t.status === 'done') status = 'Completed';
-        else if (t.status === 'in_progress') status = 'In Progress';
-        else if (t.status === 'review') status = 'Pending';
-        else if (t.status === 'backlog') status = 'Blocked';
-
-        return {
-          taskName: t.title,
-          type: t.projectName || 'General',
-          status,
-          impact: '',
-          hoursSpent: taskHours[t.id] || 0,
-          links: ''
-        };
-      });
-
-      return reply.send({ activities });
+      const populated = await buildReportAutoPopulateData({ userId: sub, startDate, endDate, organizationId });
+      return reply.send(populated);
     } catch (err) {
       fastify.log.error(err);
       return reply.code(500).send({ error: 'Failed to auto-populate report tasks', message: err.message });
+    }
+  });
+
+  // POST /api/reports/auto-draft
+  fastify.post('/auto-draft', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { sub, role, organizationId } = request.user;
+    const { userId, startDate, endDate } = request.body || {};
+
+    if (!startDate || !endDate) {
+      return reply.code(400).send({ error: 'startDate and endDate are required' });
+    }
+
+    const isAdmin = ['super_admin', 'admin', 'hr_manager'].includes(role);
+    const targetUserId = userId || sub;
+    if (userId && userId !== sub && !isAdmin) {
+      return reply.code(403).send({ error: 'Only admins can auto-draft for another user' });
+    }
+
+    const targetUser = await prisma.user.findFirst({
+      where: { id: targetUserId, organizationId, status: 'active' },
+      select: { id: true },
+    });
+    if (!targetUser) return reply.code(404).send({ error: 'User not found' });
+
+    try {
+      const result = await ensureAutoDraft({ userId: targetUserId, startDate, endDate, organizationId });
+      return reply.code(result.created ? 201 : 200).send({
+        success: true,
+        created: result.created,
+        report: result.report,
+      });
+    } catch (err) {
+      fastify.log.error(err);
+      return reply.code(500).send({ error: 'Failed to create auto draft', message: err.message });
     }
   });
 
@@ -311,7 +283,9 @@ async function reportsRoutes(fastify) {
             status: a.status || 'Pending',
             impact: a.impact || '',
             hoursSpent: parseFloat(a.hoursSpent) || 0,
-            links: a.links || ''
+            links: a.links || '',
+            isAutoFilled: a.isAutoFilled === true,
+            sourceTaskId: a.sourceTaskId || null,
           }))
         });
       }
@@ -325,7 +299,9 @@ async function reportsRoutes(fastify) {
             mitigation: rb.mitigation || '',
             supportRequired: rb.supportRequired || '',
             responsibleParty: rb.responsibleParty || '',
-            deadline: rb.deadline || ''
+            deadline: rb.deadline || '',
+            isAutoFilled: rb.isAutoFilled === true,
+            sourceTaskId: rb.sourceTaskId || null,
           }))
         });
       }
@@ -339,7 +315,9 @@ async function reportsRoutes(fastify) {
             typeScope: p.typeScope || 'Departmental',
             deliverables: p.deliverables || '',
             targetDate: p.targetDate || '',
-            dependencies: p.dependencies || ''
+            dependencies: p.dependencies || '',
+            isAutoFilled: p.isAutoFilled === true,
+            sourceTaskId: p.sourceTaskId || null,
           }))
         });
       }
@@ -352,7 +330,9 @@ async function reportsRoutes(fastify) {
             supportType: s.supportType || '',
             requestedFrom: s.requestedFrom || '',
             urgency: s.urgency || 'medium',
-            dueDate: s.dueDate || ''
+            dueDate: s.dueDate || '',
+            isAutoFilled: s.isAutoFilled === true,
+            sourceTaskId: s.sourceTaskId || null,
           }))
         });
       }
@@ -363,7 +343,9 @@ async function reportsRoutes(fastify) {
             reportId: report.id,
             insight: ins.insight,
             category: ins.category || 'Process',
-            impact: ins.impact || ''
+            impact: ins.impact || '',
+            isAutoFilled: ins.isAutoFilled === true,
+            sourceTaskId: ins.sourceTaskId || null,
           }))
         });
       }
@@ -540,7 +522,7 @@ async function reportsRoutes(fastify) {
           compression: 'DEFLATE',
         });
 
-        const filename = `Weekly_Report_${report.startDate}_${report.user.name.replace(/\s+/g, '_')}.docx`;
+        const filename = `WeeklyReport_${report.user.name.replace(/\s+/g, '_')}_${report.startDate}.docx`;
         return reply
           .header('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
           .header('Content-Disposition', `attachment; filename="${filename}"`)

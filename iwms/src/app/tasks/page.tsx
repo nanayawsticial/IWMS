@@ -21,11 +21,46 @@ import {
   Edit,
   ArrowRight,
   Filter,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays
 } from 'lucide-react';
 
 type Status = 'backlog' | 'todo' | 'in_progress' | 'review' | 'done';
 type Priority = 'critical' | 'high' | 'medium' | 'low';
+type DateViewMode = 'daily' | 'week' | 'all';
+
+function todayIso() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function addDays(date: string, days: number) {
+  const d = new Date(`${date}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+function getWeekRange(date: string) {
+  const d = new Date(`${date}T00:00:00`);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return {
+    startDate: monday.toISOString().split('T')[0],
+    endDate: sunday.toISOString().split('T')[0],
+  };
+}
+
+function formatDateLabel(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
   { id: 'backlog',     label: 'Backlog',     color: 'var(--text-3)' },
@@ -179,6 +214,9 @@ function TaskCardContent({
       <div className="space-y-1 mt-2.5">
         <div className="flex justify-between items-center text-xs text-[var(--text-3)] font-bold">
           <span>Time Util: {progress}%</span>
+          {typeof task.loggedToday === 'number' && (
+            <span>Est: {task.estimatedHours || 0}h | Today: {task.loggedToday}h</span>
+          )}
         </div>
         <div className="w-full h-1.5 bg-[var(--bg-surface-2)] rounded-full overflow-hidden border border-[var(--border)]">
           <div
@@ -240,6 +278,41 @@ function TaskCard({
   );
 }
 
+function DailyBudgetBar({ budget, date }: { budget: any; date: string }) {
+  if (!budget) return null;
+  const available = Number(budget.availableHours || 0);
+  const estimated = Number(budget.estimatedHoursTotal || 0);
+  const logged = Number(budget.loggedHoursTotal || 0);
+  const usedPct = available > 0 ? Math.min(100, Math.round((estimated / available) * 100)) : 0;
+  const overBy = Math.max(0, Math.round((estimated - available) * 10) / 10);
+  const color = budget.budgetStatus === 'over'
+    ? 'var(--red)'
+    : budget.budgetStatus === 'near'
+      ? 'var(--yellow)'
+      : 'var(--green)';
+
+  return (
+    <div className="card p-4 mb-5" style={{ borderLeft: `4px solid ${color}` }}>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+        <div>
+          <div className="text-sm font-bold text-[var(--text-1)]">Today's Budget - {formatDateLabel(date)}</div>
+          <div className="text-xs text-[var(--text-3)]">
+            Available: {available}h {budget.attendanceSource === 'record' ? 'from attendance' : 'default, no attendance record yet'}
+          </div>
+        </div>
+        <div className="flex gap-4 text-xs font-semibold text-[var(--text-2)]">
+          <span>Estimated: {estimated}h</span>
+          <span>Logged: {logged}h</span>
+          {overBy > 0 && <span style={{ color }}>{overBy}h over budget</span>}
+        </div>
+      </div>
+      <div className="h-2.5 w-full rounded-full bg-[var(--bg-surface-2)] border border-[var(--border)] overflow-hidden">
+        <div className="h-full transition-all duration-300" style={{ width: `${usedPct}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
 export default function TasksPage() {
   return (
     <Suspense fallback={
@@ -270,6 +343,9 @@ function TasksPageContent() {
   const [searchQ, setSearchQ] = useState('');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'title'>('dueDate');
   const [viewMode, setViewMode] = useState<'kanban' | 'gantt'>('kanban');
+  const [dateViewMode, setDateViewMode] = useState<DateViewMode>('all');
+  const [selectedDate, setSelectedDate] = useState(todayIso());
+  const [showReportDetails, setShowReportDetails] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
@@ -280,7 +356,21 @@ function TasksPageContent() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
   // Forms
-  const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'medium' as Priority, dueDate: '', tags: '', assigneeId: '', reviewerId: '' });
+  const emptyTaskForm = {
+    title: '',
+    description: '',
+    priority: 'medium' as Priority,
+    dueDate: '',
+    scheduledDate: '',
+    tags: '',
+    assigneeId: '',
+    reviewerId: '',
+    estimatedHours: '8',
+    outcomeImpact: '',
+    deliverableLink: '',
+    blockerNote: '',
+  };
+  const [newTask, setNewTask] = useState(emptyTaskForm);
   const [quickTaskInputs, setQuickTaskInputs] = useState<Record<string, string>>({});
 
   const [otherDragging, setOtherDragging] = useState<{ userName: string; taskTitle: string } | null>(null);
@@ -298,9 +388,29 @@ function TasksPageContent() {
     }
   });
 
+  const taskQueryParams = useMemo(() => {
+    const params: Record<string, string> = {};
+    if (assigneeId) params.assigneeId = assigneeId;
+    if (dateViewMode === 'daily') {
+      params.scheduledDate = selectedDate;
+    } else if (dateViewMode === 'week') {
+      const range = getWeekRange(selectedDate);
+      params.viewMode = 'week';
+      params.dueDateFrom = range.startDate;
+      params.dueDateTo = range.endDate;
+    }
+    return params;
+  }, [assigneeId, dateViewMode, selectedDate]);
+
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['tasks', assigneeId],
-    queryFn: () => tasksApi.list(assigneeId ? { assigneeId } : undefined),
+    queryKey: ['tasks', taskQueryParams],
+    queryFn: () => tasksApi.list(taskQueryParams),
+  });
+
+  const { data: dailyBudget } = useQuery({
+    queryKey: ['daily-budget', selectedDate, assigneeId],
+    queryFn: () => tasksApi.dailyBudget(selectedDate, assigneeId),
+    enabled: dateViewMode === 'daily',
   });
 
   const isManagement = user && ['super_admin', 'admin', 'hr_manager', 'manager', 'team_lead'].includes(user.role);
@@ -334,6 +444,16 @@ function TasksPageContent() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const shiftSelectedDate = (direction: -1 | 1) => {
+    setSelectedDate(prev => addDays(prev, dateViewMode === 'week' ? direction * 7 : direction));
+    if (dateViewMode === 'all') setDateViewMode('daily');
+  };
+
+  const weekRange = getWeekRange(selectedDate);
+  const dateLabel = dateViewMode === 'week'
+    ? `${formatDateLabel(weekRange.startDate)} - ${formatDateLabel(weekRange.endDate)}`
+    : formatDateLabel(selectedDate);
+
   const updateTask = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       tasksApi.update(id, data),
@@ -359,29 +479,39 @@ function TasksPageContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setShowModal(false);
-      setNewTask({ title: '', description: '', priority: 'medium', dueDate: '', tags: '', assigneeId: '', reviewerId: '' });
+      setNewTask(emptyTaskForm);
+      setShowReportDetails(false);
     },
   });
 
   const handleAddTask = () => {
     if (!newTask.title) return;
+    const resolvedDueDate = newTask.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
     createTask.mutate({
       title: newTask.title,
       description: newTask.description,
       assigneeId: newTask.assigneeId || user?.id,
       reviewerId: newTask.reviewerId || user?.id,
       priority: newTask.priority,
-      dueDate: newTask.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+      dueDate: resolvedDueDate,
+      scheduledDate: newTask.scheduledDate || (dateViewMode === 'daily' ? selectedDate : resolvedDueDate),
       tags: newTask.tags.split(',').map(t => t.trim()).filter(Boolean),
       projectId: 'general',
       projectName: 'General',
-      estimatedHours: 8,
+      estimatedHours: parseFloat(newTask.estimatedHours) || 8,
+      outcomeImpact: newTask.outcomeImpact,
+      deliverableLink: newTask.deliverableLink,
+      blockerNote: newTask.blockerNote,
     });
   };
 
   // Upgraded filtering and sorting logic
   const filteredAndSortedTasks = useMemo(() => {
-    let result = tasks.filter((t: any) => {
+    const budgetTasks = new Map((dailyBudget?.tasks || []).map((t: any) => [t.id, t.loggedToday]));
+    let result = tasks.map((task: any) => ({
+      ...task,
+      loggedToday: budgetTasks.has(task.id) ? budgetTasks.get(task.id) : undefined,
+    })).filter((t: any) => {
       const matchesPriority = filter === 'all' || t.priority === filter;
       const matchesSearch = t.title.toLowerCase().includes(searchQ.toLowerCase()) ||
         t.assigneeName?.toLowerCase().includes(searchQ.toLowerCase());
@@ -403,7 +533,7 @@ function TasksPageContent() {
       if (!b.dueDate) return -1;
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
-  }, [tasks, filter, searchQ, sortBy]);
+  }, [tasks, filter, searchQ, sortBy, dailyBudget]);
 
   const totalCount = filteredAndSortedTasks.length;
   const pendingCount = filteredAndSortedTasks.filter((t: any) => t.status !== 'done').length;
@@ -472,6 +602,58 @@ function TasksPageContent() {
 
         {/* Filters Toolbar */}
         <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-4 w-full xl:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full xl:w-auto">
+            <div className="tab-switcher overflow-x-auto hide-scrollbar">
+              {(['daily', 'week', 'all'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setDateViewMode(mode)}
+                  className={dateViewMode === mode ? 'active' : ''}
+                >
+                  {mode === 'daily' ? 'Daily' : mode === 'week' ? 'Week' : 'All'}
+                </button>
+              ))}
+            </div>
+            <div className="control-compact min-w-[260px]">
+              <CalendarDays size={14} className="text-[var(--text-3)] flex-shrink-0" />
+              <button
+                type="button"
+                onClick={() => shiftSelectedDate(-1)}
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--bg-hover)]"
+                title={dateViewMode === 'week' ? 'Previous week' : 'Previous day'}
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={e => {
+                  setSelectedDate(e.target.value);
+                  if (dateViewMode === 'all') setDateViewMode('daily');
+                }}
+                title={dateLabel}
+              />
+              <button
+                type="button"
+                onClick={() => shiftSelectedDate(1)}
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--bg-hover)]"
+                title={dateViewMode === 'week' ? 'Next week' : 'Next day'}
+              >
+                <ChevronRight size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDate(todayIso());
+                  setDateViewMode('daily');
+                }}
+                className="text-xs font-bold text-[var(--accent)] px-2"
+              >
+                Today
+              </button>
+            </div>
+          </div>
+
           {/* Row 1 for mobile: Assignee & Sort */}
           <div className={`${isManagement && dropdownUsers.length > 0 ? 'grid grid-cols-2' : 'flex'} gap-3 w-full md:w-auto`}>
             {isManagement && dropdownUsers.length > 0 && (
@@ -623,6 +805,8 @@ function TasksPageContent() {
         <GanttChart tasks={filteredAndSortedTasks} onTaskClick={(id) => setActiveTaskId(id)} />
       ) : (
         <>
+          {dateViewMode === 'daily' && <DailyBudgetBar budget={dailyBudget} date={selectedDate} />}
+
           {/* Kanban Stats Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="card p-3 flex justify-between items-center">
@@ -719,6 +903,7 @@ function TasksPageContent() {
                               reviewerId: user?.id,
                               priority: 'medium',
                               dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+                              scheduledDate: dateViewMode === 'daily' ? selectedDate : undefined,
                               projectId: 'general',
                               projectName: 'General',
                               estimatedHours: 8,
@@ -793,7 +978,7 @@ function TasksPageContent() {
       {/* Create Task Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-md p-6 relative shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl w-full max-w-lg p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="text-base font-extrabold text-[var(--text-1)] uppercase tracking-wide">Create New Task</h3>
               <button className="modal-close text-[var(--text-3)] hover:text-white cursor-pointer" onClick={() => setShowModal(false)}>
@@ -824,6 +1009,16 @@ function TasksPageContent() {
                   <input className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]" type="date" value={newTask.dueDate} onChange={e => setNewTask(p => ({ ...p, dueDate: e.target.value }))} />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-group">
+                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Scheduled Date</label>
+                  <input className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]" type="date" value={newTask.scheduledDate} onChange={e => setNewTask(p => ({ ...p, scheduledDate: e.target.value }))} />
+                </div>
+                <div className="form-group">
+                  <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Estimated Hours</label>
+                  <input className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]" type="number" min="0" step="0.5" value={newTask.estimatedHours} onChange={e => setNewTask(p => ({ ...p, estimatedHours: e.target.value }))} />
+                </div>
+              </div>
               {hasPermission('assign_tasks') && users.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="form-group">
@@ -849,6 +1044,32 @@ function TasksPageContent() {
               <div className="form-group">
                 <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Tags (comma separated)</label>
                 <input className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]" value={newTask.tags} onChange={e => setNewTask(p => ({ ...p, tags: e.target.value }))} placeholder="frontend, design, urgent..." />
+              </div>
+              <div className="border border-[var(--border)] rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase text-[var(--text-2)] bg-[var(--bg-surface-2)]"
+                  onClick={() => setShowReportDetails(prev => !prev)}
+                >
+                  <span>Additional Details for Reports</span>
+                  <span>{showReportDetails ? '▴' : '▾'}</span>
+                </button>
+                {showReportDetails && (
+                  <div className="p-3 space-y-3">
+                    <div className="form-group">
+                      <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Outcome / Impact</label>
+                      <textarea className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] resize-none" rows={2} value={newTask.outcomeImpact} onChange={e => setNewTask(p => ({ ...p, outcomeImpact: e.target.value }))} placeholder="What will completing this task achieve?" />
+                    </div>
+                    <div className="form-group">
+                      <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Deliverable Link</label>
+                      <input className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)]" value={newTask.deliverableLink} onChange={e => setNewTask(p => ({ ...p, deliverableLink: e.target.value }))} placeholder="URL or description of the deliverable" />
+                    </div>
+                    <div className="form-group">
+                      <label className="block text-[var(--text-3)] font-bold mb-1.5 uppercase">Blockers / Notes</label>
+                      <textarea className="w-full p-2 bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-lg text-[var(--text-1)] focus:outline-none focus:border-[var(--accent)] resize-none" rows={2} value={newTask.blockerNote} onChange={e => setNewTask(p => ({ ...p, blockerNote: e.target.value }))} placeholder="Any blocker or challenge for this task?" />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="modal-footer flex gap-2 justify-end pt-4 border-t border-[var(--border)] mt-6">

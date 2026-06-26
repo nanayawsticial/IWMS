@@ -1,10 +1,30 @@
 const prisma = require('../lib/prisma');
 
+function addAndFilter(whereClause, condition) {
+  if (whereClause.OR) {
+    whereClause.AND = [...(whereClause.AND || []), { OR: whereClause.OR }, condition];
+    delete whereClause.OR;
+  } else {
+    whereClause.AND = [...(whereClause.AND || []), condition];
+  }
+}
+
+async function getAvailableHoursForDate(userId, date, organizationId) {
+  const attendance = await prisma.attendanceRecord.findFirst({
+    where: { userId, date, organizationId },
+    select: { hoursWorked: true },
+  });
+  return {
+    availableHours: typeof attendance?.hoursWorked === 'number' ? attendance.hoursWorked : 7,
+    attendanceSource: typeof attendance?.hoursWorked === 'number' ? 'record' : 'default',
+  };
+}
+
 async function tasksRoutes(fastify) {
   // GET /api/tasks
   fastify.get('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { role, sub, organizationId } = request.user;
-    const { status, priority, assigneeId, projectId } = request.query || {};
+    const { status, priority, assigneeId, projectId, scheduledDate, dueDateFrom, dueDateTo } = request.query || {};
 
     const isAdmin = ['super_admin', 'admin', 'hr_manager'].includes(role);
     const isManager = ['manager', 'team_lead'].includes(role);
@@ -47,6 +67,25 @@ async function tasksRoutes(fastify) {
     if (status) whereClause.status = status;
     if (priority) whereClause.priority = priority;
     if (projectId) whereClause.projectId = projectId;
+    if (scheduledDate) {
+      addAndFilter(whereClause, {
+        OR: [
+          { scheduledDate },
+          { scheduledDate: null, dueDate: scheduledDate },
+        ],
+      });
+    }
+    if (dueDateFrom || dueDateTo) {
+      const dueDate = {};
+      if (dueDateFrom) dueDate.gte = dueDateFrom;
+      if (dueDateTo) dueDate.lte = dueDateTo;
+      addAndFilter(whereClause, {
+        OR: [
+          { scheduledDate: dueDate },
+          { scheduledDate: null, dueDate },
+        ],
+      });
+    }
 
     const tasks = await prisma.task.findMany({
       where: whereClause,
@@ -77,7 +116,11 @@ async function tasksRoutes(fastify) {
   // POST /api/tasks
   fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { sub, organizationId } = request.user;
-    const { title, description, assigneeId, reviewerId, priority, status, dueDate, tags, projectId, projectName, estimatedHours, departmentId } = request.body || {};
+    const {
+      title, description, assigneeId, reviewerId, priority, status, dueDate, scheduledDate,
+      tags, projectId, projectName, estimatedHours, departmentId,
+      outcomeImpact, deliverableLink, blockerNote,
+    } = request.body || {};
 
     if (!title || !assigneeId) {
       return reply.code(400).send({ error: 'title and assigneeId are required' });
@@ -107,6 +150,7 @@ async function tasksRoutes(fastify) {
 
     const resolvedDeptId = departmentId || assignee.departmentId || null;
 
+    const resolvedDueDate = dueDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
     const task = await prisma.task.create({
       data: {
         title,
@@ -116,10 +160,14 @@ async function tasksRoutes(fastify) {
         reviewerId: reviewerId || sub, // defaults to creator
         priority: priority || 'medium',
         status: status || 'todo',
-        dueDate: dueDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+        dueDate: resolvedDueDate,
+        scheduledDate: scheduledDate || resolvedDueDate,
         tags: JSON.stringify(tags || []),
         projectId: projectId || 'general',
         projectName: projectName || 'General',
+        outcomeImpact: outcomeImpact || null,
+        deliverableLink: deliverableLink || null,
+        blockerNote: blockerNote || null,
         estimatedHours: estimatedHours || 8,
         loggedHours: 0,
         departmentId: resolvedDeptId,
@@ -180,7 +228,11 @@ async function tasksRoutes(fastify) {
       return reply.code(403).send({ error: 'Insufficient permissions' });
     }
 
-    const { title, description, assigneeId, reviewerId, priority, status, dueDate, tags, projectId, projectName, estimatedHours, loggedHours, departmentId } = request.body || {};
+    const {
+      title, description, assigneeId, reviewerId, priority, status, dueDate, scheduledDate,
+      tags, projectId, projectName, estimatedHours, loggedHours, departmentId,
+      outcomeImpact, deliverableLink, blockerNote,
+    } = request.body || {};
 
     // Workflow check: If status is being changed to DONE
     // It must be verified/approved by the reviewer or creator, not the assignee directly.
@@ -229,9 +281,13 @@ async function tasksRoutes(fastify) {
     if (priority !== undefined) updateData.priority = priority;
     if (status !== undefined) updateData.status = status;
     if (dueDate !== undefined) updateData.dueDate = dueDate;
+    if (scheduledDate !== undefined) updateData.scheduledDate = scheduledDate || null;
     if (tags !== undefined) updateData.tags = JSON.stringify(tags);
     if (projectId !== undefined) updateData.projectId = projectId;
     if (projectName !== undefined) updateData.projectName = projectName;
+    if (outcomeImpact !== undefined) updateData.outcomeImpact = outcomeImpact || null;
+    if (deliverableLink !== undefined) updateData.deliverableLink = deliverableLink || null;
+    if (blockerNote !== undefined) updateData.blockerNote = blockerNote || null;
     if (estimatedHours !== undefined) updateData.estimatedHours = estimatedHours;
     if (loggedHours !== undefined) updateData.loggedHours = loggedHours;
     if (departmentId !== undefined) updateData.departmentId = departmentId;
@@ -327,6 +383,74 @@ async function tasksRoutes(fastify) {
       if (err.code === 'P2025') return reply.code(404).send({ error: 'Task not found' });
       throw err;
     }
+  });
+
+  // GET /api/tasks/daily-budget
+  fastify.get('/daily-budget', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { role, sub, organizationId } = request.user;
+    const { date, userId } = request.query || {};
+
+    if (!date) {
+      return reply.code(400).send({ error: 'date is required' });
+    }
+
+    const isAdmin = ['super_admin', 'admin', 'hr_manager'].includes(role);
+    const targetUserId = userId || sub;
+    if (userId && !isAdmin) {
+      return reply.code(403).send({ error: 'Only admins can view another user daily budget' });
+    }
+
+    const [availability, tasks, dayLogs] = await Promise.all([
+      getAvailableHoursForDate(targetUserId, date, organizationId),
+      prisma.task.findMany({
+        where: {
+          organizationId,
+          assigneeId: targetUserId,
+          OR: [
+            { scheduledDate: date },
+            { scheduledDate: null, dueDate: date },
+          ],
+        },
+        include: {
+          timeLogs: {
+            where: { userId: targetUserId, date },
+            select: { hours: true },
+          },
+        },
+        orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }],
+      }),
+      prisma.taskTimeLog.findMany({
+        where: {
+          userId: targetUserId,
+          date,
+          task: { organizationId },
+        },
+        select: { hours: true },
+      }),
+    ]);
+
+    const estimatedHoursTotal = tasks.reduce((sum, task) => sum + (Number(task.estimatedHours) || 0), 0);
+    const loggedHoursTotal = dayLogs.reduce((sum, log) => sum + (Number(log.hours) || 0), 0);
+    const budgetStatus = estimatedHoursTotal > availability.availableHours
+      ? 'over'
+      : availability.availableHours - estimatedHoursTotal <= 0.5
+        ? 'near'
+        : 'ok';
+
+    return reply.send({
+      date,
+      availableHours: availability.availableHours,
+      attendanceSource: availability.attendanceSource,
+      estimatedHoursTotal: Math.round(estimatedHoursTotal * 10) / 10,
+      loggedHoursTotal: Math.round(loggedHoursTotal * 10) / 10,
+      budgetStatus,
+      tasks: tasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        estimatedHours: Number(task.estimatedHours) || 0,
+        loggedToday: Math.round(task.timeLogs.reduce((sum, log) => sum + (Number(log.hours) || 0), 0) * 10) / 10,
+      })),
+    });
   });
 
   // GET /api/tasks/:id
@@ -438,6 +562,55 @@ async function tasksRoutes(fastify) {
     });
   });
 
+  // PATCH /api/tasks/:id/comments/:commentId
+  fastify.patch('/:id/comments/:commentId', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    const { id, commentId } = request.params;
+    const { content } = request.body || {};
+    const { organizationId } = request.user;
+
+    if (!content) {
+      return reply.code(400).send({ error: 'Comment content is required' });
+    }
+
+    const task = await prisma.task.findFirst({ where: { id, organizationId } });
+    if (!task) return reply.code(404).send({ error: 'Task not found' });
+    if (!(await canAccessTask(task, request.user))) {
+      return reply.code(403).send({ error: 'Insufficient permissions' });
+    }
+
+    const existing = await prisma.taskComment.findFirst({
+      where: { id: commentId, taskId: id },
+    });
+    if (!existing) return reply.code(404).send({ error: 'Comment not found' });
+
+    const comment = await prisma.taskComment.update({
+      where: { id: commentId },
+      data: { content },
+      include: {
+        user: { select: { id: true, name: true, avatar: true } }
+      }
+    });
+
+    if (global.io) {
+      global.io.to(`org:${organizationId}`).emit('task:commentAdded', {
+        taskId: id,
+        commentId: comment.id,
+        content: comment.content,
+        userName: comment.user.name
+      });
+    }
+
+    return reply.send({
+      id: comment.id,
+      taskId: comment.taskId,
+      userId: comment.userId,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      userName: comment.user.name,
+      userAvatar: comment.user.avatar
+    });
+  });
+
   // POST /api/tasks/:id/timelogs
   fastify.post('/:id/timelogs', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const { id } = request.params;
@@ -474,11 +647,29 @@ async function tasksRoutes(fastify) {
 
     const updatedTask = await prisma.task.update({
       where: { id },
-      data: { loggedHours: Math.round((totalLogged._sum.hours || 0) * 10) / 10 },
+      data: { loggedHours: Math.round(totalLogged._sum.hours || 0) },
       include: {
         assignee: { select: { id: true, name: true, avatar: true } }
       }
     });
+
+    const [availability, userDayLogTotals] = await Promise.all([
+      getAvailableHoursForDate(sub, date, organizationId),
+      prisma.taskTimeLog.aggregate({
+        where: {
+          userId: sub,
+          date,
+          task: { organizationId },
+        },
+        _sum: { hours: true },
+      }),
+    ]);
+
+    const totalLoggedToday = Math.round((userDayLogTotals._sum.hours || 0) * 10) / 10;
+    const warning = totalLoggedToday > availability.availableHours;
+    const warningMessage = warning
+      ? `You've logged ${totalLoggedToday}h total today. Your available hours are ${availability.availableHours}h.`
+      : '';
 
     if (global.io) {
       global.io.to(`org:${organizationId}`).emit('task:updated', {
@@ -501,7 +692,11 @@ async function tasksRoutes(fastify) {
       note: timeLog.note,
       createdAt: timeLog.createdAt,
       userName: timeLog.user.name,
-      userAvatar: timeLog.user.avatar
+      userAvatar: timeLog.user.avatar,
+      warning,
+      warningMessage,
+      totalLoggedToday,
+      availableHours: availability.availableHours,
     });
   });
 }
@@ -568,4 +763,3 @@ function verifyTaskAssignmentPermission(assigner, assignee) {
 }
 
 module.exports = tasksRoutes;
-

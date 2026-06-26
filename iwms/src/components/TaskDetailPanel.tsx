@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasksApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/components/Toast';
 
 const STATUS_OPTIONS = [
   { value: 'backlog', label: 'Backlog', color: 'var(--text-3)' },
@@ -15,6 +16,7 @@ const STATUS_OPTIONS = [
 
 export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<'comments' | 'timelogs'>('comments');
   
   // Comment state
@@ -52,14 +54,26 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
     },
   });
 
+  const markCommentAsInsight = useMutation({
+    mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
+      tasksApi.updateComment(taskId, commentId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task-details', taskId] });
+      addToast('Insight Marked', 'This comment will flow into weekly report insights.', 'success');
+    },
+  });
+
   // Time log mutation
   const logTime = useMutation({
     mutationFn: (data: { hours: number; date: string; note?: string }) => tasksApi.logTime(taskId, data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['task-details', taskId] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] }); // invalidate list for progress bars
       setHours('');
       setLogNote('');
+      if (data?.warning) {
+        addToast('Daily Budget Warning', data.warningMessage || 'Logged hours exceed available hours today.', 'warning', 7000);
+      }
     },
   });
 
@@ -315,18 +329,46 @@ export default function TaskDetailPanel({ taskId, onClose }: { taskId: string; o
                     {task.comments?.length === 0 ? (
                       <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '10px' }}>No comments yet.</p>
                     ) : (
-                      task.comments.map((c: any) => (
+                      task.comments.map((c: any) => {
+                        const isInsight = String(c.content || '').trim().toLowerCase().startsWith('#insight');
+                        return (
                         <div key={c.id} style={{ display: 'flex', gap: '10px', padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
                           <div className="table-avatar" style={{ width: '28px', height: '28px', fontSize: '13px', flexShrink: 0 }}>{c.userAvatar}</div>
-                          <div>
+                          <div style={{ flex: 1 }}>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline', marginBottom: '3px' }}>
                               <span style={{ color: 'var(--text-1)', fontSize: '13px', fontWeight: 600 }}>{c.userName}</span>
                               <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{new Date(c.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.4', margin: 0 }}>{c.content}</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!isInsight) {
+                                  markCommentAsInsight.mutate({
+                                    commentId: c.id,
+                                    content: `#insight ${c.content}`,
+                                  });
+                                }
+                              }}
+                              disabled={isInsight || markCommentAsInsight.isPending}
+                              style={{
+                                marginTop: '8px',
+                                padding: '4px 8px',
+                                borderRadius: '7px',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                background: isInsight ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.12)',
+                                color: isInsight ? 'var(--green)' : 'var(--accent)',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: isInsight ? 'default' : 'pointer',
+                              }}
+                            >
+                              {isInsight ? 'Marked as Insight' : '💡 Mark as Insight'}
+                            </button>
                           </div>
                         </div>
-                      ))
+                      );
+                      })
                     )}
                   </div>
 

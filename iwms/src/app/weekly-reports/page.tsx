@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { reportsApi, usersApi, departmentsApi } from '@/lib/api';
@@ -32,10 +32,29 @@ function getRecentMondays(count = 8) {
   return list;
 }
 
+function AutoFilledBadge({ alsoInRoadblocks = false }: { alsoInRoadblocks?: boolean }) {
+  return (
+    <span style={{
+      display: 'inline-flex',
+      marginTop: '4px',
+      padding: '2px 6px',
+      borderRadius: '999px',
+      border: '1px solid var(--border)',
+      color: 'var(--accent)',
+      fontSize: '10px',
+      fontWeight: 700,
+      whiteSpace: 'nowrap'
+    }}>
+      {alsoInRoadblocks ? '✦ Auto-filled · Also in Roadblocks' : '✦ Auto-filled'}
+    </span>
+  );
+}
+
 export default function WeeklyReportsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const weeks = getRecentMondays();
+  const autoDraftRequestedRef = useRef(false);
 
   // --- UI States ---
   const [activeTab, setActiveTab] = useState<'my' | 'team'>('my');
@@ -73,6 +92,20 @@ export default function WeeklyReportsPage() {
     queryFn: () => reportsApi.myReports(),
     enabled: !!user,
   });
+
+  useEffect(() => {
+    if (!user || loadingMy || autoDraftRequestedRef.current) return;
+    const currentWeek = weeks[0];
+    const existing = myReports.find((r: any) => r.startDate === currentWeek.startDate);
+    if (existing) return;
+
+    autoDraftRequestedRef.current = true;
+    reportsApi.autoDraft(currentWeek.startDate, currentWeek.endDate)
+      .then(() => queryClient.invalidateQueries({ queryKey: ['my-reports'] }))
+      .catch((err) => {
+        console.error('Auto-draft creation failed:', err);
+      });
+  }, [user, loadingMy, myReports, queryClient, weeks]);
 
   const { data: teamReports = [], isLoading: loadingTeam } = useQuery({
     queryKey: ['team-reports', filterDept, filterEmp, filterWeek, filterStatus],
@@ -124,18 +157,21 @@ export default function WeeklyReportsPage() {
 
   const handleAutoPopulate = async () => {
     try {
-      const { activities: populated } = await reportsApi.autoPopulate(selectedWeek.startDate, selectedWeek.endDate);
-      // Merge populated with existing manual entries
+      const populated = await reportsApi.autoPopulate(selectedWeek.startDate, selectedWeek.endDate);
       setActivities(prev => {
         const existingNames = new Set(prev.map(a => a.taskName));
         const newActivities = [...prev];
-        for (const item of populated) {
+        for (const item of populated.activities || []) {
           if (!existingNames.has(item.taskName)) {
             newActivities.push(item);
           }
         }
         return newActivities;
       });
+      setRoadblocks(prev => [...prev, ...(populated.roadblocks || []).filter((item: any) => !prev.some(rb => rb.sourceTaskId && rb.sourceTaskId === item.sourceTaskId))]);
+      setPlans(prev => [...prev, ...(populated.plans || []).filter((item: any) => !prev.some(pl => pl.sourceTaskId && pl.sourceTaskId === item.sourceTaskId))]);
+      setSupportItems(prev => [...prev, ...(populated.supportItems || []).filter((item: any) => !prev.some(s => s.sourceTaskId && s.sourceTaskId === item.sourceTaskId))]);
+      setInsights(prev => [...prev, ...(populated.insights || []).filter((item: any) => !prev.some(ins => ins.sourceTaskId && ins.sourceTaskId === item.sourceTaskId && ins.insight === item.insight))]);
     } catch (err) {
       alert('Failed to auto-populate tasks.');
     }
@@ -189,7 +225,7 @@ export default function WeeklyReportsPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Weekly_Report_${date}_${name.replace(/\s+/g, '_')}.docx`;
+      a.download = `WeeklyReport_${name.replace(/\s+/g, '_')}_${date}.docx`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -205,31 +241,31 @@ export default function WeeklyReportsPage() {
   const addActivity = () => setActivities([...activities, { taskName: '', type: 'Development', status: 'In Progress', impact: '', hoursSpent: 0, links: '' }]);
   const removeActivity = (idx: number) => setActivities(activities.filter((_, i) => i !== idx));
   const updateActivity = (idx: number, field: string, val: any) => {
-    setActivities(activities.map((a, i) => i === idx ? { ...a, [field]: val } : a));
+    setActivities(activities.map((a, i) => i === idx ? { ...a, [field]: val, isAutoFilled: false } : a));
   };
 
   const addRoadblock = () => setRoadblocks([...roadblocks, { challenge: '', impact: '', mitigation: '', supportRequired: '', responsibleParty: '', deadline: '' }]);
   const removeRoadblock = (idx: number) => setRoadblocks(roadblocks.filter((_, i) => i !== idx));
   const updateRoadblock = (idx: number, field: string, val: any) => {
-    setRoadblocks(roadblocks.map((r, i) => i === idx ? { ...r, [field]: val } : r));
+    setRoadblocks(roadblocks.map((r, i) => i === idx ? { ...r, [field]: val, isAutoFilled: false } : r));
   };
 
   const addPlan = () => setPlans([...plans, { plannedActivity: '', typeAssigned: 'Assigned', typeScope: 'Departmental', deliverables: '', targetDate: '', dependencies: '' }]);
   const removePlan = (idx: number) => setPlans(plans.filter((_, i) => i !== idx));
   const updatePlan = (idx: number, field: string, val: any) => {
-    setPlans(plans.map((p, i) => i === idx ? { ...p, [field]: val } : p));
+    setPlans(plans.map((p, i) => i === idx ? { ...p, [field]: val, isAutoFilled: false } : p));
   };
 
   const addSupportItem = () => setSupportItems([...supportItems, { description: '', supportType: '', requestedFrom: '', urgency: 'medium', dueDate: '' }]);
   const removeSupportItem = (idx: number) => setSupportItems(supportItems.filter((_, i) => i !== idx));
   const updateSupportItem = (idx: number, field: string, val: any) => {
-    setSupportItems(supportItems.map((s, i) => i === idx ? { ...s, [field]: val } : s));
+    setSupportItems(supportItems.map((s, i) => i === idx ? { ...s, [field]: val, isAutoFilled: false } : s));
   };
 
   const addInsight = () => setInsights([...insights, { insight: '', category: 'Technical', impact: '' }]);
   const removeInsight = (idx: number) => setInsights(insights.filter((_, i) => i !== idx));
   const updateInsight = (idx: number, field: string, val: any) => {
-    setInsights(insights.map((ins, i) => i === idx ? { ...ins, [field]: val } : ins));
+    setInsights(insights.map((ins, i) => i === idx ? { ...ins, [field]: val, isAutoFilled: false } : ins));
   };
 
   return (
@@ -784,6 +820,7 @@ export default function WeeklyReportsPage() {
                     <tr key={idx}>
                       <td>
                         <input className="input-field" style={{ padding: '6px' }} value={act.taskName} onChange={e => updateActivity(idx, 'taskName', e.target.value)} placeholder="Task Title" />
+                        {act.isAutoFilled && <AutoFilledBadge />}
                       </td>
                       <td>
                         <input className="input-field" style={{ padding: '6px' }} value={act.type} onChange={e => updateActivity(idx, 'type', e.target.value)} placeholder="Development" />
@@ -842,7 +879,10 @@ export default function WeeklyReportsPage() {
                 <tbody>
                   {roadblocks.map((rb, idx) => (
                     <tr key={idx}>
-                      <td><input className="input-field" style={{ padding: '6px' }} value={rb.challenge} onChange={e => updateRoadblock(idx, 'challenge', e.target.value)} placeholder="Describe challenge" /></td>
+                      <td>
+                        <input className="input-field" style={{ padding: '6px' }} value={rb.challenge} onChange={e => updateRoadblock(idx, 'challenge', e.target.value)} placeholder="Describe challenge" />
+                        {rb.isAutoFilled && <AutoFilledBadge />}
+                      </td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={rb.impact} onChange={e => updateRoadblock(idx, 'impact', e.target.value)} placeholder="Timeline impact" /></td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={rb.mitigation} onChange={e => updateRoadblock(idx, 'mitigation', e.target.value)} placeholder="Workaround" /></td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={rb.supportRequired} onChange={e => updateRoadblock(idx, 'supportRequired', e.target.value)} placeholder="Guidance/Resources" /></td>
@@ -879,7 +919,10 @@ export default function WeeklyReportsPage() {
                 <tbody>
                   {plans.map((pl, idx) => (
                     <tr key={idx}>
-                      <td><input className="input-field" style={{ padding: '6px' }} value={pl.plannedActivity} onChange={e => updatePlan(idx, 'plannedActivity', e.target.value)} placeholder="Objectives" /></td>
+                      <td>
+                        <input className="input-field" style={{ padding: '6px' }} value={pl.plannedActivity} onChange={e => updatePlan(idx, 'plannedActivity', e.target.value)} placeholder="Objectives" />
+                        {pl.isAutoFilled && <AutoFilledBadge />}
+                      </td>
                       <td>
                         <select className="input-select" style={{ padding: '6px' }} value={pl.typeAssigned} onChange={e => updatePlan(idx, 'typeAssigned', e.target.value)}>
                           <option value="Assigned">Assigned</option>
@@ -925,7 +968,10 @@ export default function WeeklyReportsPage() {
                 <tbody>
                   {supportItems.map((s, idx) => (
                     <tr key={idx}>
-                      <td><input className="input-field" style={{ padding: '6px' }} value={s.description} onChange={e => updateSupportItem(idx, 'description', e.target.value)} placeholder="Describe request" /></td>
+                      <td>
+                        <input className="input-field" style={{ padding: '6px' }} value={s.description} onChange={e => updateSupportItem(idx, 'description', e.target.value)} placeholder="Describe request" />
+                        {s.isAutoFilled && <AutoFilledBadge alsoInRoadblocks={!!s.sourceTaskId} />}
+                      </td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={s.supportType} onChange={e => updateSupportItem(idx, 'supportType', e.target.value)} placeholder="Decision / Resources" /></td>
                       <td><input className="input-field" style={{ padding: '6px' }} value={s.requestedFrom} onChange={e => updateSupportItem(idx, 'requestedFrom', e.target.value)} placeholder="HOD or Admin" /></td>
                       <td>
@@ -964,7 +1010,10 @@ export default function WeeklyReportsPage() {
                 <tbody>
                   {insights.map((ins, idx) => (
                     <tr key={idx}>
-                      <td><input className="input-field" style={{ padding: '6px' }} value={ins.insight} onChange={e => updateInsight(idx, 'insight', e.target.value)} placeholder="Key lesson" /></td>
+                      <td>
+                        <input className="input-field" style={{ padding: '6px' }} value={ins.insight} onChange={e => updateInsight(idx, 'insight', e.target.value)} placeholder="Key lesson" />
+                        {ins.isAutoFilled && <AutoFilledBadge />}
+                      </td>
                       <td>
                         <select className="input-select" style={{ padding: '6px' }} value={ins.category} onChange={e => updateInsight(idx, 'category', e.target.value)}>
                           <option value="Process">Process</option>

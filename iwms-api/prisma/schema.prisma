@@ -118,10 +118,14 @@ model Task {
   priority        String   @default("medium")
   status          String   @default("todo")
   dueDate         String
+  scheduledDate   String?
   tags            String   @default("[]")
   projectId       String   @default("general")
   projectName     String   @default("General")
-  estimatedHours  Int      @default(8)
+  outcomeImpact   String?
+  deliverableLink String?
+  blockerNote     String?
+  estimatedHours  Float    @default(8)
   loggedHours     Int      @default(0)
   departmentId    String?
   department      Department? @relation(fields: [departmentId], references: [id])
@@ -138,6 +142,8 @@ model Task {
   @@index([reviewerId])
   @@index([departmentId])
   @@index([organizationId])
+  @@index([scheduledDate])
+  @@index([assigneeId, scheduledDate])
 }
 
 model AttendanceRecord {
@@ -304,6 +310,7 @@ model WeeklyReport {
   startDate       String   // YYYY-MM-DD
   endDate         String   // YYYY-MM-DD
   status          String   @default("draft") // draft | submitted | approved | needs_revision
+  isAutoDraft     Boolean  @default(false)
   additionalNotes String   @default("")
   reviewNotes     String   @default("")
   createdAt       DateTime @default(now())
@@ -332,6 +339,8 @@ model ReportActivity {
   impact      String      @default("")
   hoursSpent  Float       @default(0)
   links       String      @default("")
+  isAutoFilled Boolean    @default(false)
+  sourceTaskId String?
 
   @@index([reportId])
 }
@@ -346,6 +355,8 @@ model ReportRoadblock {
   supportRequired  String      @default("")
   responsibleParty String      @default("")
   deadline         String      @default("")
+  isAutoFilled     Boolean     @default(false)
+  sourceTaskId     String?
 
   @@index([reportId])
 }
@@ -360,6 +371,8 @@ model ReportUpcomingPlan {
   deliverables    String      @default("")
   targetDate      String      @default("")
   dependencies    String      @default("")
+  isAutoFilled    Boolean     @default(false)
+  sourceTaskId    String?
 
   @@index([reportId])
 }
@@ -373,6 +386,8 @@ model ReportSupportItem {
   requestedFrom String    @default("")
   urgency     String      @default("medium") // high | medium | low
   dueDate     String      @default("")
+  isAutoFilled Boolean    @default(false)
+  sourceTaskId String?
 
   @@index([reportId])
 }
@@ -384,6 +399,8 @@ model ReportInsight {
   insight   String
   category  String      // Process | Technical | Team | Tooling
   impact    String      @default("")
+  isAutoFilled Boolean  @default(false)
+  sourceTaskId String?
 
   @@index([reportId])
 }

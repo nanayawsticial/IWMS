@@ -1,12 +1,83 @@
 const cron = require('node-cron');
 const { sendMail, weeklyReportHtml, lateAlertHtml } = require('./mailer');
 const prisma = require('./prisma');
+const { ensureAutoDraft, getPreviousWeekRange } = require('./reportAutomation');
 
 /**
  * Start all background cron jobs.
  * @param {import('socket.io').Server} io  — Socket.io server for broadcasting
  */
 function startCronJobs(io) {
+
+  // Auto-draft weekly reports every Monday at 06:00 AM for the previous week.
+  cron.schedule('0 6 * * 1', async () => {
+    const { startDate, endDate } = getPreviousWeekRange();
+    console.log(`[CRON] Auto-drafting weekly reports for ${startDate} to ${endDate}...`);
+
+    try {
+      const orgs = await prisma.organization.findMany({ select: { id: true } });
+      let created = 0;
+      let existing = 0;
+
+      for (const org of orgs) {
+        try {
+          const users = await prisma.user.findMany({
+            where: {
+              status: 'active',
+              organizationId: org.id,
+              OR: [
+                {
+                  attendance: {
+                    some: {
+                      organizationId: org.id,
+                      date: { gte: startDate, lte: endDate },
+                    },
+                  },
+                },
+                {
+                  timeLogs: {
+                    some: {
+                      date: { gte: startDate, lte: endDate },
+                      task: { organizationId: org.id },
+                    },
+                  },
+                },
+                {
+                  assignedTasks: {
+                    some: {
+                      organizationId: org.id,
+                      OR: [
+                        { scheduledDate: { gte: startDate, lte: endDate } },
+                        { scheduledDate: null, dueDate: { gte: startDate, lte: endDate } },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+            select: { id: true },
+          });
+
+          for (const user of users) {
+            const result = await ensureAutoDraft({
+              userId: user.id,
+              startDate,
+              endDate,
+              organizationId: org.id,
+            });
+            if (result.created) created++;
+            else existing++;
+          }
+        } catch (orgErr) {
+          console.error(`[CRON] Auto-draft failed for org ${org.id}:`, orgErr.message);
+        }
+      }
+
+      console.log(`[CRON] Auto-draft complete. Created ${created}, skipped existing ${existing}.`);
+    } catch (err) {
+      console.error('[CRON] Auto-draft failed:', err.message);
+    }
+  });
 
   // ── Weekly Report ─────────────────────────────────────────────
   // Every Monday at 08:00 AM — scoped per-organization
