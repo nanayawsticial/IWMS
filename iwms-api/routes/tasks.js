@@ -647,7 +647,7 @@ async function tasksRoutes(fastify) {
 
     const updatedTask = await prisma.task.update({
       where: { id },
-      data: { loggedHours: Math.round(totalLogged._sum.hours || 0) },
+      data: { loggedHours: Math.round((totalLogged._sum.hours || 0) * 10) / 10 },
       include: {
         assignee: { select: { id: true, name: true, avatar: true } }
       }

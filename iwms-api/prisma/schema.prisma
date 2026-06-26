@@ -126,7 +126,7 @@ model Task {
   deliverableLink String?
   blockerNote     String?
   estimatedHours  Float    @default(8)
-  loggedHours     Int      @default(0)
+  loggedHours     Float    @default(0)
   departmentId    String?
   department      Department? @relation(fields: [departmentId], references: [id])
   createdAt       DateTime @default(now())

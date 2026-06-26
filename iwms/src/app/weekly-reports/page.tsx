@@ -768,7 +768,7 @@ export default function WeeklyReportsPage() {
                 Prepare your weekly activities, roadblocks, plans, and insights.
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
               <div>
                 <select 
                   className="input-select" 
@@ -785,6 +785,26 @@ export default function WeeklyReportsPage() {
                   ))}
                 </select>
               </div>
+              <button
+                className="btn-ghost-sm"
+                onClick={handleAutoPopulate}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontWeight: 700,
+                  border: '1px solid var(--accent)',
+                  color: 'var(--accent)',
+                  background: 'var(--accent-soft)',
+                  borderRadius: '8px',
+                  padding: '6px 14px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                }}
+                title="Auto-fill all sections from your tasks, blockers, plans, and #insight comments this week"
+              >
+                ✨ Auto-fill from My Tasks
+              </button>
               <button className="btn-ghost-sm" onClick={() => setEditingReport(null)}>Cancel</button>
             </div>
           </div>
@@ -793,14 +813,9 @@ export default function WeeklyReportsPage() {
           <div style={{ marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--blue)' }}>1. Weekly Activities Overview</h3>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn-ghost-sm" onClick={handleAutoPopulate} style={{ fontSize: '12px' }}>
-                  🔄 Auto-populate from Tasks
-                </button>
-                <button className="btn-primary-sm" onClick={addActivity} style={{ fontSize: '12px' }}>
-                  + Add Row
-                </button>
-              </div>
+              <button className="btn-primary-sm" onClick={addActivity} style={{ fontSize: '12px' }}>
+                + Add Row
+              </button>
             </div>
             <div className="table-responsive">
               <table className="table" style={{ fontSize: '13px' }}>
